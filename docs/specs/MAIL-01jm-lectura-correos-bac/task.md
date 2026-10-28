@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. pnpm, Vitest. Sin deploy ni cambios remotos.
   - 6 tests verdes (rojo: funciones inexistentes)
 - [x] MAIL-01jm-T04 Migración `currency` [supabase/migrations/0002_currency.sql]
   - no aplicada al remoto (pendiente `db push`)
-- [ ] MAIL-01jm-T05 Edge Function `sync-bac-emails` con upsert idempotente [supabase/functions/sync-bac-emails/index.ts] (depende de T03, T04)
+- [x] MAIL-01jm-T05 Edge Function `sync-bac-emails` con upsert idempotente [supabase/functions/sync-bac-emails/index.ts] (depende de T03, T04)
+  - `deno check` OK; sin deploy ni secrets configurados
