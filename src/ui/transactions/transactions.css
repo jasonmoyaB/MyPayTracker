@@ -1,0 +1,12 @@
+.transactions, .transaction-description, .transaction-amount { min-width: 0; }
+.transactions-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.transactions-list { list-style: none; padding: 0; margin: 0; }
+.transaction-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 0; }
+.transaction-row + .transaction-row { border-top: 1px solid var(--color-border); }
+.transaction-description { display: grid; flex: 1 1 160px; overflow-wrap: anywhere; }
+.transaction-amount { display: grid; text-align: right; margin-left: auto; overflow-wrap: anywhere; max-width: 100%; }
+.transaction-amount .amount { font-variant-numeric: tabular-nums; }
+.transaction-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.transaction-form legend { padding: 0; margin-bottom: 12px; }
+.transaction-form input, .transaction-form select { width: 100%; min-width: 0; }
+.transaction-form { border-block: 1px solid var(--color-border); padding-block: 16px; }
