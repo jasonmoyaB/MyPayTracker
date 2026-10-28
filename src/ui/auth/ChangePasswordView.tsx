@@ -5,7 +5,7 @@ import { toUiError } from '../sessionExpiry'
 import { useToast, type ToastApi } from '../toast/ToastProvider'
 import { PasswordInput } from './PasswordInput'
 
-// AUTH-01jm-T04: pantalla "Cambiar contraseña". Montaje provisional desde el encabezado; DASH-01jm la mueve a "Cuenta".
+// AUTH-01jm-T04: pantalla "Cambiar contraseña"; DASH-01jm la monta en "Cuenta" (sin "Volver").
 const EMPTY: PasswordChange = { current: '', next: '', confirm: '' }
 const WRONG_CURRENT = 'La contraseña actual no es correcta.'
 
@@ -28,7 +28,7 @@ export async function submitPasswordChange(values: PasswordChange, email: string
   return { ok: true, errors: {} }
 }
 
-export function ChangePasswordView({ email, onBack }: { email: string; onBack: () => void }) {
+export function ChangePasswordView({ email, onBack }: { email: string; onBack?: () => void }) {
   const toast = useToast()
   const [values, setValues] = useState(EMPTY)
   const [errors, setErrors] = useState<PasswordChangeErrors>({})
@@ -64,7 +64,7 @@ type FormProps = {
   pending: boolean
   onChange: (field: keyof PasswordChange, value: string) => void
   onSubmit: () => void
-  onBack: () => void
+  onBack?: () => void
 }
 
 export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit, onBack }: FormProps) {
@@ -90,7 +90,7 @@ export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit
       </fieldset>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button type="submit" disabled={pending}>{pending ? 'Guardando…' : 'Guardar'}</button>
-        <button type="button" className="secondary" onClick={onBack} disabled={pending}>Volver</button>
+        {onBack && <button type="button" className="secondary" onClick={onBack} disabled={pending}>Volver</button>}
       </div>
     </form>
   )
