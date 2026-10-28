@@ -1,0 +1,15 @@
+ BAC
+
+| | ## Hola TITULAR DE PRUEBA ##### A continuación le detallamos la transacción realizada: | |
+
+| Comercio: | MC DONALD S CARTAGO ES |
+| Ciudad y país: | CARTAGO, Costa Rica |
+| Fecha: | Oct 26, 2026, 18:59 |
+| MASTER: | ************0000 |
+| Autorización: | 000000 |
+| Referencia: | 00000000 |
+| Tipo de Transacción: | COMPRA |
+| Monto: | CRC 3,490.00 |
+
+| | ¿Tiene dudas sobre esta transacción? Puede contactarnos vía WhatsApp |
+| Comunicado válido únicamente para Costa Rica. |

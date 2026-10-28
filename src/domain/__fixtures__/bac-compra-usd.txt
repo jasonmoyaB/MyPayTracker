@@ -1,0 +1,12 @@
+ BAC
+
+| | ## Hola TITULAR DE PRUEBA ##### A continuación le detallamos la transacción realizada: | |
+
+| Comercio: | ANTHROPIC* CLAUDE SUB |
+| Ciudad y país: | SAN FRANCISCO, Pais no Definido |
+| Fecha: | Oct 9, 2026, 16:59 |
+| MASTER: | ************0000 |
+| Autorización: | 000000 |
+| Referencia: | 000000000000 |
+| Tipo de Transacción: | COMPRA |
+| Monto: | USD 20.00 |

@@ -1,0 +1,5 @@
+ BAC San José
+
+| Notificación de Transferencia SINPE |
+
+| Notificación de Transferencia SINPE Hola TITULAR DE PRUEBA : BAC le comunica que la transferencia SINPE en tiempo real con el número de referencia 0000000000000000000000000, solicitada desde su cuenta IBAN CR0000XXXXXXXXXXXX0000 por un monto de 4,000.00 Colones, fue rechazada por la entidad destino por el siguiente motivo: FondosInsuficientes. Día y hora: 21/09/2026 06:10:44 p.m. Muchas gracias. |
