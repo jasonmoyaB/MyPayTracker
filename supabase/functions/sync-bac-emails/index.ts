@@ -3,6 +3,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
+// Solo correos de octubre 2026 (pedido del usuario). En noviembre deja de traer correos nuevos: cambiar aquí.
+const DATE_RANGE = 'after:2026/10/01 before:2026/11/01'
 
 function env(name: string): string {
   const value = Deno.env.get(name)
@@ -33,15 +35,36 @@ async function gmail<T>(url: string, token: string): Promise<T> {
 // Centavos enteros → "3490.00" sin pasar por float.
 const toNumeric = (cents: number) => `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`
 
-Deno.serve(async () => {
+async function listMessageIds(token: string): Promise<string[]> {
+  const q = encodeURIComponent(`from:(${BAC_SENDERS.join(' OR ')}) ${DATE_RANGE}`)
+  const ids: string[] = []
+  let pageToken = ''
+  do {
+    const page = await gmail<{ messages?: { id: string }[]; nextPageToken?: string }>(
+      `${GMAIL}?maxResults=100&q=${q}${pageToken ? `&pageToken=${pageToken}` : ''}`,
+      token,
+    )
+    ids.push(...(page.messages ?? []).map((m) => m.id))
+    pageToken = page.nextPageToken ?? ''
+  } while (pageToken)
+  return ids
+}
+
+Deno.serve(async (req) => {
   try {
+    const db = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'))
+    // Solo el cron conoce el secreto (vive en Vault, ver 0003_cron.sql).
+    const { data: authorized, error: authError } = await db.rpc('is_valid_cron_secret', {
+      candidate: req.headers.get('x-cron-secret') ?? '',
+    })
+    if (authError) throw authError
+    if (!authorized) return Response.json({ error: 'No autorizado' }, { status: 401 })
+
     const token = await accessToken()
-    // ponytail: una sola página (100) de los últimos 7 días; paginar con nextPageToken si el cron corre menos seguido.
-    const q = `from:(${BAC_SENDERS.join(' OR ')}) newer_than:7d`
-    const list = await gmail<{ messages?: { id: string }[] }>(`${GMAIL}?maxResults=100&q=${encodeURIComponent(q)}`, token)
+    const ids = await listMessageIds(token)
 
     const rows = []
-    for (const { id } of list.messages ?? []) {
+    for (const id of ids) {
       const msg = await gmail<{ payload: GmailPart & { headers: { name: string; value: string }[] } }>(`${GMAIL}/${id}?format=full`, token)
       const from = msg.payload.headers.find((h) => h.name.toLowerCase() === 'from')?.value ?? ''
       const parsed = parseBankEmail(from, gmailBodyText(msg.payload))
@@ -59,15 +82,13 @@ Deno.serve(async () => {
     }
 
     // service role solo aquí (servidor); ignoreDuplicates + email_message_id único → idempotente.
-    const db = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'))
     const { data, error } = await db
       .from('transactions')
       .upsert(rows, { onConflict: 'email_message_id', ignoreDuplicates: true })
       .select('id')
     if (error) throw error
 
-    const scanned = list.messages?.length ?? 0
-    return Response.json({ scanned, parsed: rows.length, inserted: data.length })
+    return Response.json({ scanned: ids.length, parsed: rows.length, inserted: data.length })
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
