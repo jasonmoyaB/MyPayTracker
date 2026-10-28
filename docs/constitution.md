@@ -13,7 +13,7 @@ Cada feature tiene `docs/specs/<feature>.md` con criterios numerados; cada crite
 `src/domain/` lógica pura (saldo, parsers), sin React ni Supabase. `src/data/` queries a Supabase. `src/ui/` componentes React, sin lógica ni SQL.
 
 ## 5. Pruebas unitarias TDD
-Red → green → refactor. Todo `domain/` con test previo; parsers probados con correos reales anonimizados; IA simulada en tests. `npm test` pasa antes de cada commit.
+Red → green → refactor. Todo `domain/` con test previo; parsers probados con correos reales anonimizados; IA simulada en tests. `pnpm test` pasa antes de cada commit.
 
 ## 6. Datos persistentes
 Postgres en Supabase: `settings(user_id, salary)` y `transactions(user_id, amount numeric(12,2), direction in|out, source email_regex|email_ai|manual, description, occurred_at, email_message_id unique)`. RLS en todas las tablas, cambios solo por migraciones, secretos en Supabase secrets.
