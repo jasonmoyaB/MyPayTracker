@@ -16,3 +16,7 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (tokens de vidrio).
   - Evidencia: rojo supabase.test.ts (`Faltan VITE_SUPABASE_URL…` al importar) y módulos inexistentes; verde supabase.test.ts (2), ErrorBoundary.test.tsx (3), unhandledRejection.test.ts (1); typecheck+test (116)+build OK.
 - [x] UX-02jm-T06 Respuesta de error saneada en la función de sync [supabase/functions/sync-bac-emails/index.ts] (AC-7)
   - Evidencia: rojo index.test.ts (2 fallos: sin console.error, respuesta con e.message); verde 2 tests; deno check OK; typecheck+test (118)+build OK. Redeploy pendiente del usuario.
+
+## Correcciones de revisión
+- [ ] UX-02jm-T07 Sesión por código, no por texto: `upsertSettings` lanza error con `code: 'session_not_found'`; `AuthSessionMissingError` → session; `TypeError` solo offline si el mensaje es de red [src/data/errors.ts, src/data/settings.ts, src/data/errors.test.ts]
+- [ ] UX-02jm-T08 `endExpiredSession().catch`; cliente sin config con `autoRefreshToken/persistSession: false`; timers de toast limpiados al desmontar; `aria-atomic="false"` en regiones [src/ui/sessionExpiry.ts, src/data/supabase.ts, src/ui/toast/ToastProvider.tsx, src/ui/toast/ToastRegion.tsx]
