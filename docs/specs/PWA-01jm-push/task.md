@@ -8,7 +8,8 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (iconos), UX-02jm (toasts)
   - Evidencia: rojo pwa.test.ts "ENOENT manifest.webmanifest"; verde 6 pruebas (manifest, index.html, registro, sw.js ejecutado con `self` falso: push, clic con ventana y sin ella); iconos solo `any` (el logo llega al borde y `maskable` lo recortaría); typecheck, test y build OK.
 - [x] PWA-01jm-T02 Migración `push_subscriptions` con RLS por dueño (sin aplicar) [supabase/migrations/0006_push_subscriptions.sql] (AC-8)
   - Evidencia: rojo push.test.ts "ENOENT 0006_push_subscriptions.sql"; verde 2 pruebas (columnas, RLS select/insert/delete, sin update: el cliente usa on conflict do nothing); sin aplicar; typecheck, test y build OK.
-- [ ] PWA-01jm-T03 Prueba + `movementNotification` [src/domain/notification.ts, src/domain/notification.test.ts] (AC-5)
+- [x] PWA-01jm-T03 Prueba + `movementNotification` [src/domain/notification.ts, src/domain/notification.test.ts] (AC-5)
+  - Evidencia: rojo "Cannot find module ./notification"; verde 4 pruebas (gasto CRC, ingreso USD, recorte a 60, sin descripción); import type con `.ts` para Deno; typecheck, test y build OK.
 - [ ] PWA-01jm-T04 `saveSubscription`/`deleteSubscription` [src/data/push.ts] (AC-2, AC-4) (depende de T02)
 - [ ] PWA-01jm-T05 Prueba + `PushToggle` con estados y aviso iPhone; montarlo en Cuenta [src/ui/account/PushToggle.tsx, src/ui/account/PushToggle.test.tsx, src/ui/account/AccountView.tsx] (AC-2–AC-4) (depende de T04)
 - [ ] PWA-01jm-T06 Envío push solo de filas nuevas + limpieza 404/410 [supabase/functions/sync-bac-emails/index.ts, supabase/functions/sync-bac-emails/push.ts] (AC-5, AC-6, AC-9) (depende de T02, T03)
