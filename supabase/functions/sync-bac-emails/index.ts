@@ -1,6 +1,7 @@
 // MAIL-01jm-T05: lee correos BAC de Gmail y los guarda en transactions. Solo I/O; la lógica vive en src/domain.
 import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
+import { notifyNewMovements } from './push.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
 // CRON-02jm: desde oct 2026 sin fecha de fin (lo anterior ya está en el saldo de cuenta, BAL-01jm).
@@ -91,11 +92,13 @@ Deno.serve(async (req) => {
     }
 
     // service role solo aquí (servidor); ignoreDuplicates + email_message_id único → idempotente.
+    // El select devuelve solo las filas realmente insertadas: un correo ya guardado no vuelve a notificar.
     const { data, error } = await db
       .from('transactions')
       .upsert(rows, { onConflict: 'email_message_id', ignoreDuplicates: true })
-      .select('id')
+      .select('direction, amount, currency, description')
     if (error) throw error
+    await notifyNewMovements(db, env('OWNER_USER_ID'), data)
 
     return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {
