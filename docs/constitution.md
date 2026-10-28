@@ -7,7 +7,7 @@ No sé cuánto entra, cuánto sale ni si puedo comprar algo. Ingreso mi salario;
 React + Vite + TypeScript, Supabase (Postgres, Auth, Edge Function con cron para Gmail), Vitest. Sin dependencias nuevas si unas líneas bastan.
 
 ## 3. Relación spec ↔ código
-Cada feature tiene `docs/specs/<feature>.md` con criterios numerados; cada criterio tiene un test (`AC-n`). Flujo: spec → test → código. Límites: `spec.md` 10–30 líneas, `plan.md` 20–50 (sin código), `task.md` máx. 100 (1–2 líneas por tarea); si se pasa, se divide en sub-features.
+Cada feature tiene `docs/specs/TICKET-nombre/` con `spec.md` → `plan.md` → `task.md` (ver `Claude.md`) y criterios numerados; cada criterio tiene un test (`AC-n`). Flujo: spec → test → código. Límites: `spec.md` 10–30 líneas, `plan.md` 20–50 (sin código), `task.md` máx. 100 (1–2 líneas por tarea); si se pasa, se divide en sub-features.
 
 ## 4. Separación de capas
 `src/domain/` lógica pura (saldo, parsers), sin React ni Supabase. `src/data/` queries a Supabase. `src/ui/` componentes React, sin lógica ni SQL.

@@ -1,7 +1,7 @@
 # ARQ-01jm — Tareas
 
 ## Base acordada
-spec.md + plan.md de esta carpeta. npm, Vitest.
+spec.md + plan.md de esta carpeta. Vitest; npm al inicio, migrado a pnpm en `8cf8222`.
 
 ## Tareas
 - [x] ARQ-01jm-T01 Scaffold Vite react-ts + Vitest + script `typecheck`; app movida a `src/ui/` [package.json, src/ui/*, index.html]
@@ -13,4 +13,4 @@ spec.md + plan.md de esta carpeta. npm, Vitest.
 - [x] ARQ-01jm-T04 Cliente Supabase en data + `.env.example` [src/data/supabase.ts, .env.example] (depende de T01)
   - typecheck OK; falla rápido si faltan variables
 - [x] ARQ-01jm-T05 Migración inicial con RLS [supabase/migrations/0001_init.sql]
-  - no aplicada (sin Supabase local); revisar con `supabase db reset`
+  - aplicada al remoto con `db push`; curl confirma tablas y RLS

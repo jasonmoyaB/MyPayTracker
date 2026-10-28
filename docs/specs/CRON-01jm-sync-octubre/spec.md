@@ -1,20 +1,23 @@
-# CRON-01jm — Sincronización programada (octubre)
+# CRON-01jm — Sincronización automática (octubre)
 
 ## Problema
-`sync-bac-emails` solo corre si alguien la llama, y cualquiera con la publishable key puede llamarla.
+Los correos de BAC solo se leían cuando alguien llamaba la sincronización a mano, y cualquiera con la clave pública podía dispararla.
 
 ## Objetivo
-Correrla sola cada hora, leer únicamente correos de octubre 2026 y aceptar llamadas solo del cron.
+Que la app lea sola, cada hora, los correos BAC de octubre 2026, y que nadie más pueda dispararla.
+
+## Requisitos de usuario
+- Ver los movimientos de octubre sin hacer nada a mano.
+- No tener que compartir ninguna clave nueva para que funcione.
 
 ## Criterios de aceptación
-- AC-1: la query de Gmail usa `after:2026/10/01 before:2026/11/01` y pagina con `nextPageToken`.
-- AC-2: `pg_cron` llama la función cada hora (`0 * * * *`) vía `pg_net`.
-- AC-3: sin header `x-cron-secret` válido → HTTP 401 y no se lee Gmail.
-- AC-4: el secreto se genera en Vault dentro de la BD; no está en git, ni en secrets de la función, ni en el chat.
+- AC-1: cada hora en punto se leen los correos BAC de octubre 2026, aunque sean más de 100.
+- AC-2: correos ya guardados no se duplican.
+- AC-3: una llamada sin la clave secreta de la sincronización se rechaza y no lee el correo.
+- AC-4: esa clave secreta nunca aparece en el repositorio, en la configuración visible ni en el chat.
+
+## Restricciones
+- Solo octubre 2026, literal: desde noviembre no entran correos nuevos hasta cambiar el rango.
 
 ## Fuera de alcance
-Rango configurable desde la UI, aviso cuando caduque el refresh token.
-
-## Supuestos
-- "Únicamente octubre" es literal: desde noviembre el cron no trae correos nuevos hasta cambiar `DATE_RANGE`.
-- La validación JWT del gateway sigue activa: el cron manda la publishable key y además el secreto.
+Elegir el rango desde la pantalla, aviso cuando caduque el acceso a Gmail.

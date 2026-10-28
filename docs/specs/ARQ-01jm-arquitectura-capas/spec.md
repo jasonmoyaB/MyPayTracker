@@ -20,4 +20,4 @@ Pantallas, auth, lectura de Gmail, IA, routing.
 ## Supuestos
 - npm (no pnpm), como dice la constitución (`npm test`).
 - Montos en el dominio como centavos enteros; en BD `numeric(12,2)`.
-- La migración no se aplica a ningún Supabase remoto.
+- Al cerrar la spec la migración no se aplicó a remoto (se aplicó después con `db push`).
