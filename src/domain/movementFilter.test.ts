@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  activePreset, applyFilter, filterTotals, initialFilter, presetRange, validateFilter,
+  activePreset, applyFilter, clearedFilter, filterTotals, initialFilter, presetRange, validateFilter,
   type FilterMovement, type MovementFilter,
 } from './movementFilter'
 
@@ -44,6 +44,17 @@ describe('AC-3: accesos rápidos', () => {
     expect(presetRange('lastMonth', now)).toEqual({ from: '2026-10-01', to: '2026-10-31' })
     expect(presetRange('last7', now)).toEqual({ from: '2026-10-26', to: '2026-11-01' })
     expect(presetRange('all', now)).toEqual({ from: null, to: null })
+  })
+  it('usa el día de Costa Rica, no el de UTC (21:00 CR del 30 oct = 31 oct UTC)', () => {
+    const night = new Date('2026-10-31T03:00:00Z')
+    expect(presetRange('thisMonth', night)).toEqual({ from: '2026-10-01', to: '2026-10-31' })
+    expect(presetRange('last7', night)).toEqual({ from: '2026-10-24', to: '2026-10-30' })
+    expect(presetRange('thisMonth', new Date('2026-11-01T05:59:59Z'))).toEqual({ from: '2026-10-01', to: '2026-10-31' })
+  })
+  it('limpiar deja todos los movimientos aunque el mes actual esté vacío', () => {
+    const old = [m('2026-09-10T10:00:00-06:00', 1, 'out'), m('2026-10-10T10:00:00-06:00', 2, 'in')]
+    expect(applyFilter(old, initialFilter(now))).toHaveLength(0)
+    expect(applyFilter(old, clearedFilter)).toHaveLength(2)
   })
   it('mes pasado en enero cae en diciembre del año anterior', () => {
     expect(presetRange('lastMonth', new Date('2027-01-15T12:00:00Z'))).toEqual({ from: '2026-12-01', to: '2026-12-31' })

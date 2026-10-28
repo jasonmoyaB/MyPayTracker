@@ -27,6 +27,7 @@ export function MovementFilters({ filter, now, onChange }: Props) {
         </div>
         <div className="filter-field">
           <label htmlFor="filter-to">Hasta</label><input type="date" id="filter-to" value={filter.to ?? ''}
+            aria-invalid={error ? true : undefined} aria-describedby={error ? 'filter-error' : undefined}
             onChange={(e) => set({ to: e.target.value || null })} />
         </div>
         <div className="filter-field">

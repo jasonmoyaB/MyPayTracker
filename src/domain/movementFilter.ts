@@ -54,6 +54,9 @@ export function presetRange(preset: Preset, now: Date): Range {
   return { from: null, to: null }
 }
 
+// Limpiar = sin fechas ni tipo (no el filtro inicial: si este mes está vacío, limpiar no haría nada).
+export const clearedFilter: MovementFilter = { from: null, to: null, direction: 'all' }
+
 export const initialFilter = (now: Date): MovementFilter => ({ ...presetRange('thisMonth', now), direction: 'all' })
 
 export function activePreset(f: MovementFilter, now: Date): Preset | null {

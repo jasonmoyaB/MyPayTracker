@@ -1,6 +1,6 @@
 import type { Currency } from '../../domain/bankEmail'
 import type { MonthStats } from '../../domain/monthStats'
-import { formatMoney, formatSigned } from '../format'
+import { formatSigned } from '../format'
 
 const LABELS: Record<Currency, string> = { CRC: 'Colones', USD: 'Dólares' }
 
@@ -8,7 +8,7 @@ const LABELS: Record<Currency, string> = { CRC: 'Colones', USD: 'Dólares' }
 export function FilterTotals({ totals }: { totals: Record<Currency, MonthStats> }) {
   const hasUsd = totals.USD.incomeCents > 0 || totals.USD.expenseCents > 0
   return (
-    <div className="filter-totals">
+    <div className="filter-totals" aria-live="polite">
       <TotalsLine currency="CRC" stats={totals.CRC} />
       {hasUsd && <TotalsLine currency="USD" stats={totals.USD} />}
     </div>
@@ -18,8 +18,8 @@ export function FilterTotals({ totals }: { totals: Record<Currency, MonthStats> 
 function TotalsLine({ currency, stats }: { currency: Currency; stats: MonthStats }) {
   return (
     <dl aria-label={LABELS[currency]}>
-      <div><dt>Ingresos</dt><dd className="amount income">+{formatMoney(stats.incomeCents, currency)}</dd></div>
-      <div><dt>Gastos</dt><dd className="amount expense">−{formatMoney(stats.expenseCents, currency)}</dd></div>
+      <div><dt>Ingresos</dt><dd className="amount income">{formatSigned(stats.incomeCents, currency)}</dd></div>
+      <div><dt>Gastos</dt><dd className="amount expense">{formatSigned(-stats.expenseCents, currency)}</dd></div>
       <div><dt>Neto</dt><dd className={`amount ${stats.netCents < 0 ? 'expense' : 'income'}`}>{formatSigned(stats.netCents, currency)}</dd></div>
     </dl>
   )

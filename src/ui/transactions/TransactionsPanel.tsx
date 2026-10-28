@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
-import { applyFilter, filterTotals, initialFilter, type MovementFilter } from '../../domain/movementFilter'
+import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
 import { formatDate, formatMoney } from '../format'
 import { FilterTotals } from './FilterTotals'
 import { MovementFilters } from './MovementFilters'
@@ -22,7 +22,7 @@ export function TransactionsPanel({ transactions, filter, onFilterChange, onTran
   return (
     <section className="card transactions" aria-labelledby="transactions-title">
       <div className="transactions-heading">
-        <h2 id="transactions-title">Movimientos</h2>
+        <h2 id="transactions-title" tabIndex={-1}>Movimientos</h2>
         <button ref={trigger} aria-expanded={open} aria-controls="manual-transaction"
           onClick={() => setOpen(true)}>Registrar movimiento</button>
       </div>
@@ -47,7 +47,7 @@ function FilteredList({ transactions, filter, onFilterChange }: FilteredListProp
       {shown.length === 0 ? (
         <div className="filtered-empty">
           <p className="muted">No hay movimientos con estos filtros</p>
-          <button type="button" className="secondary" onClick={() => onFilterChange(initialFilter(now))}>Limpiar filtros</button>
+          <button type="button" className="secondary" onClick={() => onFilterChange(clearedFilter)}>Limpiar filtros</button>
         </div>
       ) : <ul className="transactions-list">{shown.map(t => <TransactionRow key={t.id} transaction={t} />)}</ul>}
     </>
