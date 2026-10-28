@@ -1,0 +1,30 @@
+/* DASH-01jm-T02: barra de secciones con el vidrio de UX-01jm. */
+.app-nav {
+  display: flex; gap: 4px; padding: 4px; border-radius: 12px;
+  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+.app-nav a {
+  flex: 1; min-height: 44px; display: grid; place-items: center; padding: 8px 12px; border-radius: 8px;
+  color: var(--color-text-secondary); font-weight: 600; text-decoration: none;
+}
+.app-nav a:hover { color: var(--color-text); }
+.app-nav a[aria-current="page"] { color: var(--color-primary); background: var(--color-primary-soft); }
+
+/* Móvil: barra fija abajo; el main reserva su alto para no tapar contenido (ni los avisos). */
+@media (max-width: 640px) {
+  .app-shell { padding-bottom: calc(64px + 24px + env(safe-area-inset-bottom, 0px)); }
+  .app-nav {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 5; border-radius: 0;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  }
+  .toasts { bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-nav { background: var(--color-surface); border-color: var(--color-border); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .app-nav { background: var(--color-surface); border-color: var(--color-border); }
+}
