@@ -1,0 +1,25 @@
+/* UX-02jm-T02: avisos breves abajo al centro, con el vidrio de UX-01jm. */
+.toasts {
+  position: fixed; inset-inline: 16px; bottom: 16px; z-index: 10;
+  display: grid; gap: 8px; justify-items: center; pointer-events: none;
+}
+.toasts > div { display: grid; gap: 8px; justify-items: center; }
+.toast {
+  pointer-events: auto; display: flex; align-items: center; gap: 12px;
+  max-width: min(480px, 100%); padding: 8px 8px 8px 16px; border-radius: 12px;
+  color: var(--color-text); background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border); border-left: 4px solid var(--toast-accent); --toast-accent: var(--color-success);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+.toast-error { --toast-accent: var(--color-danger); }
+.toast span { overflow-wrap: anywhere; }
+.toast button { min-width: 44px; padding: 8px; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .toast { background: var(--color-surface); border-color: var(--color-border); border-left-color: var(--toast-accent); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .toast { background: var(--color-surface); border-color: var(--color-border); border-left-color: var(--toast-accent); }
+}
