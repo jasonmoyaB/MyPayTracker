@@ -1,0 +1,12 @@
+# OAUTH-01jm — Tareas
+
+## Base acordada
+spec.md + plan.md de esta carpeta.
+
+## Tareas
+- [x] OAUTH-01jm-T01 Política de privacidad estática [public/privacy.html] (AC-1, AC-3)
+- [x] OAUTH-01jm-T02 `.vercel/` en `.gitignore`; `pnpm build` incluye `dist/privacy.html` (AC-3)
+- [ ] OAUTH-01jm-T03 Login Vercel CLI (usuario) y `vercel link` del proyecto (depende de T02)
+- [ ] OAUTH-01jm-T04 Env vars de producción en Vercel y `vercel deploy --prod`; login y `/privacy.html` cargan (AC-2, AC-3)
+- [ ] OAUTH-01jm-T05 Branding de Google + Publicar app (usuario) (AC-4)
+- [ ] OAUTH-01jm-T06 Refresh token nuevo en secrets y sync sin error (usuario) (AC-5)
