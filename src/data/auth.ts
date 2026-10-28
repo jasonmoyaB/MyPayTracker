@@ -13,6 +13,8 @@ export async function signIn(email: string, password: string): Promise<void> {
 // AUTH-01jm-T03: verifica la actual volviendo a entrar (mismo usuario, la sesión sigue) y solo entonces cambia.
 // Si la actual es incorrecta, el error es de credenciales (toAppError → 'credentials') y no se toca nada.
 export async function changePassword(email: string, current: string, next: string): Promise<void> {
+  // Sin email no se puede reautenticar: tratarlo como sesión inválida, no como contraseña incorrecta.
+  if (!email) throw Object.assign(new Error('Sesión sin email'), { code: 'session_not_found' })
   await signIn(email, current)
   const { error } = await supabase.auth.updateUser({ password: next })
   if (error) throw error

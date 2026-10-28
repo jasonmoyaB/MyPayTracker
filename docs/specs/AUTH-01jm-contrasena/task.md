@@ -12,3 +12,7 @@ spec.md + plan.md de esta carpeta. Depende de UX-02jm.
   - Evidencia: rojo "changePassword is not a function"; verde 3 casos en src/data/auth.test.ts (nuevo); typecheck/test/build OK.
 - [x] AUTH-01jm-T04 Prueba + `ChangePasswordView` con errores inline, bloqueo y toast; enlace en App [src/ui/auth/ChangePasswordView.tsx, src/ui/auth/ChangePasswordView.test.tsx, src/ui/App.tsx] (AC-2, AC-4, AC-5, AC-6) (depende de T01–T03)
   - Evidencia: rojo "Cannot find module ./ChangePasswordView"; verde 7 casos en ChangePasswordView.test.tsx; App con botón "Cambiar contraseña"/"Volver"; typecheck/test/build OK (139 tests).
+
+## Correcciones de revisión
+- [x] AUTH-01jm-T05 Campos bloqueados mientras se guarda (`fieldset disabled`); sin email no reautentica [src/ui/auth/ChangePasswordView.tsx, src/data/auth.ts]
+  - Evidencia: auth.test.ts +1 (sin email → session_not_found); 148 tests, typecheck y build OK

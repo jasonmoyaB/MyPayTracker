@@ -29,4 +29,8 @@ describe('AC-3: cambiar contraseña exige la actual', () => {
     auth.updateUser.mockResolvedValue({ error })
     await expect(changePassword('yo@correo.com', 'actual123', 'nueva1234')).rejects.toBe(error)
   })
+  it('sin email no reautentica y falla como sesión', async () => {
+    const failure = await changePassword('', 'actual123', 'nueva1234').catch((e: unknown) => e)
+    expect(failure).toMatchObject({ code: 'session_not_found' })
+  })
 })

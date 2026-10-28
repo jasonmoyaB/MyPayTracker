@@ -75,6 +75,7 @@ export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit
   return (
     <form className="card" onSubmit={submit} aria-labelledby="cp-title" aria-busy={pending}>
       <h2 id="cp-title">Cambiar contraseña</h2>
+      <fieldset disabled={pending} style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 12 }}>
       {FIELDS.map(({ field, label, autoComplete }) => {
         const errorId = `cp-${field}-error`
         return (
@@ -86,6 +87,7 @@ export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit
           </div>
         )
       })}
+      </fieldset>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button type="submit" disabled={pending}>{pending ? 'Guardando…' : 'Guardar'}</button>
         <button type="button" className="secondary" onClick={onBack} disabled={pending}>Volver</button>
