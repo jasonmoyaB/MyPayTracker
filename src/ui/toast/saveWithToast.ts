@@ -1,4 +1,5 @@
-import { toAppError, type AppError } from '../../data/errors'
+import type { AppError } from '../../data/errors'
+import { toUiError } from '../sessionExpiry'
 import type { ToastApi } from './ToastProvider'
 
 // UX-02jm-T03: guarda y avisa. Devuelve el error (o null) para que el formulario decida; nunca limpia lo escrito.
@@ -6,7 +7,7 @@ export async function saveWithToast(save: () => Promise<void>, toast: ToastApi, 
   try {
     await save()
   } catch (e) {
-    const error = toAppError(e)
+    const error = toUiError(e)
     toast.error(error.message)
     return error
   }

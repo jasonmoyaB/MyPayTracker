@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { signIn } from '../../data/auth'
+import { toAppError } from '../../data/errors'
 import { ThemeToggle } from '../theme/ThemeToggle'
 
 export function LoginView() {
@@ -16,11 +17,7 @@ export function LoginView() {
     try {
       await signIn(String(fields.get('email')).trim(), String(fields.get('password')))
     } catch (failure) {
-      const invalid = failure instanceof Error && /invalid login credentials/i.test(failure.message)
-      const invalidCode = typeof failure === 'object' && failure !== null &&
-        'code' in failure && failure.code === 'invalid_credentials'
-      setError(invalid || invalidCode ? 'Correo o contraseña incorrectos' :
-        'No pudimos iniciar sesión. Revisa tu conexión e intenta de nuevo.')
+      setError(toAppError(failure).message)
     } finally {
       submitting.current = false
       setPending(false)

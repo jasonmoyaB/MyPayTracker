@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { saveWithToast } from './saveWithToast'
 
+vi.mock('../../data/auth', () => ({ endExpiredSession: vi.fn(() => Promise.resolve()) }))
+
 const fakeToast = () => ({ success: vi.fn(), error: vi.fn() })
 
 describe('AC-1/AC-2: guardar con aviso', () => {

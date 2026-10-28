@@ -3,6 +3,8 @@ import { onSessionChange, signOut, type Session } from '../data/auth'
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
 import { autoRefresh } from './autoRefresh'
+import { toUiError } from './sessionExpiry'
+import { useToast } from './toast/ToastProvider'
 import { LoginView } from './auth/LoginView'
 import { BalancePanel } from './balance/BalancePanel'
 import { ThemeToggle } from './theme/ThemeToggle'
@@ -23,6 +25,7 @@ export function App() {
 function Dashboard({ session }: { session: Session }) {
   const [data, setData] = useState<Data | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
 
   const load = useCallback(async () => {
     try {
@@ -30,9 +33,12 @@ function Dashboard({ session }: { session: Session }) {
       setData({ settings, transactions })
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      const failure = toUiError(e)
+      // Sesión vencida: el toast sobrevive al cambio a login; el resto se muestra aquí con "Reintentar".
+      if (failure.kind === 'session') toast.error(failure.message)
+      else setError(failure.message)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => { void load() }, [load])
   useEffect(() => autoRefresh(() => void load()), [load])
@@ -47,7 +53,7 @@ function Dashboard({ session }: { session: Session }) {
       </header>
       {error && (
         <p role="alert" className="status-danger">
-          No pudimos cargar tus datos: {error} <button className="secondary" onClick={() => void load()}>Reintentar</button>
+          No pudimos cargar tus datos. {error} <button className="secondary" onClick={() => void load()}>Reintentar</button>
         </p>
       )}
       {!data && !error && <p className="muted">Cargando movimientos…</p>}
