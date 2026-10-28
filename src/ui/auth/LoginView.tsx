@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { signIn } from '../../data/auth'
+import { ThemeToggle } from '../theme/ThemeToggle'
 
 export function LoginView() {
   const [pending, setPending] = useState(false)
@@ -37,6 +38,7 @@ type FormProps = {
 function LoginForm({ pending, error, onSubmit }: FormProps) {
   return (
     <main style={{ maxWidth: 464, minHeight: '100dvh', alignContent: 'center' }}>
+      <div style={{ justifySelf: 'end' }}><ThemeToggle /></div>
       <form className="card" onSubmit={onSubmit} aria-labelledby="login-title" aria-busy={pending}>
         <h1 id="login-title">MyPayTracker</h1>
         <p className="muted">Inicia sesión para consultar tu saldo y movimientos.</p>

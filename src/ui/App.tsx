@@ -4,6 +4,7 @@ import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
 import { LoginView } from './auth/LoginView'
 import { BalancePanel } from './balance/BalancePanel'
+import { ThemeToggle } from './theme/ThemeToggle'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
 type Data = { settings: Settings; transactions: Transaction[] }
@@ -39,7 +40,7 @@ function Dashboard({ session }: { session: Session }) {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <h1>MyPayTracker</h1>
         <span className="muted">
-          {session.email} <button className="secondary" onClick={() => void signOut()}>Cerrar sesión</button>
+          {session.email} <ThemeToggle /> <button className="secondary" onClick={() => void signOut()}>Cerrar sesión</button>
         </span>
       </header>
       {error && (
