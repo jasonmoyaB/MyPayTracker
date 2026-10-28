@@ -10,7 +10,6 @@ Filtrar movimientos por rango de fechas y por tipo, y ver los totales positivos 
 - Elegir "desde" y "hasta" y ver solo esos movimientos.
 - Ver solo ingresos, solo gastos o ambos.
 - Ver la suma de ingresos (positivo), gastos (negativo) y el neto del filtro.
-
 ## Criterios de aceptación
 - AC-1: campos "Desde" y "Hasta" (fecha); ambos días se incluyen completos en hora de Costa Rica.
 - AC-2: selector de tipo: Todos, Ingresos, Gastos.
@@ -20,13 +19,10 @@ Filtrar movimientos por rango de fechas y por tipo, y ver los totales positivos 
 - AC-6: un filtro sin resultados muestra "No hay movimientos con estos filtros" y un botón para limpiarlos.
 - AC-7: filtrar no cambia el saldo disponible del Resumen.
 - AC-8: el filtro elegido se mantiene al cambiar de pantalla y volver (durante la sesión).
-
 ## Restricciones
 - Lógica de filtro y totales en `src/domain` con pruebas; montos en centavos.
-
 ## Fuera de alcance
 Búsqueda por texto, exportar a Excel, filtros por categoría.
-
 ## Supuestos
 - Filtrado en el navegador sobre los movimientos ya cargados (uso personal, pocos cientos de filas).
 - Filtro inicial: Este mes, Todos.
