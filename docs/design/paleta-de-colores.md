@@ -121,4 +121,49 @@ El borde decorativo `--color-border` no sirve como único indicador de un campo.
 - No usar degradados, brillos ni grandes superficies saturadas en el dashboard.
 - No teñir cada tarjeta de un color distinto.
 - No usar gris claro para texto necesario ni placeholders como sustituto de etiquetas.
-- Esta primera paleta define el tema claro. Un futuro tema oscuro necesita tokens y contrastes propios.
+- Las secciones 2–6 definen el tema claro. El tema oscuro tiene tokens y contrastes propios (§8); no se obtiene invirtiendo colores.
+
+## 8. Tema oscuro
+
+Mismos nombres de token, valores propios. Se activa con `data-theme="dark"` en `<html>` o, si el usuario nunca eligió, con `prefers-color-scheme: dark` (`src/ui/theme.css`). Base grafito verdoso en vez de negro puro; el acento petróleo se aclara para leerse sobre fondo oscuro y el texto sobre el botón principal pasa a grafito.
+
+| Token CSS | Claro | Oscuro |
+| --- | --- | --- |
+| `--color-bg` | `#F7F8F5` | `#121715` |
+| `--color-surface` | `#FFFFFF` | `#1A201D` |
+| `--color-surface-muted` | `#EFF2EE` | `#232A26` |
+| `--color-border` | `#DEE4DD` | `#2E3732` |
+| `--color-border-control` | `#7C8880` | `#7F8B84` |
+| `--color-text` | `#202824` | `#E6EBE7` |
+| `--color-text-secondary` | `#59635D` | `#B4BEB7` |
+| `--color-text-muted` | `#66716A` | `#98A39C` |
+| `--color-primary` | `#176B5B` | `#4FB39C` |
+| `--color-primary-hover` | `#125448` | `#6CC7B1` |
+| `--color-primary-soft` | `#E7F1ED` | `#17312B` |
+| `--color-on-primary` | `#FFFFFF` | `#0E1513` |
+| `--color-success` / `-soft` | `#247044` / `#EAF4EC` | `#6BC48A` / `#16291D` |
+| `--color-warning` / `-soft` | `#855000` / `#FFF4DE` | `#E3A84A` / `#2F2410` |
+| `--color-danger` / `-soft` | `#B23838` / `#FCEEEE` | `#F08A8A` / `#331A1A` |
+| `--color-info` / `-soft` | `#365F96` / `#EDF3FB` | `#8DB4E8` / `#172436` |
+
+Contraste del tema oscuro (mismo método que §6):
+
+| Combinación | Ratio aproximado |
+| --- | --- |
+| Texto principal / fondo general | 15.01:1 |
+| Texto secundario / superficie | 8.67:1 |
+| Texto secundario / fondo general | 9.48:1 |
+| Texto secundario / superficie tenue (botón deshabilitado) | 7.68:1 |
+| Texto tenue / fondo general | 6.95:1 |
+| Texto tenue / superficie | 6.35:1 |
+| Grafito / botón principal | 7.28:1 |
+| Grafito / botón en hover | 9.20:1 |
+| Petróleo / superficie (botón secundario) | 6.51:1 |
+| Petróleo / fondo petróleo suave | 5.47:1 |
+| Éxito / fondo de éxito | 7.22:1 |
+| Advertencia / fondo de advertencia | 7.22:1 |
+| Error / fondo de error | 6.68:1 |
+| Error / superficie (saldo negativo) | 6.87:1 |
+| Información / fondo de información | 7.32:1 |
+| Borde de control / superficie | 4.67:1 |
+| Borde de control / fondo general | 5.11:1 |

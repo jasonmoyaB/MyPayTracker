@@ -24,6 +24,57 @@
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
 }
 
+/* THEME-01jm-T02: tema oscuro (paleta-de-colores.md §8). El bloque se repite porque CSS no deja
+   compartirlo entre la elección explícita y la preferencia del sistema sin elección guardada. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #121715;
+  --color-surface: #1A201D;
+  --color-surface-muted: #232A26;
+  --color-border: #2E3732;
+  --color-border-control: #7F8B84;
+  --color-text: #E6EBE7;
+  --color-text-secondary: #B4BEB7;
+  --color-text-muted: #98A39C;
+  --color-primary: #4FB39C;
+  --color-primary-hover: #6CC7B1;
+  --color-primary-soft: #17312B;
+  --color-on-primary: #0E1513;
+  --color-success: #6BC48A;
+  --color-success-soft: #16291D;
+  --color-warning: #E3A84A;
+  --color-warning-soft: #2F2410;
+  --color-danger: #F08A8A;
+  --color-danger-soft: #331A1A;
+  --color-info: #8DB4E8;
+  --color-info-soft: #172436;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #121715;
+    --color-surface: #1A201D;
+    --color-surface-muted: #232A26;
+    --color-border: #2E3732;
+    --color-border-control: #7F8B84;
+    --color-text: #E6EBE7;
+    --color-text-secondary: #B4BEB7;
+    --color-text-muted: #98A39C;
+    --color-primary: #4FB39C;
+    --color-primary-hover: #6CC7B1;
+    --color-primary-soft: #17312B;
+    --color-on-primary: #0E1513;
+    --color-success: #6BC48A;
+    --color-success-soft: #16291D;
+    --color-warning: #E3A84A;
+    --color-warning-soft: #2F2410;
+    --color-danger: #F08A8A;
+    --color-danger-soft: #331A1A;
+    --color-info: #8DB4E8;
+    --color-info-soft: #172436;
+  }
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
