@@ -1,0 +1,5 @@
+/* AUTH-01jm: campo de contraseña con botón de ojo (mismo ritmo que label en theme.css). */
+.password-field { display: grid; gap: 4px; font-size: 14px; color: var(--color-text-secondary); }
+.password-row { display: flex; gap: 8px; }
+.password-row input { flex: 1; min-width: 0; }
+.password-eye { min-width: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; }

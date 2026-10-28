@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { signIn } from '../../data/auth'
 import { toAppError } from '../../data/errors'
 import { ThemeToggle } from '../theme/ThemeToggle'
+import { PasswordInput } from './PasswordInput'
 
 export function LoginView() {
   const [pending, setPending] = useState(false)
@@ -45,10 +46,7 @@ function LoginForm({ pending, error, onSubmit }: FormProps) {
           <input id="login-email" name="email" type="email" autoComplete="username" required
             style={{ minWidth: 0, width: '100%' }} />
         </label>
-        <label htmlFor="login-password">Contraseña
-          <input id="login-password" name="password" type="password" autoComplete="current-password" required
-            style={{ minWidth: 0, width: '100%' }} />
-        </label>
+        <PasswordInput id="login-password" label="Contraseña" name="password" autoComplete="current-password" required />
         {error && <p role="alert" className="status-danger">{error}</p>}
         <button type="submit" disabled={pending}>{pending ? 'Iniciando sesión…' : 'Iniciar sesión'}</button>
         {pending && <p role="status" className="muted">Iniciando sesión…</p>}
