@@ -14,3 +14,6 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm, UX-02jm y AUTH-01jm.
   - Evidencia: rojo "Cannot find module ./AccountView"; verde 3 pruebas en AccountView.test.tsx; `onBack` de ChangePasswordView pasa a opcional (sin "Volver" en Cuenta); typecheck, test y build OK.
 - [x] DASH-01jm-T05 `App.tsx` usa `AppShell` con las tres pantallas; quita enlace provisional [src/ui/App.tsx] (AC-1) (depende de T02–T04)
   - Evidencia: rojo App.test.tsx "Element type is invalid" (sin `DashboardBody` exportado); verde 5 pruebas (Resumen, Movimientos, Cuenta, error, cargando); se borra BalancePanel.tsx (sin uso); typecheck, test y build OK.
+
+## Correcciones de revisión
+- [ ] DASH-01jm-T06 Al cambiar de sección: scroll arriba y foco al h2 de la pantalla (tabIndex -1); regla móvil de `.toasts` con especificidad propia; quitar `export` de `BalanceSummary`; aviso de saldo negativo neutro ("tus gastos superan tu saldo") [src/ui/AppShell.tsx, src/ui/route.ts, src/ui/shell.css, src/ui/dashboard/BalanceCard.tsx, pantallas con h2]
