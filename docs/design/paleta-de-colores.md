@@ -118,7 +118,7 @@ El borde decorativo `--color-border` no sirve como único indicador de un campo.
 ## 7. Límites visuales
 
 - Un único color de marca; los colores semánticos aparecen solo cuando comunican un estado.
-- No usar degradados, brillos ni grandes superficies saturadas en el dashboard.
+- No usar degradados, brillos ni grandes superficies saturadas en el dashboard. Excepción (UX-01jm): las manchas radiales suaves del fondo y las superficies de vidrio de §9.
 - No teñir cada tarjeta de un color distinto.
 - No usar gris claro para texto necesario ni placeholders como sustituto de etiquetas.
 - Las secciones 2–6 definen el tema claro. El tema oscuro tiene tokens y contrastes propios (§8); no se obtiene invirtiendo colores.
@@ -167,3 +167,20 @@ Contraste del tema oscuro (mismo método que §6):
 | Información / fondo de información | 7.32:1 |
 | Borde de control / superficie | 4.67:1 |
 | Borde de control / fondo general | 5.11:1 |
+
+## 9. Vidrio (UX-01jm)
+
+Tarjetas, encabezado y diálogos son paneles translúcidos con desenfoque sobre un fondo con dos manchas radiales suaves (`--blob-1` verde, `--blob-2` azul) que se desvanecen sobre `--color-bg`. Sin vidrio dentro de vidrio.
+
+| Token | Claro | Oscuro |
+| --- | --- | --- |
+| `--glass-bg` | `rgb(255 255 255 / 0.72)` | `rgb(26 32 29 / 0.62)` |
+| `--glass-bg-strong` (campos) | `rgb(255 255 255 / 0.86)` | `rgb(26 32 29 / 0.8)` |
+| `--glass-border` | `rgb(255 255 255 / 0.7)` | `rgb(255 255 255 / 0.08)` |
+| `--glass-shadow` | `0 8px 24px rgb(32 40 36 / 8%)` | `0 8px 24px rgb(0 0 0 / 30%)` |
+| `--blob-1` / `--blob-2` | `#CFE6DC` / `#D6E2F3` | `#1A3A31` / `#1A2A42` |
+| `--glass-blur` | `16px` | `16px` |
+
+- Superficies: `backdrop-filter` y `-webkit-backdrop-filter` con `blur(var(--glass-blur)) saturate(140%)`.
+- Fallback: sin soporte de `backdrop-filter` o con `prefers-reduced-transparency: reduce`, vuelven a `--color-surface` opaco con `--color-border`.
+- Contraste: `src/ui/theme.contrast.test.ts` exige ≥ 4.5:1 para texto principal y secundario sobre cada vidrio mezclado con el fondo y con cada mancha opaca (peor caso), en ambos temas. Si cambias un token de vidrio, el test lo valida.

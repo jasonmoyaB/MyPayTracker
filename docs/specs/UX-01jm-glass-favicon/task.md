@@ -10,4 +10,5 @@ spec.md + plan.md de esta carpeta. pnpm, Vitest (entorno node).
   - Evidencia: icons.test.ts 7/7 (32/180/192/512 px, logo 640×213, public/ sin PNG originales); dist/ solo copia icons/
 - [x] UX-01jm-T03 Favicon, apple-touch-icon y theme-color en index.html; logo en LoginView [index.html, src/ui/auth/LoginView.tsx] (AC-4, AC-6) (depende de T02)
   - Evidencia: LoginView.test.tsx 2/2 (links e theme-color claro/oscuro en index.html; img logo con alt y 240 px)
-- [ ] UX-01jm-T04 Documentar el estilo vidrio [docs/design/paleta-de-colores.md, docs/design/fundamentos-ui-ux.md]
+- [x] UX-01jm-T04 Documentar el estilo vidrio [docs/design/paleta-de-colores.md, docs/design/fundamentos-ui-ux.md]
+  - Evidencia: paleta §9 Vidrio (tokens, fallback, test de contraste) y §7 con la excepción; fundamentos §5 tarjetas/sombras/vidrio
