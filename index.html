@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyPayTracker</title>
+    <script>
+      // THEME-01jm-T04: aplica el tema guardado antes de pintar para no parpadear. Sin elección
+      // no pone nada y el CSS sigue a prefers-color-scheme. Misma clave que ThemeToggle.tsx.
+      try {
+        var t = localStorage.getItem('theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
