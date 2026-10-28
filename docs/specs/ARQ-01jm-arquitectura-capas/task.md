@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. npm, Vitest.
   - 4 tests verdes; rojo previo en AC-2 sin data/
 - [x] ARQ-01jm-T04 Cliente Supabase en data + `.env.example` [src/data/supabase.ts, .env.example] (depende de T01)
   - typecheck OK; falla rápido si faltan variables
-- [ ] ARQ-01jm-T05 Migración inicial con RLS [supabase/migrations/0001_init.sql]
+- [x] ARQ-01jm-T05 Migración inicial con RLS [supabase/migrations/0001_init.sql]
+  - no aplicada (sin Supabase local); revisar con `supabase db reset`
