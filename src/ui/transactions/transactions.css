@@ -10,3 +10,20 @@
 .transaction-form legend { padding: 0; margin-bottom: 12px; }
 .transaction-form input, .transaction-form select { width: 100%; min-width: 0; }
 .transaction-form { border-block: 1px solid var(--color-border); padding-block: 16px; }
+
+/* MOV-01jm: filtros y totales del resultado. */
+.movement-filters { display: grid; gap: 12px; min-width: 0; }
+.filter-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-presets button[aria-pressed="true"] { background: var(--color-primary); color: var(--color-on-primary); }
+.filter-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.filter-field { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.filter-field input, .filter-field select { width: 100%; min-width: 0; }
+.filter-field p { margin: 0; font-size: 14px; }
+.filter-totals { display: grid; gap: 8px; }
+.filter-totals dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 0; }
+.filter-totals dl div { padding: 8px 12px; border-radius: 8px; background: var(--color-surface-muted); min-width: 0; }
+.filter-totals dt { font-size: 14px; color: var(--color-text-secondary); }
+.filter-totals dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.filter-totals .income { color: var(--color-success); }
+.filter-totals .expense { color: var(--color-danger); }
+.filtered-empty { display: grid; gap: 8px; justify-items: start; }

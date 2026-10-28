@@ -8,3 +8,8 @@ export function formatMoney(cents: number, currency: Currency): string {
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('es-CR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Costa_Rica' }).format(new Date(iso))
 }
+
+// Signo explícito: + para cero o positivo, − (menos tipográfico) para negativo.
+export function formatSigned(cents: number, currency: Currency): string {
+  return `${cents < 0 ? '−' : '+'}${formatMoney(Math.abs(cents), currency)}`
+}
