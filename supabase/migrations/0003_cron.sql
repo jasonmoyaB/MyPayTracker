@@ -29,6 +29,9 @@ select cron.schedule(
     url := 'https://jgwbihaekplkirlfjjol.supabase.co/functions/v1/sync-bac-emails',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
+      -- publishable key (pública por diseño): pasa la validación JWT del gateway; el secreto autoriza.
+      'apikey', 'sb_publishable_A_bwE84HhFp3ykLZINqzUg_qksQD_1j',
+      'Authorization', 'Bearer sb_publishable_A_bwE84HhFp3ykLZINqzUg_qksQD_1j',
       'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'sync_bac_cron_secret')
     ),
     body := '{}'::jsonb,

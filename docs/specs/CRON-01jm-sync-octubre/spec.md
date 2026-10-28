@@ -17,4 +17,4 @@ Rango configurable desde la UI, aviso cuando caduque el refresh token.
 
 ## Supuestos
 - "Únicamente octubre" es literal: desde noviembre el cron no trae correos nuevos hasta cambiar `DATE_RANGE`.
-- La función se despliega con `--no-verify-jwt`: la valida el secreto, no el JWT del gateway.
+- La validación JWT del gateway sigue activa: el cron manda la publishable key y además el secreto.
