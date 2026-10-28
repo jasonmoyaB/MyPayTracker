@@ -12,5 +12,6 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (tokens de vidrio).
   - Evidencia: rojo `Cannot find module ./saveWithToast`; verde saveWithToast.test.ts (2); éxito por prop en BalancePanel; ToastProvider en main.tsx; typecheck+test (108)+build OK.
 - [x] UX-02jm-T04 Sesión vencida → salir con aviso; errores de carga amigables en App y Login [src/ui/App.tsx, src/ui/auth/LoginView.tsx, src/data/auth.ts] (AC-3, AC-4)
   - Evidencia: rojo `Cannot find module ./sessionExpiry`; verde sessionExpiry.test.ts (2): sesión vencida → `endExpiredSession` (signOut local) + aviso; Login y carga usan `toAppError`; typecheck+test (110)+build OK.
-- [ ] UX-02jm-T05 ErrorBoundary + config faltante + `unhandledrejection` [src/ui/main.tsx, src/ui/ErrorBoundary.tsx, src/data/supabase.ts] (AC-5, AC-6)
+- [x] UX-02jm-T05 ErrorBoundary + config faltante + `unhandledrejection` [src/ui/main.tsx, src/ui/ErrorBoundary.tsx, src/data/supabase.ts] (AC-5, AC-6)
+  - Evidencia: rojo supabase.test.ts (`Faltan VITE_SUPABASE_URL…` al importar) y módulos inexistentes; verde supabase.test.ts (2), ErrorBoundary.test.tsx (3), unhandledRejection.test.ts (1); typecheck+test (116)+build OK.
 - [ ] UX-02jm-T06 Respuesta de error saneada en la función de sync [supabase/functions/sync-bac-emails/index.ts] (AC-7)
