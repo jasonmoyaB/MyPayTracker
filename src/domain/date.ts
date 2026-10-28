@@ -1,6 +1,8 @@
 // Costa Rica = UTC−06:00 fijo (sin horario de verano): 21600000 ms = 6 h.
+export const CR_OFFSET_MS = 21600000
+
 export function costaRicaDateTime(now: Date): string {
-  return new Date(now.getTime() - 21600000).toISOString().slice(0, 16)
+  return new Date(now.getTime() - CR_OFFSET_MS).toISOString().slice(0, 16)
 }
 
 export function costaRicaIso(local: string): string | null {

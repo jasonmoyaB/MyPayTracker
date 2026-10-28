@@ -1,11 +1,9 @@
+import { CR_OFFSET_MS } from './date'
 import type { SummaryMovement } from './summary'
 
 export type MonthMovement = SummaryMovement & { occurredAt: string; description: string; source: string }
 export type MonthStats = { incomeCents: number; expenseCents: number; netCents: number }
 export type TopExpense = { description: string; cents: number }
-
-// Costa Rica = UTC−06:00 fijo (ver date.ts): 6 h en ms.
-const CR_OFFSET_MS = 21600000
 
 // Inicio (incluido) y fin (excluido) del mes en curso en hora de Costa Rica, en ms epoch.
 export function costaRicaMonth(now: Date): { startMs: number; endMs: number } {
