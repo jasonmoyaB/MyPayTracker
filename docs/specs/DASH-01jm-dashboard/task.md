@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm, UX-02jm y AUTH-01jm.
   - Evidencia: rojo "Cannot find module ./DashboardView"; verde 7 pruebas en DashboardView.test.tsx (AC-2–AC-7, AC-9); BalancePanel reutiliza summaryFor/BalanceSummary; typecheck, test y build OK.
 - [x] DASH-01jm-T04 Prueba + `AccountView` con saldo, salario y cambiar contraseña [src/ui/account/*] (AC-8)
   - Evidencia: rojo "Cannot find module ./AccountView"; verde 3 pruebas en AccountView.test.tsx; `onBack` de ChangePasswordView pasa a opcional (sin "Volver" en Cuenta); typecheck, test y build OK.
-- [ ] DASH-01jm-T05 `App.tsx` usa `AppShell` con las tres pantallas; quita enlace provisional [src/ui/App.tsx] (AC-1) (depende de T02–T04)
+- [x] DASH-01jm-T05 `App.tsx` usa `AppShell` con las tres pantallas; quita enlace provisional [src/ui/App.tsx] (AC-1) (depende de T02–T04)
+  - Evidencia: rojo App.test.tsx "Element type is invalid" (sin `DashboardBody` exportado); verde 5 pruebas (Resumen, Movimientos, Cuenta, error, cargando); se borra BalancePanel.tsx (sin uso); typecheck, test y build OK.

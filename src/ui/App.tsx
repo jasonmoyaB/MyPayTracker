@@ -5,9 +5,11 @@ import { listTransactions, type Transaction } from '../data/transactions'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
 import { useToast } from './toast/ToastProvider'
-import { ChangePasswordView } from './auth/ChangePasswordView'
+import { AccountView } from './account/AccountView'
+import { AppShell } from './AppShell'
 import { LoginView } from './auth/LoginView'
-import { BalancePanel } from './balance/BalancePanel'
+import { DashboardView } from './dashboard/DashboardView'
+import { useRoute, type Route } from './route'
 import { ThemeToggle } from './theme/ThemeToggle'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
@@ -26,8 +28,7 @@ export function App() {
 function Dashboard({ session }: { session: Session }) {
   const [data, setData] = useState<Data | null>(null)
   const [error, setError] = useState<string | null>(null)
-  // AUTH-01jm-T04: montaje provisional; DASH-01jm lo mueve a "Cuenta".
-  const [changingPassword, setChangingPassword] = useState(false)
+  const route = useRoute()
   const toast = useToast()
 
   const load = useCallback(async () => {
@@ -46,25 +47,27 @@ function Dashboard({ session }: { session: Session }) {
   useEffect(() => { void load() }, [load])
   useEffect(() => autoRefresh(() => void load()), [load])
 
+  const header = (
+    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <h1>MyPayTracker</h1>
+      <span className="muted">
+        {session.email} <ThemeToggle />{' '}
+        <button className="secondary" onClick={() => void signOut()}>Cerrar sesión</button>
+      </span>
+    </header>
+  )
   return (
-    <main>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <h1>MyPayTracker</h1>
-        <span className="muted">
-          {session.email} <ThemeToggle />{' '}
-          <button className="secondary" onClick={() => setChangingPassword(true)}>Cambiar contraseña</button>{' '}
-          <button className="secondary" onClick={() => void signOut()}>Cerrar sesión</button>
-        </span>
-      </header>
-      {changingPassword
-        ? <ChangePasswordView email={session.email} onBack={() => setChangingPassword(false)} />
-        : <DashboardBody data={data} error={error} reload={() => void load()} />}
-    </main>
+    <AppShell route={route} header={header}>
+      <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()} />
+    </AppShell>
   )
 }
 
+type BodyProps = { route: Route; email: string; data: Data | null; error: string | null; reload: () => void }
+
+// Los datos se cargan una vez en Dashboard y se reparten a la pantalla activa.
 // Un error al recargar se muestra sobre los datos que ya había (no los oculta).
-function DashboardBody({ data, error, reload }: { data: Data | null; error: string | null; reload: () => void }) {
+export function DashboardBody({ route, email, data, error, reload }: BodyProps) {
   return (
     <>
       {error && (
@@ -73,12 +76,13 @@ function DashboardBody({ data, error, reload }: { data: Data | null; error: stri
         </p>
       )}
       {!data && !error && <p className="muted">Cargando movimientos…</p>}
-      {data && (
-        <>
-          <BalancePanel settings={data.settings} transactions={data.transactions} onSettingsSaved={reload} />
-          <TransactionsPanel transactions={data.transactions} onTransactionSaved={reload} />
-        </>
-      )}
+      {data && <Screen route={route} email={email} data={data} reload={reload} />}
     </>
   )
+}
+
+function Screen({ route, email, data, reload }: Omit<BodyProps, 'error' | 'data'> & { data: Data }) {
+  if (route === 'movimientos') return <TransactionsPanel transactions={data.transactions} onTransactionSaved={reload} />
+  if (route === 'cuenta') return <AccountView email={email} settings={data.settings} onSettingsSaved={reload} />
+  return <DashboardView settings={data.settings} transactions={data.transactions} />
 }
