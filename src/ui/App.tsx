@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
+import { autoRefresh } from './autoRefresh'
 import { LoginView } from './auth/LoginView'
 import { BalancePanel } from './balance/BalancePanel'
 import { ThemeToggle } from './theme/ThemeToggle'
@@ -34,6 +35,7 @@ function Dashboard({ session }: { session: Session }) {
   }, [])
 
   useEffect(() => { void load() }, [load])
+  useEffect(() => autoRefresh(() => void load()), [load])
 
   return (
     <main>
