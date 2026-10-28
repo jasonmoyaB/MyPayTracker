@@ -38,7 +38,7 @@ export async function notifyNewMovements(db: SupabaseClient, ownerId: string, ro
       if (deleteError) throw deleteError
     }
   } catch (e) {
-    console.error('Notificaciones push fallaron:', e)
+    console.error('Notificaciones push fallaron:', e instanceof Error ? e.message : String(e))
   }
 }
 
@@ -60,7 +60,8 @@ async function sendAll(subs: Subscription[], movements: MovementInput[], send: S
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode
         if (status === 404 || status === 410) gone.add(sub.id)
-        else console.error('Push a una suscripción falló:', e)
+        // Solo estado y mensaje: el error completo trae endpoint, cabeceras y cuerpo.
+        else console.error('Push a una suscripción falló:', status, (e as Error).message)
       }
     }
   }

@@ -6,7 +6,9 @@ self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 
 self.addEventListener('push', (event) => {
-  const { title = 'MyPayTracker', body = '' } = event.data ? event.data.json() : {}
+  let payload = {}
+  try { payload = event.data ? event.data.json() : {} } catch { payload = { body: event.data.text() } }
+  const { title = 'MyPayTracker', body = '' } = payload
   event.waitUntil(self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192.png',

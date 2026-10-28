@@ -65,13 +65,19 @@ export function PushToggle() {
     setStatus(initial)
     if (initial !== 'checking') return
     // Sin service worker registrado (dev) `ready` no resuelve y se queda en "Comprobando…".
-    void readyDeps().then((d) => d.manager.getSubscription())
-      .then((sub) => setStatus(pushStatus({ ...env, subscribed: sub !== null })))
+    void readyDeps().then((d) => d.manager.getSubscription()).then((sub) => {
+      setStatus(pushStatus({ ...env, subscribed: sub !== null }))
+      // Re-guarda en silencio: si la fila se borró (404/410, reset), vuelve a existir. Idempotente.
+      if (sub) void saveSubscription(sub.toJSON()).catch(() => {})
+    })
   }, [])
   async function toggle() {
     setBusy(true)
     try {
+      // iOS exige pedir el permiso dentro del gesto: antes de cualquier await.
+      const permission = status === 'on' ? null : Notification.requestPermission()
       const deps = await readyDeps()
+      if (permission) deps.requestPermission = () => permission
       setStatus(await (status === 'on' ? turnOff(deps, toast) : turnOn(deps, toast)))
     } finally {
       setBusy(false)

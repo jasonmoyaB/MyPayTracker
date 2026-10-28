@@ -18,3 +18,7 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (iconos), UX-02jm (toasts)
   - Evidencia: rojo push.test.ts "Cannot find module ./push.ts"; verde 5 pruebas (envío por suscripción, sin filas nuevas no envía, sin VAPID omite, 404/410 se borra, otros errores no rompen); `deno check --no-lock --node-modules-dir=none` OK (sin el flag Deno busca web-push en node_modules por el package.json raíz); typecheck, test y build OK.
 - [x] PWA-01jm-T07 Guía de pasos manuales (VAPID, secrets, Vercel, db push, deploy) [docs/specs/PWA-01jm-push/despliegue.md]
   - Evidencia: guía con VAPID, secrets, env de Vercel, db push, deploy de función y web, pruebas y check de Deno (solo docs, sin prueba automática); typecheck, test y build OK.
+
+## Correcciones de revisión
+- [x] PWA-01jm-T08 Re-guardar la suscripción existente al abrir Cuenta; permiso pedido antes de cualquier await (iOS); `sw.js` tolera payload no JSON; logs de push sin endpoint ni cuerpo [src/ui/account/PushToggle.tsx, public/sw.js, supabase/functions/sync-bac-emails/push.ts]
+  - Evidencia: 247 tests, typecheck, build y deno check OK
