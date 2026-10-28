@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
-import { getSalaryCents } from '../data/settings'
+import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
 import { LoginView } from './auth/LoginView'
 import { BalancePanel } from './balance/BalancePanel'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-type Data = { salaryCents: number | null; transactions: Transaction[] }
+type Data = { settings: Settings; transactions: Transaction[] }
 
 export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).
@@ -24,8 +24,8 @@ function Dashboard({ session }: { session: Session }) {
 
   const load = useCallback(async () => {
     try {
-      const [salaryCents, transactions] = await Promise.all([getSalaryCents(), listTransactions()])
-      setData({ salaryCents, transactions })
+      const [settings, transactions] = await Promise.all([getSettings(), listTransactions()])
+      setData({ settings, transactions })
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -50,7 +50,7 @@ function Dashboard({ session }: { session: Session }) {
       {!data && !error && <p className="muted">Cargando movimientos…</p>}
       {data && (
         <>
-          <BalancePanel salaryCents={data.salaryCents} transactions={data.transactions} onSalarySaved={() => void load()} />
+          <BalancePanel settings={data.settings} transactions={data.transactions} onSettingsSaved={() => void load()} />
           <TransactionsPanel transactions={data.transactions} onTransactionSaved={() => void load()} />
         </>
       )}

@@ -23,3 +23,13 @@ export function summarize(salaryCents: number, movements: SummaryMovement[]): Su
   }
 }
 
+
+// El saldo de la cuenta ya incluye todo lo anterior a `asOf`: solo se suman movimientos posteriores.
+export function summarizeFromAccount(
+  accountCents: number,
+  asOf: string,
+  movements: (SummaryMovement & { occurredAt: string })[],
+): Summary {
+  const since = Date.parse(asOf)
+  return summarize(accountCents, movements.filter((m) => Date.parse(m.occurredAt) > since))
+}
