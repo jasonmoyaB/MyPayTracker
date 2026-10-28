@@ -39,6 +39,8 @@ function LoginForm({ pending, error, onSubmit }: FormProps) {
   return (
     <main style={{ maxWidth: 464, minHeight: '100dvh', alignContent: 'center' }}>
       <div style={{ justifySelf: 'end' }}><ThemeToggle /></div>
+      <img src="/icons/logo.png" alt="MyPayTracker" width="640" height="213"
+        style={{ width: 240, maxWidth: '100%', height: 'auto', justifySelf: 'center', borderRadius: 12 }} />
       <form className="card" onSubmit={onSubmit} aria-labelledby="login-title" aria-busy={pending}>
         <h1 id="login-title">MyPayTracker</h1>
         <p className="muted">Inicia sesión para consultar tu saldo y movimientos.</p>

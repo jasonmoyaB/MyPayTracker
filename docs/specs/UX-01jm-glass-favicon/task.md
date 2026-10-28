@@ -8,5 +8,6 @@ spec.md + plan.md de esta carpeta. pnpm, Vitest (entorno node).
   - Evidencia: theme.contrast.test.ts 27/27 (24 pares texto/vidrio/fondo ≥ 4.5 en claro y oscuro); vite.config.ts procesa theme.css en Vitest
 - [x] UX-01jm-T02 Iconos 32/180/192/512 + logo reducido; originales a docs/design/marca/ [public/icons/*, docs/design/marca/*] (AC-4, AC-5)
   - Evidencia: icons.test.ts 7/7 (32/180/192/512 px, logo 640×213, public/ sin PNG originales); dist/ solo copia icons/
-- [ ] UX-01jm-T03 Favicon, apple-touch-icon y theme-color en index.html; logo en LoginView [index.html, src/ui/auth/LoginView.tsx] (AC-4, AC-6) (depende de T02)
+- [x] UX-01jm-T03 Favicon, apple-touch-icon y theme-color en index.html; logo en LoginView [index.html, src/ui/auth/LoginView.tsx] (AC-4, AC-6) (depende de T02)
+  - Evidencia: LoginView.test.tsx 2/2 (links e theme-color claro/oscuro en index.html; img logo con alt y 240 px)
 - [ ] UX-01jm-T04 Documentar el estilo vidrio [docs/design/paleta-de-colores.md, docs/design/fundamentos-ui-ux.md]
