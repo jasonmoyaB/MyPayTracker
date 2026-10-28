@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
+import { initialFilter, type MovementFilter } from '../domain/movementFilter'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
 import { useToast } from './toast/ToastProvider'
@@ -28,6 +29,8 @@ export function App() {
 function Dashboard({ session }: { session: Session }) {
   const [data, setData] = useState<Data | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Vive aquí (no en la pantalla) para sobrevivir al cambiar de sección; solo en memoria.
+  const [filter, setFilter] = useState(() => initialFilter(new Date()))
   const route = useRoute()
   const toast = useToast()
 
@@ -58,31 +61,37 @@ function Dashboard({ session }: { session: Session }) {
   )
   return (
     <AppShell route={route} header={header}>
-      <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()} />
+      <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()}
+        filter={filter} onFilterChange={setFilter} />
     </AppShell>
   )
 }
 
-type BodyProps = { route: Route; email: string; data: Data | null; error: string | null; reload: () => void }
+type BodyProps = {
+  route: Route; email: string; data: Data | null; error: string | null; reload: () => void
+  filter: MovementFilter; onFilterChange: (filter: MovementFilter) => void
+}
 
 // Los datos se cargan una vez en Dashboard y se reparten a la pantalla activa.
 // Un error al recargar se muestra sobre los datos que ya había (no los oculta).
-export function DashboardBody({ route, email, data, error, reload }: BodyProps) {
+export function DashboardBody({ data, error, ...screen }: BodyProps) {
   return (
     <>
       {error && (
         <p role="alert" className="status-danger">
-          No pudimos cargar tus datos. {error} <button className="secondary" onClick={reload}>Reintentar</button>
+          No pudimos cargar tus datos. {error} <button className="secondary" onClick={screen.reload}>Reintentar</button>
         </p>
       )}
       {!data && !error && <p className="muted">Cargando movimientos…</p>}
-      {data && <Screen route={route} email={email} data={data} reload={reload} />}
+      {data && <Screen {...screen} data={data} />}
     </>
   )
 }
 
-function Screen({ route, email, data, reload }: Omit<BodyProps, 'error' | 'data'> & { data: Data }) {
-  if (route === 'movimientos') return <TransactionsPanel transactions={data.transactions} onTransactionSaved={reload} />
+function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<BodyProps, 'error' | 'data'> & { data: Data }) {
+  if (route === 'movimientos') return (
+    <TransactionsPanel transactions={data.transactions} filter={filter} onFilterChange={onFilterChange} onTransactionSaved={reload} />
+  )
   if (route === 'cuenta') return <AccountView email={email} settings={data.settings} onSettingsSaved={reload} />
   return <DashboardView settings={data.settings} transactions={data.transactions} />
 }

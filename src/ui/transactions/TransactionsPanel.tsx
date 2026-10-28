@@ -1,15 +1,20 @@
 import { useRef, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
+import { applyFilter, filterTotals, initialFilter, type MovementFilter } from '../../domain/movementFilter'
 import { formatDate, formatMoney } from '../format'
+import { FilterTotals } from './FilterTotals'
+import { MovementFilters } from './MovementFilters'
 import { TransactionForm } from './TransactionForm'
 import './transactions.css'
 
 export type TransactionsPanelProps = {
   transactions: Transaction[]
+  filter: MovementFilter
+  onFilterChange: (filter: MovementFilter) => void
   onTransactionSaved: () => void
 }
 
-export function TransactionsPanel({ transactions, onTransactionSaved }: TransactionsPanelProps) {
+export function TransactionsPanel({ transactions, filter, onFilterChange, onTransactionSaved }: TransactionsPanelProps) {
   const [open, setOpen] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const close = () => { setOpen(false); trigger.current?.focus() }
@@ -23,9 +28,29 @@ export function TransactionsPanel({ transactions, onTransactionSaved }: Transact
       </div>
       {open && <TransactionForm onSaved={finish} onCancel={close} />}
       {transactions.length === 0 ? <p className="muted">Aun no hay movimientos</p> : (
-        <ul className="transactions-list">{transactions.map(t => <TransactionRow key={t.id} transaction={t} />)}</ul>
+        <FilteredList transactions={transactions} filter={filter} onFilterChange={onFilterChange} />
       )}
     </section>
+  )
+}
+
+type FilteredListProps = Pick<TransactionsPanelProps, 'transactions' | 'filter' | 'onFilterChange'>
+
+function FilteredList({ transactions, filter, onFilterChange }: FilteredListProps) {
+  const now = new Date()
+  // ponytail: filtra en el navegador lo ya cargado (PostgREST da máx. 1000 filas); filtrar en servidor si crece.
+  const shown = applyFilter(transactions, filter)
+  return (
+    <>
+      <MovementFilters filter={filter} now={now} onChange={onFilterChange} />
+      <FilterTotals totals={filterTotals(shown)} />
+      {shown.length === 0 ? (
+        <div className="filtered-empty">
+          <p className="muted">No hay movimientos con estos filtros</p>
+          <button type="button" className="secondary" onClick={() => onFilterChange(initialFilter(now))}>Limpiar filtros</button>
+        </div>
+      ) : <ul className="transactions-list">{shown.map(t => <TransactionRow key={t.id} transaction={t} />)}</ul>}
+    </>
   )
 }
 
