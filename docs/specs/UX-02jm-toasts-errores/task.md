@@ -14,4 +14,5 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (tokens de vidrio).
   - Evidencia: rojo `Cannot find module ./sessionExpiry`; verde sessionExpiry.test.ts (2): sesión vencida → `endExpiredSession` (signOut local) + aviso; Login y carga usan `toAppError`; typecheck+test (110)+build OK.
 - [x] UX-02jm-T05 ErrorBoundary + config faltante + `unhandledrejection` [src/ui/main.tsx, src/ui/ErrorBoundary.tsx, src/data/supabase.ts] (AC-5, AC-6)
   - Evidencia: rojo supabase.test.ts (`Faltan VITE_SUPABASE_URL…` al importar) y módulos inexistentes; verde supabase.test.ts (2), ErrorBoundary.test.tsx (3), unhandledRejection.test.ts (1); typecheck+test (116)+build OK.
-- [ ] UX-02jm-T06 Respuesta de error saneada en la función de sync [supabase/functions/sync-bac-emails/index.ts] (AC-7)
+- [x] UX-02jm-T06 Respuesta de error saneada en la función de sync [supabase/functions/sync-bac-emails/index.ts] (AC-7)
+  - Evidencia: rojo index.test.ts (2 fallos: sin console.error, respuesta con e.message); verde 2 tests; deno check OK; typecheck+test (118)+build OK. Redeploy pendiente del usuario.

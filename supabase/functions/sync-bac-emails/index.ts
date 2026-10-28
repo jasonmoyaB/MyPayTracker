@@ -99,6 +99,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {
-    return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    // UX-02jm-T06: el detalle (puede traer cuerpos de Google o datos internos) solo va al log.
+    console.error('sync-bac-emails falló:', e)
+    return Response.json({ error: 'sync_failed' }, { status: 500 })
   }
 })
