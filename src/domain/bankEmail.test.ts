@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { htmlToText, parseBacPurchase } from './bankEmail'
+import { htmlToText, parseBacPurchase, parseBacSinpe } from './bankEmail'
 import compraCrc from './__fixtures__/bac-compra-crc.txt?raw'
 import compraUsd from './__fixtures__/bac-compra-usd.txt?raw'
+import sinpeOk from './__fixtures__/bac-sinpe-acreditado.txt?raw'
+import sinpeRechazado from './__fixtures__/bac-sinpe-rechazado.txt?raw'
 import compraHtml from './__fixtures__/bac-compra-html.html?raw'
 
 describe('AC-1: compra BAC', () => {
@@ -33,5 +35,27 @@ describe('AC-4: htmlToText', () => {
   })
   it('decodifica entidades numéricas', () => {
     expect(htmlToText('<p>Jos&#233;&nbsp;&amp;</p>')).toBe('José &')
+  })
+})
+
+describe('AC-2: SINPE BAC', () => {
+  it('SINPE acreditado → ingreso con concepto y hora 24h de Costa Rica', () => {
+    expect(parseBacSinpe(sinpeOk)).toEqual({
+      amountCents: 2_000_000,
+      currency: 'CRC',
+      direction: 'in',
+      description: 'SINPE: b_______________',
+      occurredAt: '2026-10-24T21:20:13-06:00',
+    })
+  })
+  it('en dólares usa USD', () => {
+    expect(parseBacSinpe(sinpeOk.replace('Colones', 'Dólares'))).toMatchObject({ currency: 'USD' })
+  })
+  it('12 a.m. es medianoche y 12 p.m. es mediodía', () => {
+    expect(parseBacSinpe(sinpeOk.replace('09:20:13 p.m.', '12:05:00 a.m.'))?.occurredAt).toBe('2026-10-24T00:05:00-06:00')
+    expect(parseBacSinpe(sinpeOk.replace('09:20:13 p.m.', '12:05:00 p.m.'))?.occurredAt).toBe('2026-10-24T12:05:00-06:00')
+  })
+  it('AC-3: SINPE rechazado → null', () => {
+    expect(parseBacSinpe(sinpeRechazado)).toBeNull()
   })
 })

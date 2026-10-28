@@ -60,3 +60,23 @@ export function parseBacPurchase(text: string): ParsedMovement | null {
     occurredAt: crIso(date[3], month, date[2], Number(date[4]), date[5]),
   }
 }
+
+// Solo "se acreditó" genera movimiento; los SINPE rechazados no tocan el saldo.
+const SINPE_RE = new RegExp(
+  'se acredit[oó] .*? por un monto de ([\\d,]+)\\.(\\d{2}) (Colones|D[oó]lares), por concepto de (.*?)\\.\\s*' +
+    'D[ií]a y hora:? (\\d{2})/(\\d{2})/(\\d{4}) (\\d{1,2}):(\\d{2}):(\\d{2}) ([ap])\\.\\s?m\\.',
+)
+
+export function parseBacSinpe(text: string): ParsedMovement | null {
+  const m = text.match(SINPE_RE)
+  if (!m) return null
+  const [, integer, decimals, currencyWord, concept, day, month, year, hour, minute, second, ampm] = m
+  const hour24 = (Number(hour) % 12) + (ampm === 'p' ? 12 : 0)
+  return {
+    amountCents: toCents(integer, decimals),
+    currency: currencyWord === 'Colones' ? 'CRC' : 'USD',
+    direction: 'in',
+    description: `SINPE: ${concept.trim()}`,
+    occurredAt: crIso(year, Number(month), day, hour24, minute, second),
+  }
+}
