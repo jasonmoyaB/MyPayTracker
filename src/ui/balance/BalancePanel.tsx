@@ -30,6 +30,7 @@ export function BalancePanel({ settings, transactions, onSettingsSaved }: Balanc
         note={account ? `registrado el ${formatDate(account.asOf)}; se suman los movimientos posteriores` : undefined}
         valueCents={account?.cents ?? null}
         save={saveAccountBalanceCents}
+        successMessage="Saldo actualizado"
         onSaved={onSettingsSaved}
       />
       <MoneySetting
@@ -38,6 +39,7 @@ export function BalancePanel({ settings, transactions, onSettingsSaved }: Balanc
         note={account ? 'no se suma mientras haya saldo de cuenta' : undefined}
         valueCents={settings.salaryCents}
         save={saveSalaryCents}
+        successMessage="Salario actualizado"
         onSaved={onSettingsSaved}
       />
       {summary && <AffordCheck balanceCents={summary.balanceCrcCents} />}

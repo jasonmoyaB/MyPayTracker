@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { parseAmountToCents } from '../../domain/amount'
 import { centsToNumeric } from '../../domain/money'
 import { formatMoney } from '../format'
+import { saveWithToast } from '../toast/saveWithToast'
+import { useToast } from '../toast/ToastProvider'
 
 // Un monto en colones que el usuario registra y edita (salario, saldo de la cuenta).
 export type MoneySettingProps = {
@@ -10,6 +12,7 @@ export type MoneySettingProps = {
   note?: string
   valueCents: number | null
   save: (cents: number) => Promise<void>
+  successMessage: string
   onSaved: () => void
 }
 
@@ -35,9 +38,10 @@ export function MoneySetting(props: MoneySettingProps) {
   )
 }
 
-type FormProps = Pick<MoneySettingProps, 'label' | 'valueCents' | 'save' | 'onSaved'> & { onCancel?: () => void }
+type FormProps = Pick<MoneySettingProps, 'label' | 'valueCents' | 'save' | 'successMessage' | 'onSaved'> & { onCancel?: () => void }
 
-function MoneyForm({ label, valueCents, save, onSaved, onCancel }: FormProps) {
+function MoneyForm({ label, valueCents, save, successMessage, onSaved, onCancel }: FormProps) {
+  const toast = useToast()
   const [text, setText] = useState(valueCents === null ? '' : centsToNumeric(valueCents))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,14 +52,10 @@ function MoneyForm({ label, valueCents, save, onSaved, onCancel }: FormProps) {
     if (cents === null) return setError('Escribe un monto mayor que cero, por ejemplo 140000.')
     setSaving(true)
     setError(null)
-    try {
-      await save(cents)
-      onSaved()
-    } catch (err) {
-      setError(`No pudimos guardar: ${err instanceof Error ? err.message : String(err)}`)
-    } finally {
-      setSaving(false)
-    }
+    // Si falla, el toast avisa y el monto escrito se conserva.
+    const failed = await saveWithToast(() => save(cents), toast, successMessage)
+    setSaving(false)
+    if (!failed) onSaved()
   }
 
   return (

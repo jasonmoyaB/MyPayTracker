@@ -11,18 +11,16 @@ export type TransactionsPanelProps = {
 
 export function TransactionsPanel({ transactions, onTransactionSaved }: TransactionsPanelProps) {
   const [open, setOpen] = useState(false)
-  const [saved, setSaved] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const close = () => { setOpen(false); trigger.current?.focus() }
-  const finish = () => { close(); setSaved(true); onTransactionSaved() }
+  const finish = () => { close(); onTransactionSaved() }
   return (
     <section className="card transactions" aria-labelledby="transactions-title">
       <div className="transactions-heading">
         <h2 id="transactions-title">Movimientos</h2>
         <button ref={trigger} aria-expanded={open} aria-controls="manual-transaction"
-          onClick={() => { setOpen(true); setSaved(false) }}>Registrar movimiento</button>
+          onClick={() => setOpen(true)}>Registrar movimiento</button>
       </div>
-      {saved && <p role="status" className="status-success">Movimiento guardado</p>}
       {open && <TransactionForm onSaved={finish} onCancel={close} />}
       {transactions.length === 0 ? <p className="muted">Aun no hay movimientos</p> : (
         <ul className="transactions-list">{transactions.map(t => <TransactionRow key={t.id} transaction={t} />)}</ul>

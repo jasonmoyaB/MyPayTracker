@@ -2,6 +2,8 @@ import { useRef, useState, type FormEvent } from 'react'
 import { addManualTransaction, type NewTransaction } from '../../data/transactions'
 import { parseAmountToCents } from '../../domain/amount'
 import { costaRicaDateTime, costaRicaIso } from '../../domain/date'
+import { saveWithToast } from '../toast/saveWithToast'
+import { useToast } from '../toast/ToastProvider'
 
 function useFields() {
   const [amount, setAmount] = useState('')
@@ -14,6 +16,7 @@ function useFields() {
 
 export function useTransactionForm(onSaved: () => void) {
   const fields = useFields()
+  const toast = useToast()
   const { amount, currency, direction, description, date } = fields
   const [amountError, setAmountError] = useState('')
   const [error, setError] = useState('')
@@ -31,13 +34,12 @@ export function useTransactionForm(onSaved: () => void) {
     if (!occurredAt) { setError('Ingresa una fecha y hora válidas de Costa Rica.'); return }
     pending.current = true
     setSaving(true)
-    try {
-      await addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt })
-    } catch {
-      setError('No pudimos guardar el movimiento. Revisa tu conexión y vuelve a intentarlo.')
-      return
-    } finally { pending.current = false; setSaving(false) }
-    onSaved()
+    // Si falla, el toast avisa y los campos se conservan.
+    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt }),
+      toast, 'Movimiento guardado')
+    pending.current = false
+    setSaving(false)
+    if (!failed) onSaved()
   }
   return { ...fields, amountError, error, saving, submit }
 }
