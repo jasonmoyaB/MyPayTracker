@@ -7,8 +7,8 @@ type Props = { toasts: Toast[]; onClose: (id: number) => void }
 export function ToastRegion({ toasts, onClose }: Props) {
   return (
     <div className="toasts">
-      <div role="status">{toasts.filter((t) => t.kind === 'success').map((t) => <Item key={t.id} toast={t} onClose={onClose} />)}</div>
-      <div role="alert">{toasts.filter((t) => t.kind === 'error').map((t) => <Item key={t.id} toast={t} onClose={onClose} />)}</div>
+      <div role="status" aria-atomic="false">{toasts.filter((t) => t.kind === 'success').map((t) => <Item key={t.id} toast={t} onClose={onClose} />)}</div>
+      <div role="alert" aria-atomic="false">{toasts.filter((t) => t.kind === 'error').map((t) => <Item key={t.id} toast={t} onClose={onClose} />)}</div>
     </div>
   )
 }

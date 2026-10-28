@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { MAX_TOASTS, pushToast, removeToast, TOAST_MS, type Toast } from './toastQueue'
-import { ToastProvider, useToast } from './ToastProvider'
+import { ToastProvider, toastTimers, useToast } from './ToastProvider'
 import { ToastRegion } from './ToastRegion'
 
 const toast = (id: number, kind: Toast['kind'] = 'success'): Toast => ({ id, kind, message: `aviso ${id}` })
@@ -31,6 +31,9 @@ describe('AC-8: región accesible', () => {
     expect(html).toMatch(/role="status"[^>]*>.*aviso 1/)
     expect(html).toMatch(/role="alert"[^>]*>.*aviso 2/)
   })
+  it('cada aviso se anuncia solo, no la región entera', () => {
+    expect(html.match(/aria-atomic="false"/g)).toHaveLength(2)
+  })
   it('cada toast tiene botón para cerrar', () => {
     expect(html.match(/aria-label="Cerrar aviso"/g)).toHaveLength(2)
   })
@@ -46,5 +49,21 @@ describe('ToastProvider', () => {
   })
   it('useToast fuera del provider falla con un mensaje claro', () => {
     expect(() => renderToStaticMarkup(<Probe />)).toThrow(/ToastProvider/)
+  })
+})
+
+describe('UX-02jm-T08: temporizadores de toasts', () => {
+  it('vence a los 4 s, se cancela al cerrar a mano y se limpia al desmontar', () => {
+    vi.useFakeTimers()
+    const expired = vi.fn()
+    const timers = toastTimers(expired)
+    timers.start(1); timers.start(2); timers.start(3)
+    timers.cancel(2)
+    vi.advanceTimersByTime(TOAST_MS)
+    expect(expired.mock.calls).toEqual([[1], [3]])
+    timers.start(4)
+    timers.clear()
+    expect(vi.getTimerCount()).toBe(0)
+    vi.useRealTimers()
   })
 })
