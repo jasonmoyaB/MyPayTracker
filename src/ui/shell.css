@@ -19,7 +19,8 @@
     position: fixed; inset-inline: 0; bottom: 0; z-index: 5; border-radius: 0;
     padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
   }
-  .toasts { bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px)); }
+  /* (0,2,0): gana a toast.css sin depender del orden de carga; solo aplica con la barra montada. */
+  .app-shell ~ .toasts { bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

@@ -17,7 +17,7 @@ export function AccountView({ email, settings, onSettingsSaved, children }: Prop
   return (
     <>
       <section className="card" aria-labelledby="money-title">
-        <h2 id="money-title">Saldo y salario</h2>
+        <h2 id="money-title" tabIndex={-1}>Saldo y salario</h2>
         <MoneySetting
           label="Saldo actual en BAC"
           emptyHint="Registra cuánto tienes hoy en tu cuenta BAC para partir de un saldo real."

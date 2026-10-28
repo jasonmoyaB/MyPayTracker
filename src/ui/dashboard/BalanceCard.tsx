@@ -12,7 +12,7 @@ export function summaryFor({ account, salaryCents }: Settings, transactions: Tra
 export function BalanceCard({ summary }: { summary: Summary | null }) {
   return (
     <section className="card dashboard-balance" aria-labelledby="balance-title">
-      <h2 id="balance-title">Saldo disponible</h2>
+      <h2 id="balance-title" tabIndex={-1}>Saldo disponible</h2>
       {summary ? <BalanceSummary summary={summary} /> : (
         <p className="muted">Registra tu saldo o salario en <a href="#/cuenta">Cuenta</a> para calcular cuánto tienes.</p>
       )}
@@ -20,14 +20,14 @@ export function BalanceCard({ summary }: { summary: Summary | null }) {
   )
 }
 
-export function BalanceSummary({ summary }: { summary: Summary }) {
+function BalanceSummary({ summary }: { summary: Summary }) {
   const negative = summary.balanceCrcCents < 0
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       <p className={`amount dashboard-big${negative ? ' negative' : ''}`}>{formatMoney(summary.balanceCrcCents, 'CRC')}</p>
       {negative && (
         <p className="status-danger" style={{ margin: 0 }}>
-          Tu saldo es negativo: tus gastos superan tu salario más tus ingresos.
+          Saldo negativo: tus gastos superan tu saldo.
         </p>
       )}
       <UsdLine usd={summary.usd} />

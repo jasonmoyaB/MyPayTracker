@@ -18,3 +18,9 @@ function subscribe(onChange: () => void): () => void {
 export function useRoute(): Route {
   return useSyncExternalStore(subscribe, () => parseRoute(window.location.hash), () => 'resumen')
 }
+
+// Al cambiar de sección: arriba del todo y foco al título de la pantalla (lector de pantalla y teclado).
+export function showScreenTop(content: Pick<ParentNode, 'querySelector'> | null, scrollTo: (x: number, y: number) => void) {
+  scrollTo(0, 0)
+  content?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true })
+}
