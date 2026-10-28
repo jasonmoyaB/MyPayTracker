@@ -10,12 +10,15 @@ const cases: [string, unknown, AppErrorKind][] = [
   ['status 401', { status: 401, message: 'Unauthorized' }, 'session'],
   ['JWT vencido de PostgREST', { code: 'PGRST303', message: 'JWT expired' }, 'session'],
   ['refresh token perdido', { code: 'refresh_token_not_found', status: 400 }, 'session'],
-  ['sin usuario al guardar', new Error('Sesión expirada'), 'session'],
+  ['sin usuario al guardar', Object.assign(new Error('Sesión expirada'), { code: 'session_not_found' }), 'session'],
+  ['AuthSessionMissingError', { name: 'AuthSessionMissingError', message: 'Auth session missing!', status: 400 }, 'session'],
   ['status 403', { status: 403, message: 'Forbidden' }, 'forbidden'],
   ['RLS (42501)', { code: '42501', message: 'new row violates row-level security policy' }, 'forbidden'],
   ['dato inválido (22P02)', { code: '22P02', message: 'invalid input syntax' }, 'invalid'],
   ['restricción (23514)', { code: '23514', message: 'violates check constraint' }, 'invalid'],
   ['error cualquiera', new Error('boom'), 'unknown'],
+  ['bug (TypeError no de red)', new TypeError('Cannot read properties of undefined'), 'unknown'],
+  ['texto de sesión sin código', new Error('Sesión expirada'), 'unknown'],
   ['string', 'boom', 'unknown'],
   ['null', null, 'unknown'],
 ]
@@ -28,7 +31,7 @@ describe('AC-3: toAppError traduce errores por tipo', () => {
   it('nunca expone el mensaje técnico y siempre habla en español', () => {
     for (const [, input] of cases) {
       const { message } = toAppError(input)
-      expect(message).not.toMatch(/fetch|jwt|row-level|syntax|boom|constraint|unauthorized|forbidden/i)
+      expect(message).not.toMatch(/fetch|jwt|row-level|syntax|boom|constraint|unauthorized|forbidden|undefined|missing/i)
       expect(message.length).toBeGreaterThan(10)
     }
   })

@@ -24,9 +24,10 @@ function shapeOf(e: unknown): Shape {
 
 function kindOf(e: unknown): AppErrorKind {
   const { name, message, code, status } = shapeOf(e)
-  if (e instanceof TypeError || name === 'AuthRetryableFetchError' || /failed to fetch|networkerror|load failed/i.test(message)) return 'offline'
+  // Solo errores de red; un TypeError cualquiera es un bug y no debe ocultarse como "sin conexión".
+  if (name === 'AuthRetryableFetchError' || /failed to fetch|networkerror|load failed/i.test(message)) return 'offline'
   if (code === 'invalid_credentials' || /invalid login credentials/i.test(message)) return 'credentials'
-  if (status === 401 || SESSION_CODES.includes(code) || /jwt expired|sesión expirada/i.test(message)) return 'session'
+  if (status === 401 || SESSION_CODES.includes(code) || name === 'AuthSessionMissingError' || /jwt expired/i.test(message)) return 'session'
   if (status === 403 || code === '42501') return 'forbidden'
   if (/^2[23][0-9A-Z]{3}$/.test(code)) return 'invalid'
   return 'unknown'

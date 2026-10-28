@@ -18,5 +18,6 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (tokens de vidrio).
   - Evidencia: rojo index.test.ts (2 fallos: sin console.error, respuesta con e.message); verde 2 tests; deno check OK; typecheck+test (118)+build OK. Redeploy pendiente del usuario.
 
 ## Correcciones de revisión
-- [ ] UX-02jm-T07 Sesión por código, no por texto: `upsertSettings` lanza error con `code: 'session_not_found'`; `AuthSessionMissingError` → session; `TypeError` solo offline si el mensaje es de red [src/data/errors.ts, src/data/settings.ts, src/data/errors.test.ts]
+- [x] UX-02jm-T07 Sesión por código, no por texto: `upsertSettings` lanza error con `code: 'session_not_found'`; `AuthSessionMissingError` → session; `TypeError` solo offline si el mensaje es de red [src/data/errors.ts, src/data/settings.ts, src/data/errors.test.ts]
+  - Evidencia: rojo errors.test.ts (AuthSessionMissingError→unknown, TypeError de bug→offline, texto sin código→session) y settings.test.ts (error sin `code`); verde 20+1 tests; typecheck+test (143)+build OK.
 - [ ] UX-02jm-T08 `endExpiredSession().catch`; cliente sin config con `autoRefreshToken/persistSession: false`; timers de toast limpiados al desmontar; `aria-atomic="false"` en regiones [src/ui/sessionExpiry.ts, src/data/supabase.ts, src/ui/toast/ToastProvider.tsx, src/ui/toast/ToastRegion.tsx]

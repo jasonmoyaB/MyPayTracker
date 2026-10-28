@@ -22,7 +22,7 @@ export async function getSettings(): Promise<Settings> {
 
 async function upsertSettings(fields: Record<string, string>): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) throw new Error('Sesión expirada')
+  if (!auth.user) throw Object.assign(new Error('Sesión expirada'), { code: 'session_not_found' })
   const { error } = await supabase
     .from('settings')
     .upsert({ user_id: auth.user.id, ...fields, updated_at: new Date().toISOString() })
