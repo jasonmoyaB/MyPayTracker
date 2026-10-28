@@ -6,12 +6,11 @@ import { AccountView } from './AccountView'
 
 vi.mock('../../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
 vi.mock('../../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
+vi.mock('../../data/push', () => ({ saveSubscription: vi.fn(), deleteSubscription: vi.fn() }))
 
-const render = (settings: Parameters<typeof AccountView>[0]['settings'], slot?: string) => renderToStaticMarkup(
+const render = (settings: Parameters<typeof AccountView>[0]['settings']) => renderToStaticMarkup(
   <ToastProvider>
-    <AccountView email="yo@correo.com" settings={settings} onSettingsSaved={() => {}}>
-      {slot && <p>{slot}</p>}
-    </AccountView>
+    <AccountView email="yo@correo.com" settings={settings} onSettingsSaved={() => {}} />
   </ToastProvider>,
 )
 
@@ -29,7 +28,7 @@ describe('AC-8: Cuenta', () => {
     expect(html).toContain('Agrega tu salario para calcular tu saldo.')
     expect(html).not.toContain('Volver')
   })
-  it('deja un espacio para notificaciones (PWA-01jm)', () => {
-    expect(render({ salaryCents: null, account: null }, 'Interruptor de avisos')).toContain('Interruptor de avisos')
+  it('incluye las notificaciones (PWA-01jm)', () => {
+    expect(render({ salaryCents: null, account: null })).toMatch(/<h2 id="push-title">Notificaciones<\/h2>/)
   })
 })

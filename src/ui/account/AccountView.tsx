@@ -1,18 +1,16 @@
-import type { ReactNode } from 'react'
 import { saveAccountBalanceCents, saveSalaryCents, type Settings } from '../../data/settings'
 import { ChangePasswordView } from '../auth/ChangePasswordView'
 import { MoneySetting } from '../balance/MoneySetting'
 import { formatDate } from '../format'
+import { PushToggle } from './PushToggle'
 
 type Props = {
   email: string
   settings: Settings
   onSettingsSaved: () => void
-  // PWA-01jm: aquí se monta el interruptor de notificaciones.
-  children?: ReactNode
 }
 
-export function AccountView({ email, settings, onSettingsSaved, children }: Props) {
+export function AccountView({ email, settings, onSettingsSaved }: Props) {
   const { account } = settings
   return (
     <>
@@ -38,7 +36,7 @@ export function AccountView({ email, settings, onSettingsSaved, children }: Prop
         />
       </section>
       <ChangePasswordView email={email} />
-      {children}
+      <PushToggle />
     </>
   )
 }

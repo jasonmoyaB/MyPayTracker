@@ -12,6 +12,7 @@ spec.md + plan.md de esta carpeta. Depende de UX-01jm (iconos), UX-02jm (toasts)
   - Evidencia: rojo "Cannot find module ./notification"; verde 4 pruebas (gasto CRC, ingreso USD, recorte a 60, sin descripción); import type con `.ts` para Deno; typecheck, test y build OK.
 - [x] PWA-01jm-T04 `saveSubscription`/`deleteSubscription` [src/data/push.ts] (AC-2, AC-4) (depende de T02)
   - Evidencia: rojo "Cannot find module ./push"; verde 4 pruebas nuevas en push.test.ts (upsert ignoreDuplicates por endpoint, rechaza sin claves, borra por endpoint, propaga error); typecheck, test y build OK.
-- [ ] PWA-01jm-T05 Prueba + `PushToggle` con estados y aviso iPhone; montarlo en Cuenta [src/ui/account/PushToggle.tsx, src/ui/account/PushToggle.test.tsx, src/ui/account/AccountView.tsx] (AC-2–AC-4) (depende de T04)
+- [x] PWA-01jm-T05 Prueba + `PushToggle` con estados y aviso iPhone; montarlo en Cuenta [src/ui/account/PushToggle.tsx, src/ui/account/PushToggle.test.tsx, src/ui/account/AccountView.tsx] (AC-2–AC-4) (depende de T04)
+  - Evidencia: rojo "Cannot find module ./pushState"; verde 15 pruebas en PushToggle.test.tsx (base64url, 8 estados, textos, activar/denegado/rollback, desactivar/fallo); lógica pura en `pushState.ts` (archivo extra); Cuenta monta `PushToggle` en lugar del hueco `children`; typecheck, test y build OK.
 - [ ] PWA-01jm-T06 Envío push solo de filas nuevas + limpieza 404/410 [supabase/functions/sync-bac-emails/index.ts, supabase/functions/sync-bac-emails/push.ts] (AC-5, AC-6, AC-9) (depende de T02, T03)
 - [ ] PWA-01jm-T07 Guía de pasos manuales (VAPID, secrets, Vercel, db push, deploy) [docs/specs/PWA-01jm-push/despliegue.md]
