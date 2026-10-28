@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { htmlToText, parseBacPurchase, parseBacSinpe } from './bankEmail'
+import { gmailBodyText, htmlToText, parseBacPurchase, parseBacSinpe, parseBankEmail } from './bankEmail'
 import compraCrc from './__fixtures__/bac-compra-crc.txt?raw'
 import compraUsd from './__fixtures__/bac-compra-usd.txt?raw'
 import sinpeOk from './__fixtures__/bac-sinpe-acreditado.txt?raw'
@@ -57,5 +57,46 @@ describe('AC-2: SINPE BAC', () => {
   })
   it('AC-3: SINPE rechazado → null', () => {
     expect(parseBacSinpe(sinpeRechazado)).toBeNull()
+  })
+})
+
+// Gmail entrega el cuerpo en base64url sobre bytes UTF-8.
+const b64url = (s: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+
+describe('parseBankEmail: el remitente elige el parser', () => {
+  it('NotificacionBAC → compra, sin importar mayúsculas', () => {
+    expect(parseBankEmail('notificacionbac@baccredomatic.cr', compraCrc)?.direction).toBe('out')
+  })
+  it('"BAC - SINPE <notificaciones@…>" → SINPE', () => {
+    expect(parseBankEmail('BAC - SINPE <notificaciones@baccredomatic.cr>', sinpeOk)?.direction).toBe('in')
+  })
+  it('AC-3: remitente desconocido → null', () => {
+    expect(parseBankEmail('promo@otro.com', compraCrc)).toBeNull()
+  })
+})
+
+describe('AC-4: gmailBodyText', () => {
+  it('multipart: prefiere text/html anidado, decodifica UTF-8 y lo pasa a texto', () => {
+    const payload = {
+      mimeType: 'multipart/mixed',
+      parts: [
+        { mimeType: 'image/jpeg', body: {} },
+        {
+          mimeType: 'multipart/alternative',
+          parts: [
+            { mimeType: 'text/plain', body: { data: b64url('plano') } },
+            { mimeType: 'text/html', body: { data: b64url('<b>Transacción</b>') } },
+          ],
+        },
+      ],
+    }
+    expect(gmailBodyText(payload)).toBe('Transacción')
+  })
+  it('sin html usa text/plain', () => {
+    expect(gmailBodyText({ mimeType: 'text/plain', body: { data: b64url('Monto: CRC 1.00') } })).toBe('Monto: CRC 1.00')
+  })
+  it('sin cuerpo → cadena vacía', () => {
+    expect(gmailBodyText({ mimeType: 'multipart/mixed', parts: [] })).toBe('')
   })
 })

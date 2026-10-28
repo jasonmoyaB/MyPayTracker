@@ -80,3 +80,37 @@ export function parseBacSinpe(text: string): ParsedMovement | null {
     occurredAt: crIso(year, Number(month), day, hour24, minute, second),
   }
 }
+
+const PARSERS: Record<string, (text: string) => ParsedMovement | null> = {
+  'notificacionbac@baccredomatic.cr': parseBacPurchase,
+  'notificaciones@baccredomatic.cr': parseBacSinpe,
+}
+
+export const BAC_SENDERS = Object.keys(PARSERS)
+
+// `from` puede venir como "BAC - SINPE <notificaciones@baccredomatic.cr>" o solo la dirección.
+export function parseBankEmail(from: string, text: string): ParsedMovement | null {
+  const address = (from.match(/<([^>]+)>/)?.[1] ?? from).trim().toLowerCase()
+  return PARSERS[address]?.(text) ?? null
+}
+
+export type GmailPart = { mimeType?: string; body?: { data?: string }; parts?: GmailPart[] }
+
+function findPart(part: GmailPart, mimeType: string): GmailPart | undefined {
+  if (part.mimeType === mimeType && part.body?.data) return part
+  for (const child of part.parts ?? []) {
+    const found = findPart(child, mimeType)
+    if (found) return found
+  }
+}
+
+function decodeBase64Url(data: string): string {
+  const bytes = Uint8Array.from(atob(data.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+// Gmail API (format=full): el cuerpo vive en partes MIME anidadas. Se prefiere HTML porque BAC lo envía siempre.
+export function gmailBodyText(payload: GmailPart): string {
+  const part = findPart(payload, 'text/html') ?? findPart(payload, 'text/plain')
+  return part?.body?.data ? htmlToText(decodeBase64Url(part.body.data)) : ''
+}
