@@ -3,8 +3,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
-// Solo correos de octubre 2026 (pedido del usuario). En noviembre deja de traer correos nuevos: cambiar aquí.
-const DATE_RANGE = 'after:2026/10/01 before:2026/11/01'
+// CRON-02jm: desde oct 2026 sin fecha de fin (lo anterior ya está en el saldo de cuenta, BAL-01jm).
+const DATE_RANGE = 'after:2026/10/01'
 
 function env(name: string): string {
   const value = Deno.env.get(name)
@@ -62,9 +62,18 @@ Deno.serve(async (req) => {
 
     const token = await accessToken()
     const ids = await listMessageIds(token)
+    // Listar ids es barato; descargar cada correo no. Solo se descargan los que no están guardados.
+    // ponytail: correos sin movimiento (SINPE rechazado, etc.) no se guardan y se re-descargan cada corrida; son pocos.
+    const { data: stored, error: storedError } = await db
+      .from('transactions')
+      .select('email_message_id')
+      .not('email_message_id', 'is', null)
+    if (storedError) throw storedError
+    const known = new Set(stored.map((r) => r.email_message_id))
+    const newIds = ids.filter((id) => !known.has(id))
 
     const rows = []
-    for (const id of ids) {
+    for (const id of newIds) {
       const msg = await gmail<{ payload: GmailPart & { headers: { name: string; value: string }[] } }>(`${GMAIL}/${id}?format=full`, token)
       const from = msg.payload.headers.find((h) => h.name.toLowerCase() === 'from')?.value ?? ''
       const parsed = parseBankEmail(from, gmailBodyText(msg.payload))
@@ -88,7 +97,7 @@ Deno.serve(async (req) => {
       .select('id')
     if (error) throw error
 
-    return Response.json({ scanned: ids.length, parsed: rows.length, inserted: data.length })
+    return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
