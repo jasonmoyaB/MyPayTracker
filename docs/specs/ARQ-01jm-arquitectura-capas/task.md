@@ -9,5 +9,6 @@ spec.md + plan.md de esta carpeta. npm, Vitest.
 - [x] ARQ-01jm-T02 Prueba: `canAfford` falla → implementar en domain [src/domain/balance*.ts]
   - 3 tests verdes (rojo primero: módulo inexistente)
 - [ ] ARQ-01jm-T03 Prueba: test de arquitectura detecta imports prohibidos → reglas por capa [src/architecture.test.ts]
-- [ ] ARQ-01jm-T04 Cliente Supabase en data + `.env.example` [src/data/supabase.ts, .env.example] (depende de T01)
+- [x] ARQ-01jm-T04 Cliente Supabase en data + `.env.example` [src/data/supabase.ts, .env.example] (depende de T01)
+  - typecheck OK; falla rápido si faltan variables
 - [ ] ARQ-01jm-T05 Migración inicial con RLS [supabase/migrations/0001_init.sql]
