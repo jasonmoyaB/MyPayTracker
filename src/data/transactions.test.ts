@@ -39,3 +39,14 @@ describe('TC-01jm AC-4: lee y guarda el método de pago', () => {
     expect(db.insert).toHaveBeenCalledWith(expect.objectContaining({ payment_method: 'credit', amount: '2000.50' }))
   })
 })
+
+describe('TC-02jm AC-5: installments en transactions', () => {
+  const sql8 = readFileSync(new URL('../../supabase/migrations/0008_installments.sql', import.meta.url), 'utf8').toLowerCase()
+  it('plazos de BAC CR con default 1', () => {
+    expect(sql8).toMatch(/add column installments smallint not null default 1/)
+    expect(sql8).toMatch(/check \(installments in \(1, 3, 6, 10, 12\)\)/)
+  })
+  it('más de un plazo solo con tarjeta', () => {
+    expect(sql8).toMatch(/check \(installments = 1 or payment_method = 'credit'\)/)
+  })
+})
