@@ -7,23 +7,27 @@ import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
 import { planLabel } from '../transactions/TransactionForm'
 
-type Fields = { product: string; price: string; remaining: string }
+type Fields = { product: string; price: string; remaining: string; monthly: string }
 
 // TC-04jm-T03 (AC-5): "queda" vacío = el precio; nunca puede superar el precio.
-export function checkDebt({ product, price, remaining }: Fields): { error: string } | { priceCents: number; remainingCents: number } {
+export function checkDebt({ product, price, remaining, monthly }: Fields): { error: string } | { priceCents: number; remainingCents: number; monthlyCents?: number } {
   const priceCents = parseAmountToCents(price)
   const remainingCents = remaining.trim() ? parseAmountToCents(remaining) : priceCents
   if (priceCents === null) return { error: 'Ingresa un precio mayor que cero con hasta 2 decimales.' }
   if (!product.trim()) return { error: 'Ingresa el producto.' }
   if (remainingCents === null) return { error: 'Lo que te queda por pagar debe ser mayor que cero con hasta 2 decimales.' }
   if (remainingCents > priceCents) return { error: 'Lo que te queda por pagar no puede ser mayor que el precio.' }
-  return { priceCents, remainingCents }
+  // TC-05jm-T02: la cuota mensual es opcional; vacía, las cuotas salen del precio y el plazo.
+  if (!monthly.trim()) return { priceCents, remainingCents }
+  const monthlyCents = parseAmountToCents(monthly)
+  if (monthlyCents === null) return { error: 'Lo que pagas por mes debe ser mayor que cero con hasta 2 decimales.' }
+  return { priceCents, remainingCents, monthlyCents }
 }
 
 // TC-04jm-T03: la deuda que ya venía pagando se guarda como una compra con tarjeta más (ver ongoingPurchase).
 export function DebtForm({ onSaved }: { onSaved: () => void }) {
   const toast = useToast()
-  const [fields, setFields] = useState<Fields>({ product: '', price: '', remaining: '' })
+  const [fields, setFields] = useState<Fields>({ product: '', price: '', remaining: '', monthly: '' })
   const [months, setMonths] = useState(1)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -35,7 +39,7 @@ export function DebtForm({ onSaved }: { onSaved: () => void }) {
     const checked = checkDebt(fields)
     setError('error' in checked ? checked.error : '')
     if ('error' in checked) return
-    const { installments, occurredAt } = ongoingPurchase(checked.priceCents, months, checked.remainingCents, new Date())
+    const { installments, occurredAt } = ongoingPurchase(checked.priceCents, months, checked.remainingCents, new Date(), checked.monthlyCents)
     pending.current = true
     setSaving(true)
     // Si falla, el toast avisa y los campos se conservan.
@@ -44,7 +48,7 @@ export function DebtForm({ onSaved }: { onSaved: () => void }) {
     pending.current = false
     setSaving(false)
     if (failed) return
-    setFields({ product: '', price: '', remaining: '' })
+    setFields({ product: '', price: '', remaining: '', monthly: '' })
     setMonths(1)
     onSaved()
   }
@@ -63,6 +67,8 @@ export function DebtForm({ onSaved }: { onSaved: () => void }) {
           </select>
           <label htmlFor="debt-remaining">Te queda por pagar (₡, opcional: vacío = el precio)</label>
           <input id="debt-remaining" inputMode="decimal" value={fields.remaining} onChange={set('remaining')} />
+          <label htmlFor="debt-monthly">Cuánto pagas por mes (₡, opcional)</label>
+          <input id="debt-monthly" inputMode="decimal" value={fields.monthly} onChange={set('monthly')} />
           {error && <p role="alert" className="status-danger">{error}</p>}
           <button type="submit">{saving ? 'Guardando…' : 'Guardar deuda'}</button>
         </fieldset>
