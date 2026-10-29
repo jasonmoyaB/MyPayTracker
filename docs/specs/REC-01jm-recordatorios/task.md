@@ -16,3 +16,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "Cannot find module ./reminders.ts" y SW abría siempre Movimientos; verde 8/8 en reminders.test.ts + pwa.test.ts + push.test.ts intacto; typecheck, test (354) y build OK.
 - [x] REC-01jm-T06 Correcciones de review: recordatorios se cargan solo en su pantalla (si 0010 falta, solo esa pantalla falla); Borrar bloquea doble toque; descripción con maxLength 60 [src/ui/App.tsx, src/ui/reminders/*]
   - Evidencia: rojo 9 fallos (sin carga propia, sin "Cargando recordatorios…"/Reintentar, sin maxLength, App esperaba la lista); verde 3/3 nuevas en RemindersView.test.tsx + App/screenFocus; typecheck, test (357) y build OK.
+- [x] REC-01jm-T07 Prueba + botón "Usar la deuda actual" junto al monto: llena lo que vence el próximo 20 (CRC) [src/ui/reminders/*]
+  - Evidencia: rojo "sin botón Usar la deuda actual"; verde 359/359; typecheck, test y build OK.

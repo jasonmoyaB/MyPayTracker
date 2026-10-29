@@ -86,7 +86,7 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
             </li>
           ))}
         </ul>}
-      <ReminderForm onSaved={reload} />
+      <ReminderForm onSaved={reload} debtCents={card.crcCents} />
     </>
   )
 }
