@@ -6,7 +6,8 @@ const CUT_DAY = 6
 const DUE_DAY = 20
 
 export type PaymentMethod = 'cash' | 'credit'
-export type CreditMovement = SummaryMovement & { paymentMethod: PaymentMethod; occurredAt: string }
+// TC-02jm: `installments` = plazo de tasa cero (1 = un pago); opcional para no tocar a quien no lo usa.
+export type CreditMovement = SummaryMovement & { paymentMethod: PaymentMethod; occurredAt: string; installments?: number }
 
 // Día `day` a las 00:00 CR del mes local de `ref`, o del siguiente si ya pasó `limitDay`. Date.UTC pasa dic → ene.
 function crDay(ref: Date, day: number, limitDay: number): string {
@@ -20,6 +21,28 @@ export function creditDueAt(occurredAt: string): string {
   return crDay(new Date(occurredAt), DUE_DAY, CUT_DAY)
 }
 
+// TC-02jm-T02: cuota k el 20 del mes k después del primer pago; el resto de centavos va en la primera.
+// ponytail: cuotas iguales sin la comisión de BAC por plazo; agregarla si el dev la conoce.
+export function installmentDues(occurredAt: string, amountCents: number, n: number): { dueAt: string; cents: number }[] {
+  const first = new Date(creditDueAt(occurredAt))
+  const base = Math.floor(amountCents / n)
+  return Array.from({ length: n }, (_, k) => {
+    const due = new Date(first)
+    due.setUTCMonth(first.getUTCMonth() + k) // el 20 existe en todos los meses: no hay desborde
+    return { dueAt: due.toISOString(), cents: k === 0 ? amountCents - base * (n - 1) : base }
+  })
+}
+
+// Próximo día de pago (20); el mismo 20 aún cuenta mientras sea ese día en CR.
+export function nextPayDay(now: Date): string {
+  return crDay(now, DUE_DAY, DUE_DAY)
+}
+
+// Lo que vence hasta `at` (incluida). Claves ISO UTC: comparar texto = comparar fechas.
+export function dueBy(scheduleCrc: Record<string, number>, at: string): number {
+  return Object.entries(scheduleCrc).reduce((sum, [dueAt, cents]) => (dueAt <= at ? sum + cents : sum), 0)
+}
+
 // El día de corte aún cuenta como "próximo" mientras sea ese día en CR.
 export function nextCutAt(now: Date): string {
   return crDay(now, CUT_DAY, CUT_DAY)
@@ -29,16 +52,17 @@ export function nextCutAt(now: Date): string {
 // saldo de cuenta (BAL-01jm) no la resta dos veces si es posterior al pago.
 export function splitCredit<T extends CreditMovement>(movements: T[], now: Date) {
   const settled: T[] = []
-  // TC-01jm-T06: dueAt = pago más temprano de lo pendiente; el 20 del calendario puede no tener deuda.
-  const pending = { crcCents: 0, usdCents: 0, dueAt: null as string | null }
+  // TC-01jm-T06: dueAt = pago más temprano de lo pendiente. TC-02jm: scheduleCrc = CRC por fecha de pago.
+  const pending = { crcCents: 0, usdCents: 0, dueAt: null as string | null, scheduleCrc: {} as Record<string, number> }
   for (const m of movements) {
     if (m.paymentMethod !== 'credit') { settled.push(m); continue }
-    const dueAt = creditDueAt(m.occurredAt)
-    if (Date.parse(dueAt) <= now.getTime()) { settled.push({ ...m, occurredAt: dueAt }); continue }
-    // ISO UTC de toISOString: el orden de texto es el orden de fechas.
-    if (pending.dueAt === null || dueAt < pending.dueAt) pending.dueAt = dueAt
-    if (m.currency === 'CRC') pending.crcCents += m.amountCents
-    else pending.usdCents += m.amountCents
+    for (const { dueAt, cents } of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
+      if (Date.parse(dueAt) <= now.getTime()) { settled.push({ ...m, amountCents: cents, occurredAt: dueAt }); continue }
+      if (pending.dueAt === null || dueAt < pending.dueAt) pending.dueAt = dueAt
+      if (m.currency === 'USD') { pending.usdCents += cents; continue }
+      pending.crcCents += cents
+      pending.scheduleCrc[dueAt] = (pending.scheduleCrc[dueAt] ?? 0) + cents
+    }
   }
   return { settled, pending }
 }
