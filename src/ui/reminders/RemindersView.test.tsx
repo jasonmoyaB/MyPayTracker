@@ -72,3 +72,17 @@ describe('REC-01jm-T07/T08: el monto puede ser la deuda actual', () => {
   })
 })
 
+describe('REC-01jm-T09: modal con toda la deuda de la tarjeta', () => {
+  const debt = [{ ...credit('2026-10-10T12:00:00-06:00', 30_000_00), description: 'anillo', installments: 3 },
+    { ...credit('2026-10-11T12:00:00-06:00', 5_000_00), description: 'súper' }]
+  const reminders = [{ id: 'r1', description: 'Spotify', amountCents: 2000_00, currency: 'CRC' as const, day: 15 },
+    { id: 'r2', description: 'Pagar tarjeta', amountCents: 15_000_00, currency: 'CRC' as const, day: 20 }]
+  it('la fila de tarjeta y el recordatorio de tarjeta abren el modal; Spotify no', () => {
+    const html = render(debt, reminders)
+    expect(html.match(/aria-haspopup="dialog"/g)).toHaveLength(2)
+    expect(html).toMatch(/Debes ₡35.000,00/)
+    for (const row of ['<td>20 nov</td><td>₡15.000,00</td>', '<td>20 dic</td><td>₡10.000,00</td>', '<td>20 ene</td><td>₡10.000,00</td>',
+      '<td>anillo</td><td>₡30.000,00</td>', '<td>súper</td><td>₡5.000,00</td>']) expect(html).toMatch(new RegExp(row))
+  })
+})
+

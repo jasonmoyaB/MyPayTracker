@@ -20,3 +20,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "sin botón Usar la deuda actual"; verde 359/359; typecheck, test y build OK.
 - [x] REC-01jm-T08 Prueba + "Usar deuda actual" solo si la descripción habla de la tarjeta (`isCardPayment`, regex) [src/domain/reminder.ts, src/ui/reminders/ReminderForm.tsx]
   - Evidencia: rojo "isCardPayment is not a function"; verde 360/360; typecheck, test y build OK.
+- [x] REC-01jm-T09 Prueba + modal de deuda de tarjeta (total, pago por mes, por producto) en la fila de tarjeta y en recordatorios de tarjeta [src/ui/reminders/*]
+  - Evidencia: rojo "sin aria-haspopup ni tablas de deuda"; verde 361/361; typecheck, test y build OK.

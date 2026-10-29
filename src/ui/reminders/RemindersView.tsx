@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { deleteReminder, listReminders, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { dueOn, nextPayDay } from '../../domain/credit'
-import { nextDueOn } from '../../domain/reminder'
+import { isCardPayment, nextDueOn } from '../../domain/reminder'
 import { formatDay, formatMoney } from '../format'
 import { toUiError } from '../sessionExpiry'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
+import { CardDebtDialog } from './CardDebtDialog'
 import { ReminderForm } from './ReminderForm'
 import '../dashboard/dashboard.css'
 
@@ -68,19 +69,19 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
   return (
     <>
       {cardAmount && (
-        <p style={{ margin: 0 }}><strong>Tarjeta de crédito</strong> · {formatDay(payDay)} · <span className="amount">{cardAmount}</span></p>
+        <CardDebtDialog transactions={transactions} now={now}>
+          <span><strong>Tarjeta de crédito</strong> · {formatDay(payDay)} · <span className="amount">{cardAmount}</span></span>
+        </CardDebtDialog>
       )}
       {reminders.length === 0
         ? <p className="muted" style={{ margin: 0 }}>Aún no tienes recordatorios.</p>
         : <ul className="dashboard-list" aria-label="Pagos mensuales">
           {reminders.map((r) => (
             <li key={r.id}>
-              <span className="dashboard-text">
-                <span>{r.description}</span>
-                {/* nextDueOn da la fecha CR; a las 00:00 CR para que formatDay no la corra un día. */}
-                <span className="muted">Próximo pago {formatDay(`${nextDueOn(r.day, now)}T00:00:00-06:00`)} · día {r.day}</span>
-              </span>
-              <span className="amount">{formatMoney(r.amountCents, r.currency)}</span>
+              {/* REC-01jm-T09: los recordatorios de tarjeta abren el modal con toda la deuda. */}
+              {isCardPayment(r.description)
+                ? <CardDebtDialog transactions={transactions} now={now}><ReminderText r={r} now={now} /></CardDebtDialog>
+                : <ReminderText r={r} now={now} />}
               <button type="button" className="secondary" disabled={deleting} onClick={() => void remove(r.id)}
                 aria-label={`Borrar ${r.description}`}>Borrar</button>
             </li>
@@ -89,4 +90,15 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
       <ReminderForm onSaved={reload} debtCents={card.crcCents} />
     </>
   )
+}
+
+function ReminderText({ r, now }: { r: Reminder; now: Date }) {
+  return <>
+    <span className="dashboard-text">
+      <span>{r.description}</span>
+      {/* nextDueOn da la fecha CR; a las 00:00 CR para que formatDay no la corra un día. */}
+      <span className="muted">Próximo pago {formatDay(`${nextDueOn(r.day, now)}T00:00:00-06:00`)} · día {r.day}</span>
+    </span>
+    <span className="amount">{formatMoney(r.amountCents, r.currency)}</span>
+  </>
 }
