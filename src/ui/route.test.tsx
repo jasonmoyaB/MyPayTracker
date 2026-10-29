@@ -16,7 +16,10 @@ describe('AC-1: AppShell', () => {
   it('nav con nombre accesible y los tres enlaces por hash', () => {
     expect(html).toMatch(/<nav[^>]*aria-label="Secciones"/)
     for (const href of ['#/resumen', '#/movimientos', '#/cuenta']) expect(html).toContain(`href="${href}"`)
-    for (const text of ['Resumen', 'Movimientos', 'Cuenta']) expect(html).toContain(`>${text}</a>`)
+    for (const text of ['Resumen', 'Movimientos', 'Cuenta']) expect(html).toContain(`<span>${text}</span></a>`)
+  })
+  it('NAV-01jm AC-1: cada enlace lleva un icono decorativo', () => {
+    expect(html.match(/<a[^>]*><svg[^>]*aria-hidden="true"/g)).toHaveLength(3)
   })
   it('solo la sección activa lleva aria-current="page"', () => {
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)

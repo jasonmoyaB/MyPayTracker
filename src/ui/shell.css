@@ -6,19 +6,24 @@
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
 }
 .app-nav a {
-  flex: 1; min-height: 44px; display: grid; place-items: center; padding: 8px 12px; border-radius: 8px;
+  flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 12px; border-radius: 8px;
   color: var(--color-text-secondary); font-weight: 600; text-decoration: none;
 }
+.app-nav svg { width: 20px; height: 20px; flex-shrink: 0; }
 .app-nav a:hover { color: var(--color-text); }
 .app-nav a[aria-current="page"] { color: var(--color-primary); background: var(--color-primary-soft); }
 
-/* Móvil: barra fija abajo; el main reserva su alto para no tapar contenido (ni los avisos). */
+/* NAV-01jm-T01 móvil: barra de app pegada al borde, icono sobre etiqueta; el main reserva su alto. */
 @media (max-width: 640px) {
   .app-shell { padding-bottom: calc(64px + 24px + env(safe-area-inset-bottom, 0px)); }
   .app-nav {
-    position: fixed; inset-inline: 0; bottom: 0; z-index: 5; border-radius: 0;
-    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 5; border-radius: 0; gap: 0;
+    border-width: 1px 0 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
   }
+  .app-nav a { flex-direction: column; gap: 4px; min-height: 52px; padding: 4px; font-size: 12px; }
+  .app-nav svg { width: 24px; height: 24px; }
+  .app-nav a[aria-current="page"] { background: none; }
   /* (0,2,0): gana a toast.css sin depender del orden de carga; solo aplica con la barra montada. */
   .app-shell ~ .toasts { bottom: calc(64px + 16px + env(safe-area-inset-bottom, 0px)); }
 }
