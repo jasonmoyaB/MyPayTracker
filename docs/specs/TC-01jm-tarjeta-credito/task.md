@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. Regla ponytail: reutilizar lo existente, sin 
   - Evidencia: rojo 2 fallos en transactions.test.ts (select sin payment_method, insert sin payment_method); verde 4/4; fixtures con paymentMethod cash y el formulario guarda cash hasta T04; typecheck y test OK (265).
 - [x] TC-01jm-T04 Prueba + select "Método de pago" (solo gasto) y etiqueta "Tarjeta · se paga el …" en la fila [src/ui/transactions/*] (AC-4) (depende de T02, T03)
   - Evidencia: rojo 3 fallos (PaymentField undefined, formatDay is not a function); verde 16/16 en transactions; typecheck y test OK (268).
-- [ ] TC-01jm-T05 Prueba + `summaryFor` con `splitCredit`, `CreditCard` (corte, pago, deuda, límite, quiebra) y `AffordCheck` con el límite [src/ui/dashboard/*] (AC-2, AC-3) (depende de T02, T03)
+- [x] TC-01jm-T05 Prueba + `summaryFor` con `splitCredit`, `CreditCard` (corte, pago, deuda, límite, quiebra) y `AffordCheck` con el límite [src/ui/dashboard/*] (AC-2, AC-3) (depende de T02, T03)
+  - Evidencia: rojo 2 fallos en DashboardView.test.tsx (no aparecía ₡150 000 ni "Puedes gastar"); verde 10/10 (AC-2 deuda, fechas y "te faltarían ₡50 000"; AC-3 saldo −₡50 000); typecheck y test OK (271).

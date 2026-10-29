@@ -1,12 +1,15 @@
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
+import { splitCredit } from '../../domain/credit'
 import { summarize, summarizeFromAccount, type Summary } from '../../domain/summary'
 import { formatMoney } from '../format'
 
 // BAL-01jm: con saldo de cuenta parte de ahí (el salario ya está dentro). Sin él: salario + movimientos.
-export function summaryFor({ account, salaryCents }: Settings, transactions: Transaction[]): Summary | null {
-  if (account) return summarizeFromAccount(account.cents, account.asOf, transactions)
-  return salaryCents === null ? null : summarize(salaryCents, transactions)
+// TC-01jm-T05: las compras con tarjeta cuentan desde su día de pago, no desde la compra.
+export function summaryFor({ account, salaryCents }: Settings, transactions: Transaction[], now = new Date()): Summary | null {
+  const { settled } = splitCredit(transactions, now)
+  if (account) return summarizeFromAccount(account.cents, account.asOf, settled)
+  return salaryCents === null ? null : summarize(salaryCents, settled)
 }
 
 export function BalanceCard({ summary }: { summary: Summary | null }) {

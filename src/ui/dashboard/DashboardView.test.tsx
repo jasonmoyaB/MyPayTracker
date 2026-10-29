@@ -67,3 +67,25 @@ describe('AC-9: estados vacíos', () => {
     expect(html).not.toContain('¿Puedo comprar esto?')
   })
 })
+
+describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
+  // Compra el 10 nov (después del corte) → se paga el 20 dic.
+  const credit = [tx('2026-11-10T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+  const salary = { salaryCents: 150_000_00, account: null }
+  it('AC-2: antes del pago: saldo intacto, deuda, fechas y aviso de quiebra', () => {
+    const html = render({ settings: salary, transactions: credit })
+    expect(html).toContain(formatMoney(150_000_00, 'CRC'))
+    expect(html).toContain(formatMoney(200_000_00, 'CRC'))
+    expect(html).toContain(`Al pagar la tarjeta te faltarían ${formatMoney(50_000_00, 'CRC')}`)
+    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 nov']) expect(html).toContain(day)
+  })
+  it('AC-3: desde el 20 la compra es gasto: saldo −₡50 000 y sin deuda', () => {
+    const html = render({ settings: salary, transactions: credit, now: new Date('2026-12-21T12:00:00-06:00') })
+    expect(html).toContain(formatMoney(-50_000_00, 'CRC'))
+    expect(html).not.toContain('te faltarían')
+  })
+  it('con límite positivo dice cuánto se puede gastar', () => {
+    const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })
+    expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')} sin quedar en quiebra`)
+  })
+})
