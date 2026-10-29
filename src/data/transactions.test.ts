@@ -52,3 +52,11 @@ describe('TC-02jm AC-5: installments en transactions', () => {
     expect(sql8).toMatch(/check \(installments = 1 or payment_method = 'credit'\)/)
   })
 })
+
+describe('TC-04jm-T01: lo que queda de un plazo cabe en 1–12 cuotas', () => {
+  it('reemplaza el check de plazos por un rango', () => {
+    const sql9 = readFileSync(new URL('../../supabase/migrations/0009_installments_restantes.sql', import.meta.url), 'utf8').toLowerCase()
+    expect(sql9).toMatch(/drop constraint transactions_installments_check/)
+    expect(sql9).toMatch(/add constraint transactions_installments_check check \(installments between 1 and 12\)/)
+  })
+})
