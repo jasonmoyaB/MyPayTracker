@@ -38,9 +38,9 @@ describe('TC-05jm-T03: productos en deuda y total del 20', () => {
     const html = renderToStaticMarkup(<ToastProvider>
       <CreditCard pending={{ ...pending, crcCents: 65_000_00 }} limitCents={null} salaryCents={null} now={new Date('2026-10-29T12:00:00-06:00')}
         onSaved={() => {}} dueNextCents={15_000_00}
-        purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00 }]} />
+        purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z' }]} />
     </ToastProvider>)
     expect(html).toContain('Total a pagar el 20 nov: ₡15')
-    expect(html).toMatch(/<li[^>]*>Tele: faltan ₡60.000,00 · 6 cuotas, próxima de ₡10.000,00<\/li>/)
+    expect(html).toMatch(/<li[^>]*>Tele: faltan ₡60.000,00 · 6 cuotas, próxima ₡10.000,00 el 20 nov<\/li>/)
   })
 })

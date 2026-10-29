@@ -142,6 +142,6 @@ describe('TC-05jm-T01: cuota mensual y productos en deuda', () => {
       { ...m('2026-09-01T12:00:00-06:00', 5_000_00), description: 'Vieja' },
       { ...m('2026-10-25T12:00:00-06:00', 5_000_00, 'cash'), description: 'Súper' },
     ], now)
-    expect(list).toEqual([{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00 }])
+    expect(list).toEqual([{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z' }])
   })
 })

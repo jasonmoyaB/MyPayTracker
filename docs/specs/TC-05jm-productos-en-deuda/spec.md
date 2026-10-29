@@ -4,7 +4,7 @@ En el card "Tarjeta de crédito" el dev ve el total de la deuda, pero no de qué
 próximo 20. Quiere ver cada producto con lo que le falta y, al cargar una deuda, poner la cuota que ya paga al mes.
 ## Requisitos
 - El card lista cada compra con tarjeta que aún tiene cuotas por vencer: producto, lo que falta pagar, cuántas cuotas
-  quedan y de cuánto es la próxima.
+  quedan y la próxima: "próxima ₡10 000 el 20 nov".
 - El card muestra "Total a pagar el 20 <mes>": la suma de lo que vence el próximo día de pago (solo CRC).
 - "Agregar deuda que ya tenías" suma "Cuánto pagas por mes (opcional)". Si se llena, las cuotas restantes son
   lo que queda ÷ cuota (redondeo hacia arriba, máximo 12); si no, se calcula con precio ÷ plazo como en TC-04jm.

@@ -25,7 +25,7 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
       <SalaryLine scheduleCrc={pending.scheduleCrc} salaryCents={salaryCents} />
       {purchases.length > 0 && <ul style={{ margin: 0, paddingLeft: 20 }}>
         {purchases.map((p, i) => <li key={i} className="amount">
-          {p.description}: faltan {formatMoney(p.remainingCents, p.currency)} · {p.count} {p.count === 1 ? 'cuota' : 'cuotas'}, próxima de {formatMoney(p.nextCents, p.currency)}
+          {p.description}: faltan {formatMoney(p.remainingCents, p.currency)} · {p.count} {p.count === 1 ? 'cuota' : 'cuotas'}, próxima {formatMoney(p.nextCents, p.currency)} el {formatDay(p.nextDueAt)}
         </li>)}
       </ul>}
       <DebtForm onSaved={onSaved} />
