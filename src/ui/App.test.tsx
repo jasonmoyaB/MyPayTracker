@@ -41,7 +41,7 @@ describe('AC-1: cada sección muestra su pantalla', () => {
 
 describe('MOV-01jm: el filtro vive en el shell', () => {
   const gasto = { id: '1', amountCents: 500, currency: 'CRC' as const, direction: 'out' as const, source: 'manual' as const,
-    description: 'Café', occurredAt: '2026-10-28T13:45:00-06:00' }
+    description: 'Café', occurredAt: '2026-10-28T13:45:00-06:00', paymentMethod: 'cash' as const }
   const withGasto = { ...data, transactions: [gasto] }
   const onlyIncome = { from: null, to: null, direction: 'in' as const }
   it('AC-8: Movimientos muestra el filtro que recibe de App', () => {

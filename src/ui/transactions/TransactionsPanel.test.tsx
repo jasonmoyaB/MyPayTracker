@@ -9,7 +9,7 @@ vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
 
 const transaction: Transaction = {
   id: '1', amountCents: 349050, currency: 'CRC', direction: 'out', source: 'manual',
-  description: 'Compra semanal', occurredAt: '2026-10-28T13:45:00-06:00',
+  description: 'Compra semanal', occurredAt: '2026-10-28T13:45:00-06:00', paymentMethod: 'cash',
 }
 const income: Transaction = { ...transaction, id: '2', direction: 'in', source: 'email_regex', description: 'Salario' }
 const all: MovementFilter = { from: null, to: null, direction: 'all' }

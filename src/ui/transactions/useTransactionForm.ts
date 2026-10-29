@@ -35,7 +35,7 @@ export function useTransactionForm(onSaved: () => void) {
     pending.current = true
     setSaving(true)
     // Si falla, el toast avisa y los campos se conservan.
-    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt }),
+    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt, paymentMethod: 'cash' }),
       toast, 'Movimiento guardado')
     pending.current = false
     setSaving(false)

@@ -1,5 +1,6 @@
 import type { Currency } from '../domain/bankEmail'
 import type { Direction } from '../domain/balance'
+import type { PaymentMethod } from '../domain/credit'
 import { centsToNumeric, numericToCents } from '../domain/money'
 import { supabase } from './supabase'
 
@@ -13,15 +14,17 @@ export type Transaction = {
   source: Source
   description: string
   occurredAt: string
+  // TC-01jm-T03: credit difiere el gasto a su día de pago (ver domain/credit.ts).
+  paymentMethod: PaymentMethod
 }
 
-export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt'>
+export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt' | 'paymentMethod'>
 
 // RLS ya filtra por user_id; más recientes primero.
 export async function listTransactions(): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
-    .select('id, amount, currency, direction, source, description, occurred_at')
+    .select('id, amount, currency, direction, source, description, occurred_at, payment_method')
     .order('occurred_at', { ascending: false })
   if (error) throw error
   return data.map((r) => ({
@@ -32,6 +35,7 @@ export async function listTransactions(): Promise<Transaction[]> {
     source: r.source,
     description: r.description,
     occurredAt: r.occurred_at,
+    paymentMethod: r.payment_method,
   }))
 }
 
@@ -44,6 +48,7 @@ export async function addManualTransaction(t: NewTransaction): Promise<void> {
     source: 'manual',
     description: t.description,
     occurred_at: t.occurredAt,
+    payment_method: t.paymentMethod,
   })
   if (error) throw error
 }
