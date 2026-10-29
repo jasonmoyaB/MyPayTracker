@@ -87,5 +87,5 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   )
   if (route === 'cuenta') return <AccountView settings={data.settings} onSettingsSaved={reload} />
   if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
-  return <DashboardView settings={data.settings} transactions={data.transactions} />
+  return <DashboardView settings={data.settings} transactions={data.transactions} reload={reload} />
 }

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { Transaction } from '../../data/transactions'
 import { formatDate, formatMoney } from '../format'
+import { ToastProvider } from '../toast/ToastProvider'
 import { DashboardView } from './DashboardView'
 
 const now = new Date('2026-11-15T18:00:00Z')
@@ -22,7 +23,7 @@ const transactions = [
 ]
 const settings = { salaryCents: 100_000_00, account: null }
 const render = (props: Partial<Parameters<typeof DashboardView>[0]> = {}) =>
-  renderToStaticMarkup(<DashboardView settings={settings} transactions={transactions} now={now} {...props} />)
+  renderToStaticMarkup(<ToastProvider><DashboardView settings={settings} transactions={transactions} now={now} {...props} /></ToastProvider>)
 
 describe('DASH-01jm: Resumen', () => {
   const html = render()

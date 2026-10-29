@@ -10,9 +10,9 @@ import { RecentMovements } from './RecentMovements'
 import { TopExpenses } from './TopExpenses'
 import './dashboard.css'
 
-type Props = { settings: Settings; transactions: Transaction[]; now?: Date }
+type Props = { settings: Settings; transactions: Transaction[]; now?: Date; reload?: () => void }
 
-export function DashboardView({ settings, transactions, now = new Date() }: Props) {
+export function DashboardView({ settings, transactions, now = new Date(), reload = () => {} }: Props) {
   const { settled, pending } = splitCredit(transactions, now)
   const summary = summaryFor(settings, settled)
   // TC-02jm-T05: hoy solo resta lo que vence el próximo 20; las cuotas posteriores salen del salario de ese mes.
@@ -20,7 +20,7 @@ export function DashboardView({ settings, transactions, now = new Date() }: Prop
   return (
     <div className="dashboard">
       <BalanceCard summary={summary} />
-      <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} />
+      <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} onSaved={reload} />
       <MonthCards stats={monthStats(transactions, now)} />
       <TopExpenses items={topExpenses(transactions, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />

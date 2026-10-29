@@ -29,7 +29,7 @@ describe('AC-1: al cambiar de sección', () => {
   const firstH2 = (html: string) => html.match(/<h2[^>]*>/)?.[0]
   const settings = { salaryCents: null, account: null }
   it.each([
-    ['Resumen', <DashboardView settings={settings} transactions={[]} />],
+    ['Resumen', <ToastProvider><DashboardView settings={settings} transactions={[]} /></ToastProvider>],
     ['Movimientos', <TransactionsPanel transactions={[]} filter={{ from: null, to: null, direction: 'all' }}
       onFilterChange={() => {}} onTransactionSaved={() => {}} />],
     ['Cuenta', <ToastProvider><AccountView settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
@@ -48,9 +48,9 @@ describe('avisos en móvil', () => {
 
 describe('AC-2: saldo negativo', () => {
   it('aviso neutro, válido con saldo de cuenta o salario', () => {
-    const html = renderToStaticMarkup(<DashboardView settings={{ salaryCents: 0, account: null }}
+    const html = renderToStaticMarkup(<ToastProvider><DashboardView settings={{ salaryCents: 0, account: null }}
       transactions={[{ id: '1', occurredAt: '2026-11-01T10:00:00-06:00', amountCents: 100, direction: 'out',
-        description: 'x', currency: 'CRC', source: 'manual', paymentMethod: 'cash', installments: 1 }]} />)
+        description: 'x', currency: 'CRC', source: 'manual', paymentMethod: 'cash', installments: 1 }]} /></ToastProvider>)
     expect(html).toContain('tus gastos superan tu saldo')
     expect(html).not.toContain('salario más tus ingresos')
   })
