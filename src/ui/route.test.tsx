@@ -5,7 +5,7 @@ import { AppShell } from './AppShell'
 
 describe('AC-1: parseRoute', () => {
   it.each([
-    ['#/resumen', 'resumen'], ['#/movimientos', 'movimientos'], ['#/cuenta', 'cuenta'], ['#/opciones', 'opciones'],
+    ['#/resumen', 'resumen'], ['#/movimientos', 'movimientos'], ['#/cuenta', 'cuenta'], ['#/opciones', 'opciones'], ['#/recordatorios', 'recordatorios'],
     ['', 'resumen'], ['#', 'resumen'], ['#/otra', 'resumen'], ['#/cuenta/extra', 'resumen'],
   ])('%s → %s', (hash, route) => expect(parseRoute(hash)).toBe(route))
 })
@@ -15,11 +15,11 @@ describe('AC-1: AppShell', () => {
 
   it('nav con nombre accesible y los tres enlaces por hash', () => {
     expect(html).toMatch(/<nav[^>]*aria-label="Secciones"/)
-    for (const href of ['#/resumen', '#/movimientos', '#/cuenta', '#/opciones']) expect(html).toContain(`href="${href}"`)
-    for (const text of ['Resumen', 'Movimientos', 'Cuenta', 'Opciones']) expect(html).toContain(`<span>${text}</span></a>`)
+    for (const href of ['#/resumen', '#/movimientos', '#/recordatorios', '#/cuenta', '#/opciones']) expect(html).toContain(`href="${href}"`)
+    for (const text of ['Resumen', 'Movimientos', 'Recordatorios', 'Cuenta', 'Opciones']) expect(html).toContain(`<span>${text}</span></a>`)
   })
   it('NAV-01jm AC-1: cada enlace lleva un icono decorativo', () => {
-    expect(html.match(/<a[^>]*><svg[^>]*aria-hidden="true"/g)).toHaveLength(4)
+    expect(html.match(/<a[^>]*><svg[^>]*aria-hidden="true"/g)).toHaveLength(5)
   })
   it('solo la sección activa lleva aria-current="page"', () => {
     expect(html.match(/aria-current="page"/g)).toHaveLength(1)

@@ -10,5 +10,6 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "Cannot find module ./reminder" y "dueOn is not a function"; verde 9/9 nuevas en reminder.test.ts y credit.test.ts; typecheck y test OK (333).
 - [x] REC-01jm-T03 Prueba + `listReminders`/`addReminder`/`deleteReminder` [src/data/reminders.ts]
   - Evidencia: rojo "Cannot find module ./reminders"; verde 4/4 nuevas en src/data/reminders.test.ts; typecheck y test OK (337).
-- [ ] REC-01jm-T04 Prueba + pantalla Recordatorios: ruta, pestaña, fila de tarjeta, lista, formulario y borrar [src/ui/reminders/*, src/ui/route.ts, src/ui/AppShell.tsx, src/ui/App.tsx] (AC-1, AC-4)
+- [x] REC-01jm-T04 Prueba + pantalla Recordatorios: ruta, pestaña, fila de tarjeta, lista, formulario y borrar [src/ui/reminders/*, src/ui/route.ts, src/ui/AppShell.tsx, src/ui/App.tsx] (AC-1, AC-4)
+  - Evidencia: rojo 4 fallos (ruta, 5 enlaces/íconos, pantalla en App) y "Cannot find module ./ReminderForm"; verde 6/6 en RemindersView.test.tsx + route/App/screenFocus; typecheck, test (346) y build OK.
 - [ ] REC-01jm-T05 Prueba + `notifyReminders` con reclamo atómico, antes del sync de Gmail; SW abre la URL del aviso [supabase/functions/sync-bac-emails/*, public/sw.js] (AC-2–AC-5)

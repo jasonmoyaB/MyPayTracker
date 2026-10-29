@@ -5,11 +5,13 @@ import { showScreenTop } from './route'
 import { AccountView } from './account/AccountView'
 import { DashboardView } from './dashboard/DashboardView'
 import { ToastProvider } from './toast/ToastProvider'
+import { RemindersView } from './reminders/RemindersView'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
 vi.mock('../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
 vi.mock('../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
 vi.mock('../data/transactions', () => ({ addManualTransaction: vi.fn() }))
+vi.mock('../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn() }))
 
 // DASH-01jm-T06: correcciones de revisión.
 describe('AC-1: al cambiar de sección', () => {
@@ -32,6 +34,7 @@ describe('AC-1: al cambiar de sección', () => {
     ['Resumen', <ToastProvider><DashboardView settings={settings} transactions={[]} /></ToastProvider>],
     ['Movimientos', <TransactionsPanel transactions={[]} filter={{ from: null, to: null, direction: 'all' }}
       onFilterChange={() => {}} onTransactionSaved={() => {}} />],
+    ['Recordatorios', <ToastProvider><RemindersView reminders={[]} transactions={[]} reload={() => {}} /></ToastProvider>],
     ['Cuenta', <ToastProvider><AccountView settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
   ])('el primer h2 de %s es enfocable por código (tabindex -1)', (_, screen) => {
     expect(firstH2(renderToStaticMarkup(screen))).toContain('tabindex="-1"')

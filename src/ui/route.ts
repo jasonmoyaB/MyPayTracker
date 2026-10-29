@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export const ROUTES = ['resumen', 'movimientos', 'cuenta', 'opciones'] as const
+export const ROUTES = ['resumen', 'movimientos', 'recordatorios', 'cuenta', 'opciones'] as const
 export type Route = (typeof ROUTES)[number]
 
 // Hash desconocido o vacío → Resumen (sección inicial).

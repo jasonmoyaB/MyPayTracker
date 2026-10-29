@@ -21,7 +21,9 @@
     position: fixed; inset-inline: 0; bottom: 0; z-index: 5; border-radius: 0; gap: 0;
     border-width: 1px 0 0; padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
   }
-  .app-nav a { flex-direction: column; gap: 4px; min-height: 52px; padding: 4px; font-size: 12px; }
+  /* REC-01jm-T04: con 5 pestañas "Recordatorios" es la etiqueta más larga; en pantallas muy angostas se corta con … */
+  .app-nav a { flex-direction: column; gap: 4px; min-height: 52px; min-width: 0; padding: 4px 2px; font-size: 11px; }
+  .app-nav span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .app-nav svg { width: 24px; height: 24px; }
   .app-nav a[aria-current="page"] { background: none; }
   /* (0,2,0): gana a toast.css sin depender del orden de carga; solo aplica con la barra montada. */
