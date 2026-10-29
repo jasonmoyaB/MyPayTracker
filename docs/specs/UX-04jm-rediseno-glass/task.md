@@ -10,5 +10,6 @@ spec.md + plan.md de esta carpeta. pnpm, Vitest. Sin dependencias nuevas.
   - Evidencia: 313 tests (route y screenFocus siguen verdes); typecheck OK.
 - [x] UX-04jm-T03 Resumen en bento denso con saldo protagonista y entrada escalonada; prueba de la cuadrícula [src/ui/dashboard/*] (AC-2, AC-4)
   - Evidencia: bento.test.ts 3/3 (dense, filas de 6, recientes a fila entera sin compra); 316 tests; typecheck OK.
-- [ ] UX-04jm-T04 Movimientos, cuenta, opciones, tabla, toasts, login y error con el mismo lenguaje; sin estilos en línea repetidos [src/ui/**] (AC-3, AC-5)
+- [x] UX-04jm-T04 Movimientos, cuenta, opciones, tabla, toasts, login y error con el mismo lenguaje; sin estilos en línea repetidos [src/ui/**] (AC-3, AC-5)
+  - Evidencia: 0 `style=` en src/ui (fuera de tests); 316 tests; typecheck y build OK.
 - [ ] UX-04jm-T05 Documentar tokens y fuente [docs/design/paleta-de-colores.md, docs/design/fundamentos-ui-ux.md]

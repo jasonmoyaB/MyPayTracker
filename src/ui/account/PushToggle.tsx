@@ -93,7 +93,7 @@ export function PushToggleView({ status, busy, onToggle }: ViewProps) {
   return (
     <section className="card" aria-labelledby="push-title">
       <h2 id="push-title">Notificaciones</h2>
-      <p className="muted" role="status" style={{ margin: 0 }}>{STATUS_TEXT[status]}</p>
+      <p className="muted" role="status">{STATUS_TEXT[status]}</p>
       {canToggle && (
         <div>
           <button type="button" className={status === 'on' ? 'secondary' : undefined} disabled={busy}

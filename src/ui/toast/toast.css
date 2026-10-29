@@ -6,12 +6,13 @@
 .toasts > div { display: grid; gap: 8px; justify-items: center; }
 .toast {
   pointer-events: auto; display: flex; align-items: center; gap: 12px;
-  max-width: min(480px, 100%); padding: 8px 8px 8px 16px; border-radius: 12px;
+  max-width: min(480px, 100%); padding: 6px 6px 6px 16px; border-radius: var(--radius-md);
   color: var(--color-text); background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border); border-left: 4px solid var(--toast-accent); --toast-accent: var(--color-success);
-  box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  animation: rise 320ms var(--ease) both;
 }
 .toast-error { --toast-accent: var(--color-danger); }
 .toast span { overflow-wrap: anywhere; }

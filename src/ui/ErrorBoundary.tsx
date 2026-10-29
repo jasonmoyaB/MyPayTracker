@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
 
 export function ErrorScreen({ title, detail }: { title: string; detail: string }) {
   return (
-    <main style={{ maxWidth: 464, minHeight: '100dvh', alignContent: 'center' }}>
+    <main className="center-screen">
       <section className="card" role="alert">
         <h1>{title}</h1>
         <p className="muted">{detail}</p>

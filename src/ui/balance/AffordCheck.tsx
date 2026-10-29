@@ -28,7 +28,7 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
   }
 
   return (
-    <form className="afford" onSubmit={onSubmit}>
+    <form className="stack" onSubmit={onSubmit}>
       <h3>¿Puedo comprar esto?</h3>
       <div className="inline-form">
         <label>

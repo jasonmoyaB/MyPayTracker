@@ -75,11 +75,11 @@ export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit
   return (
     <form className="card" onSubmit={submit} aria-labelledby="cp-title" aria-busy={pending}>
       <h2 id="cp-title">Cambiar contraseña</h2>
-      <fieldset disabled={pending} style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 12 }}>
+      <fieldset className="stack" disabled={pending}>
       {FIELDS.map(({ field, label, autoComplete }) => {
         const errorId = `cp-${field}-error`
         return (
-          <div key={field} style={{ display: 'grid', gap: 4 }}>
+          <div key={field} className="stack-tight">
             <PasswordInput id={`cp-${field}`} label={label} autoComplete={autoComplete} value={values[field]}
               onChange={(e) => onChange(field, e.target.value)}
               aria-invalid={errors[field] ? true : undefined} aria-describedby={errors[field] ? errorId : undefined} />
@@ -88,7 +88,7 @@ export function ChangePasswordForm({ values, errors, pending, onChange, onSubmit
         )
       })}
       </fieldset>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div className="actions">
         <button type="submit" disabled={pending}>{pending ? 'Guardando…' : 'Guardar'}</button>
         {onBack && <button type="button" className="secondary" onClick={onBack} disabled={pending}>Volver</button>}
       </div>

@@ -185,7 +185,13 @@ button.secondary:hover { background: var(--color-primary-soft); border-color: va
 .inline-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
 .inline-form label { flex: 1 1 160px; }
 .inline-form > [role="alert"] { flex-basis: 100%; margin: 0; }
-.afford { display: grid; gap: 12px; min-width: 0; }
+/* Pilas verticales y filas de botones sin estilos en línea. */
+.stack { display: grid; gap: 12px; min-width: 0; border: 0; padding: 0; margin: 0; }
+.stack-tight { display: grid; gap: 6px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.money-value { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+label > input, label > select { width: 100%; min-width: 0; }
+.login-logo { width: 220px; max-width: 100%; height: auto; justify-self: center; border-radius: var(--radius-md); }
 
 .table-scroll { overflow-x: auto; }
 .table-scroll table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
