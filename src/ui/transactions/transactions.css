@@ -15,9 +15,11 @@
 .movement-filters { display: grid; gap: 12px; min-width: 0; }
 .filter-presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .filter-presets button[aria-pressed="true"] { background: var(--color-primary); color: var(--color-on-primary); }
-.filter-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.filter-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 12px; }
 .filter-field { display: grid; gap: 4px; align-content: start; min-width: 0; }
 .filter-field input, .filter-field select { width: 100%; min-width: 0; }
+/* UX-03jm-T02: iOS da al date un ancho propio que ignora width y lo encima sobre el campo vecino. */
+.filter-field input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-height: 44px; text-align: left; }
 .filter-field p { margin: 0; font-size: 14px; }
 .filter-totals { display: grid; gap: 8px; }
 .filter-totals dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 0; }

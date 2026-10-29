@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { MovementFilter } from '../../domain/movementFilter'
@@ -59,5 +60,16 @@ describe('AC-4: totales del filtro', () => {
     const html = renderToStaticMarkup(<FilterTotals totals={{ CRC: zero, USD: { incomeCents: 500, expenseCents: 0, netCents: 500 } }} />)
     expect(html).toContain(`+${formatMoney(500, 'USD')}`)
     expect(html).toContain('Dólares')
+  })
+})
+
+describe('UX-03jm AC-2/AC-3: Desde y Hasta no se solapan en el teléfono', () => {
+  // Vitest vacía los .css importados; se lee del disco.
+  const css = readFileSync(new URL('./transactions.css', import.meta.url), 'utf8')
+  it('columnas nunca más anchas que el contenedor', () => {
+    expect(css).toMatch(/\.filter-fields\s*\{[^}]*minmax\(min\(100%, \d+px\), 1fr\)/)
+  })
+  it('el date de iOS pierde su ancho nativo', () => {
+    expect(css).toMatch(/\.filter-field input\[type="date"\]\s*\{[^}]*-webkit-appearance: none[^}]*appearance: none/)
   })
 })
