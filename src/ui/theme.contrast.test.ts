@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import css from './theme.css?raw'
 
@@ -60,9 +61,16 @@ describe('AC-1/AC-3: vidrio en ambos temas y fallback opaco', () => {
   it('el tema oscuro del sistema repite los tokens del oscuro explícito', () => {
     expect(block(':root:not([data-theme="light"])')).toEqual(block(':root[data-theme="dark"]'))
   })
-  it('las superficies usan backdrop-filter con prefijo webkit', () => {
-    expect(css).toMatch(/-webkit-backdrop-filter: blur\(var\(--glass-blur\)\)/)
-    expect(css).toMatch(/\bbackdrop-filter: blur\(var\(--glass-blur\)\)/)
+  // PERF-01jm: desenfocar tarjetas altas re-pinta miles de píxeles en cada frame de scroll (36 ms/frame).
+  it('las tarjetas no desenfocan y el fondo no es fijo', () => {
+    // Declaraciones, no la condición del @supports de abajo.
+    expect(css).not.toMatch(/[;{]\s*(-webkit-)?backdrop-filter:/)
+    expect(css).not.toMatch(/background-attachment: fixed/)
+  })
+  it('la navegación sí desenfoca, con prefijo webkit', () => {
+    const shell = readFileSync(new URL('./shell.css', import.meta.url), 'utf8')
+    expect(shell).toMatch(/-webkit-backdrop-filter: blur\(var\(--glass-blur\)\)/)
+    expect(shell).toMatch(/\bbackdrop-filter: blur\(var\(--glass-blur\)\)/)
   })
   it('sin soporte o con menos transparencia vuelven a la superficie opaca', () => {
     expect(css).toContain('@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))')

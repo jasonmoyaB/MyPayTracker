@@ -27,7 +27,6 @@
   --glass-bg: rgb(255 255 255 / 0.72); --glass-bg-strong: rgb(255 255 255 / 0.86);
   --glass-border: rgb(255 255 255 / 0.7); --glass-highlight: rgb(255 255 255 / 0.9);
   --glass-shadow: 0 1px 2px rgb(32 40 36 / 4%), 0 12px 32px -8px rgb(32 40 36 / 12%);
-  --grain-opacity: 0.05;
   /* UX-04jm: forma y ritmo compartidos (fundamentos-ui-ux.md §5). */
   --radius-lg: 20px; --radius-md: 12px; --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -60,7 +59,6 @@
   --glass-bg: rgb(26 32 29 / 0.62); --glass-bg-strong: rgb(26 32 29 / 0.8);
   --glass-border: rgb(255 255 255 / 0.08); --glass-highlight: rgb(255 255 255 / 0.06);
   --glass-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 40px -12px rgb(0 0 0 / 55%);
-  --grain-opacity: 0.07;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -89,7 +87,6 @@
     --glass-bg: rgb(26 32 29 / 0.62); --glass-bg-strong: rgb(26 32 29 / 0.8);
     --glass-border: rgb(255 255 255 / 0.08); --glass-highlight: rgb(255 255 255 / 0.06);
     --glass-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 40px -12px rgb(0 0 0 / 55%);
-    --grain-opacity: 0.07;
   }
 }
 
@@ -99,21 +96,17 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  /* UX-04jm: tres manchas fijas; el vidrio necesita algo detrás que desenfocar. */
+  /* UX-04jm: tres manchas suaves. PERF-01jm: grano como capa del fondo (opacidad dentro del SVG) y sin
+     `fixed`: una capa fija sobre la página obliga a repintar en cada frame de scroll. */
   background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E"),
     radial-gradient(42rem 32rem at -5% -10%, var(--blob-1), transparent 70%),
     radial-gradient(38rem 30rem at 105% 30%, var(--blob-2), transparent 70%),
     radial-gradient(34rem 26rem at 30% 110%, var(--blob-3), transparent 70%),
     var(--color-bg);
-  background-attachment: fixed;
   color: var(--color-text);
   font: 16px/1.5 "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-/* Grano muy tenue: quita el aspecto de degradado plano sin tocar el contraste del texto. */
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px; }
@@ -129,12 +122,12 @@ h3 { font-size: 16px; }
 .card { border-radius: var(--radius-lg); padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
 /* La cuadrícula ya separa; así no hace falta `margin: 0` en cada párrafo. */
 .card p { margin: 0; }
-/* UX-01jm-T01: superficies de vidrio; sin vidrio dentro de vidrio para no encarecer el desenfoque. */
+/* UX-01jm-T01: superficies de vidrio. PERF-01jm: sin backdrop-filter; detrás solo hay un degradado suave
+   (el desenfoque no se ve) y re-desenfocar tarjetas altas costaba ~36 ms por frame de scroll.
+   El desenfoque queda para capas flotantes con contenido debajo (navegación y toasts). */
 .card, dialog {
   background: var(--glass-bg); border: 1px solid var(--glass-border);
   box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
 }
 /* UX-04jm: entrada discreta; cada pantalla vuelve a montar sus tarjetas. */
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
