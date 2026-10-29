@@ -3,6 +3,7 @@ import { addReminder, type NewReminder } from '../../data/reminders'
 import type { Currency } from '../../domain/bankEmail'
 import { parseAmountToCents } from '../../domain/amount'
 import { centsToNumeric } from '../../domain/money'
+import { isCardPayment } from '../../domain/reminder'
 import { formatMoney } from '../format'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
@@ -53,8 +54,8 @@ export function ReminderForm({ onSaved, debtCents = 0 }: { onSaved: () => void; 
         <label htmlFor="reminder-amount">Monto</label>
         <input id="reminder-amount" inputMode="decimal" required value={fields.amount} onChange={set('amount')} />
         {/* ponytail: copia el monto de hoy; si la deuda cambia, el recordatorio no se actualiza solo. */}
-        {debtCents > 0 && <button type="button" className="secondary" onClick={() => setFields({ ...fields, amount: centsToNumeric(debtCents), currency: 'CRC' })}>
-          Usar la deuda actual ({formatMoney(debtCents, 'CRC')})
+        {debtCents > 0 && isCardPayment(fields.description) && <button type="button" className="secondary" onClick={() => setFields({ ...fields, amount: centsToNumeric(debtCents), currency: 'CRC' })}>
+          Usar deuda actual ({formatMoney(debtCents, 'CRC')})
         </button>}
         <label htmlFor="reminder-currency">Moneda</label>
         <select id="reminder-currency" value={fields.currency} onChange={set('currency')}>

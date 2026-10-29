@@ -34,3 +34,10 @@ export function reminderNotification({ description, phase, amounts }:
   const money = amounts.filter((a) => a.cents > 0).map((a) => formatAmount(a.cents, a.currency)).join(' y ')
   return { title: 'Recordatorio de pago', body: `${description}: ${when}, ${money}`, url: '/#/recordatorios' }
 }
+
+// REC-01jm-T08: la descripción habla de pagar la tarjeta. Sin tildes ni mayúsculas; palabra completa para no
+// confundir "acreditar" o "tarjetero".
+const CARD_WORDS = /\b(tarjetas?|creditos?|tc|visa|mastercard)\b/
+export function isCardPayment(description: string): boolean {
+  return CARD_WORDS.test(description.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase())
+}

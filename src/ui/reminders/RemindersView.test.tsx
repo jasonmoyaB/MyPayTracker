@@ -65,13 +65,10 @@ describe('REC-01jm-T06: correcciones de review', () => {
   })
 })
 
-describe('REC-01jm-T07: el monto puede ser la deuda actual', () => {
-  it('con deuda que vence el próximo 20 ofrece "Usar la deuda actual" con ese monto', () => {
+describe('REC-01jm-T07/T08: el monto puede ser la deuda actual', () => {
+  it('con deuda pero sin descripción de tarjeta no aparece "Usar deuda actual"', () => {
     const html = render([credit('2026-10-10T12:00:00-06:00', 10_000_00), credit('2026-10-11T12:00:00-06:00', 20_666_70)])
-    expect(html).toMatch(/<button type="button"[^>]*>Usar la deuda actual \(₡30.666,70\)<\/button>/)
-  })
-  it('sin deuda no aparece', () => {
-    expect(render()).not.toContain('Usar la deuda actual')
+    expect(html).not.toContain('Usar deuda actual')
   })
 })
 

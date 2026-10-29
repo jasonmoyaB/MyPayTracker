@@ -18,3 +18,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo 9 fallos (sin carga propia, sin "Cargando recordatorios…"/Reintentar, sin maxLength, App esperaba la lista); verde 3/3 nuevas en RemindersView.test.tsx + App/screenFocus; typecheck, test (357) y build OK.
 - [x] REC-01jm-T07 Prueba + botón "Usar la deuda actual" junto al monto: llena lo que vence el próximo 20 (CRC) [src/ui/reminders/*]
   - Evidencia: rojo "sin botón Usar la deuda actual"; verde 359/359; typecheck, test y build OK.
+- [x] REC-01jm-T08 Prueba + "Usar deuda actual" solo si la descripción habla de la tarjeta (`isCardPayment`, regex) [src/domain/reminder.ts, src/ui/reminders/ReminderForm.tsx]
+  - Evidencia: rojo "isCardPayment is not a function"; verde 360/360; typecheck, test y build OK.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextDueOn, reminderNotification, reminderPhase } from './reminder'
+import { isCardPayment, nextDueOn, reminderNotification, reminderPhase } from './reminder'
 
 const cr = (local: string) => new Date(`${local}-06:00`)
 const money = (cents: number, currency: 'CRC' | 'USD') =>
@@ -48,3 +48,14 @@ describe('REC-01jm: texto del aviso', () => {
     expect(body).toBe(`Tarjeta de crédito: vence hoy, ${money(30_666_70, 'CRC')} y ${money(15_00, 'USD')}`)
   })
 })
+
+describe('REC-01jm-T08: isCardPayment', () => {
+  it('reconoce pagos de la tarjeta con o sin tildes ni mayúsculas', () => {
+    for (const d of ['Pagar tarjeta de crédito', 'pago credito', 'CRÉDITO BAC', 'pagar TC', 'Visa', 'mastercard'])
+      expect(isCardPayment(d)).toBe(true)
+  })
+  it('no confunde otras palabras', () => {
+    for (const d of ['Spotify', 'acreditar salario', 'tarjetero nuevo', 'etc', '']) expect(isCardPayment(d)).toBe(false)
+  })
+})
+
