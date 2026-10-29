@@ -1,7 +1,6 @@
 import { saveAccountBalanceCents, saveSalaryCents, type Settings } from '../../data/settings'
 import { MoneySetting } from '../balance/MoneySetting'
 import { formatDate } from '../format'
-import { PushToggle } from './PushToggle'
 
 type Props = {
   settings: Settings
@@ -33,7 +32,6 @@ export function AccountView({ settings, onSettingsSaved }: Props) {
           onSaved={onSettingsSaved}
         />
       </section>
-      <PushToggle />
     </>
   )
 }

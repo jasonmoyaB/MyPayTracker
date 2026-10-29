@@ -27,7 +27,7 @@ describe('AC-8: Cuenta', () => {
     expect(html).toContain('Agrega tu salario para calcular tu saldo.')
     expect(html).not.toContain('Volver')
   })
-  it('incluye las notificaciones (PWA-01jm)', () => {
-    expect(render({ salaryCents: null, account: null })).toMatch(/<h2 id="push-title">Notificaciones<\/h2>/)
+  it('las notificaciones viven en Opciones (UX-03jm)', () => {
+    expect(render({ salaryCents: null, account: null })).not.toContain('Notificaciones')
   })
 })

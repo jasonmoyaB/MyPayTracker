@@ -1,3 +1,4 @@
+import { PushToggle } from '../account/PushToggle'
 import { ChangePasswordView } from '../auth/ChangePasswordView'
 import { ThemeToggle } from '../theme/ThemeToggle'
 
@@ -11,6 +12,8 @@ export function OptionsView({ email, onSignOut }: Props) {
         <h2 id="theme-title" tabIndex={-1}>Apariencia</h2>
         <div><ThemeToggle /></div>
       </section>
+      {/* UX-03jm-T01: aquí busca el dev los ajustes; antes estaba en Cuenta. */}
+      <PushToggle />
       <ChangePasswordView email={email} />
       <section className="card" aria-labelledby="session-title">
         <h2 id="session-title">Sesión</h2>
