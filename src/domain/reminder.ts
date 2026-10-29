@@ -27,6 +27,13 @@ export function reminderPhase(dueOn: string, now: Date): ReminderPhase | null {
   return days === 0 ? 'hoy' : days === DAYS_BEFORE ? 'pronto' : null
 }
 
+// REC-01jm-T10: para la campana, todo lo que vence en 0–3 días (a cualquier hora: no es un push).
+export function dueSoon(dueOn: string, now: Date): string | null {
+  const days = (Date.parse(dueOn) - Date.parse(costaRicaDateTime(now).slice(0, 10))) / DAY_MS
+  if (days < 0 || days > DAYS_BEFORE) return null
+  return days === 0 ? 'vence hoy' : days === 1 ? 'vence mañana' : `vence en ${days} días`
+}
+
 // Varios montos para la tarjeta: CRC y USD se mencionan aparte, nunca se suman.
 export function reminderNotification({ description, phase, amounts }:
   { description: string; phase: ReminderPhase; amounts: { cents: number; currency: Currency }[] }) {

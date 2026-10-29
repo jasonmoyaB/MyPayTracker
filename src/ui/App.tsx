@@ -10,6 +10,7 @@ import { AccountView } from './account/AccountView'
 import { AppShell } from './AppShell'
 import { LoginView } from './auth/LoginView'
 import { OptionsView } from './options/OptionsView'
+import { NotificationBell } from './reminders/NotificationBell'
 import { RemindersView } from './reminders/RemindersView'
 import { DashboardView } from './dashboard/DashboardView'
 import { useRoute, type Route } from './route'
@@ -52,7 +53,13 @@ function Dashboard({ session }: { session: Session }) {
   useEffect(() => autoRefresh(() => void load()), [load])
 
   // NAV-02jm: tema, contraseña y cerrar sesión viven en Opciones.
-  const header = <header><h1>MyPayTracker</h1></header>
+  const header = (
+    <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <h1>MyPayTracker</h1>
+      {/* REC-01jm-T10: campana con lo que vence pronto. */}
+      <NotificationBell transactions={data?.transactions ?? []} />
+    </header>
+  )
   return (
     <AppShell route={route} header={header}>
       <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()}

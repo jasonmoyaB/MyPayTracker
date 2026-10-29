@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isCardPayment, nextDueOn, reminderNotification, reminderPhase } from './reminder'
+import { dueSoon, isCardPayment, nextDueOn, reminderNotification, reminderPhase } from './reminder'
 
 const cr = (local: string) => new Date(`${local}-06:00`)
 const money = (cents: number, currency: 'CRC' | 'USD') =>
@@ -56,6 +56,16 @@ describe('REC-01jm-T08: isCardPayment', () => {
   })
   it('no confunde otras palabras', () => {
     for (const d of ['Spotify', 'acreditar salario', 'tarjetero nuevo', 'etc', '']) expect(isCardPayment(d)).toBe(false)
+  })
+})
+
+describe('REC-01jm-T10: dueSoon (campana)', () => {
+  const now = cr('2026-11-13T06:00:00')
+  it('vence en 0–3 días: hoy, mañana o en N días; fuera de eso, null (sin esperar a las 8:00)', () => {
+    expect(dueSoon('2026-11-13', now)).toBe('vence hoy')
+    expect(dueSoon('2026-11-14', now)).toBe('vence mañana')
+    expect(dueSoon('2026-11-16', now)).toBe('vence en 3 días')
+    expect(dueSoon('2026-11-17', now)).toBeNull()
   })
 })
 

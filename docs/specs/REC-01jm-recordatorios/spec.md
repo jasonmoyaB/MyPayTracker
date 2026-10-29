@@ -13,6 +13,8 @@ pagos mensuales (p. ej. Spotify ₡2 000 cada mes) y el pago de la tarjeta, y un
 - Push (a los dispositivos con notificaciones activas): 3 días antes ("Spotify: vence en 3 días, ₡2 000") y el día
   ("Spotify: vence hoy, ₡2 000"). Igual para la tarjeta el 17 y el 20. Tocarla abre Recordatorios.
 - Cada aviso sale una sola vez por fecha aunque el cron corra cada 5 minutos.
+- Campana en el encabezado con la cantidad de pagos que vencen en 0–3 días (recordatorios y tarjeta); al tocarla
+  lista "Spotify: vence mañana, ₡2 000" y lleva a Recordatorios. Se calcula al abrir la app (no guarda historial).
 ## Restricciones
 - Centavos enteros; CRC y USD nunca se suman (el aviso de tarjeta menciona USD aparte si lo hay).
 - Tabla nueva con RLS del dueño; migración nueva `0010`; sin dependencias; sin `db push` ni cambios remotos.

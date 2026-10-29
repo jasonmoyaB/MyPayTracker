@@ -40,7 +40,15 @@
 .dashboard-dialog { width: min(420px, calc(100vw - 32px)); padding: 20px; border-radius: 12px; color: var(--color-text); font-variant-numeric: tabular-nums; }
 .dashboard-dialog[open] { display: grid; gap: 12px; }
 .dashboard-dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+.dashboard-dialog a { color: var(--color-primary); font-weight: 600; }
 .dashboard-dialog table { width: 100%; border-collapse: collapse; }
 .dashboard-dialog caption { text-align: left; padding-bottom: 4px; }
 .dashboard-dialog th, .dashboard-dialog td { padding: 8px 0; text-align: left; border-top: 1px solid var(--color-border); }
 .dashboard-dialog th:last-child, .dashboard-dialog td:last-child { text-align: right; }
+
+/* REC-01jm-T10: campana del encabezado con la cantidad de pagos que vencen pronto. */
+.bell { position: relative; padding: 8px 10px; display: inline-grid; place-items: center; }
+.bell-count {
+  position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: var(--color-danger); color: #fff; font-size: 12px; line-height: 20px; font-weight: 600;
+}
