@@ -8,7 +8,7 @@ vi.mock('../data/settings', () => ({ getSettings: vi.fn(), saveAccountBalanceCen
 vi.mock('../data/transactions', () => ({ listTransactions: vi.fn(), addManualTransaction: vi.fn() }))
 vi.mock('../data/reminders', () => ({ listReminders: vi.fn(), addReminder: vi.fn(), deleteReminder: vi.fn() }))
 
-const data = { settings: { salaryCents: 100_00, account: null }, transactions: [], reminders: [] }
+const data = { settings: { salaryCents: 100_00, account: null }, transactions: [] }
 const render = (props: Partial<Parameters<typeof DashboardBody>[0]>) => renderToStaticMarkup(
   <ToastProvider>
     <DashboardBody route="resumen" email="yo@correo.com" data={data} error={null} reload={() => {}}
@@ -32,7 +32,7 @@ describe('AC-1: cada sección muestra su pantalla', () => {
     expect(html).toContain('Cambiar contraseña')
     expect(html).toContain('Cerrar sesión')
   })
-  it('Recordatorios (REC-01jm)', () => expect(render({ route: 'recordatorios' })).toContain('Agregar recordatorio'))
+  it('Recordatorios (REC-01jm)', () => expect(render({ route: 'recordatorios' })).toContain('Cargando recordatorios…'))
   it('un error de carga se muestra sobre los datos con "Reintentar"', () => {
     const html = render({ error: 'Sin conexión.' })
     expect(html).toContain('Reintentar')

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
 import { getSettings, type Settings } from '../data/settings'
-import { listReminders, type Reminder } from '../data/reminders'
 import { listTransactions, type Transaction } from '../data/transactions'
 import { initialFilter, type MovementFilter } from '../domain/movementFilter'
 import { autoRefresh } from './autoRefresh'
@@ -16,7 +15,7 @@ import { DashboardView } from './dashboard/DashboardView'
 import { useRoute, type Route } from './route'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-type Data = { settings: Settings; transactions: Transaction[]; reminders: Reminder[] }
+type Data = { settings: Settings; transactions: Transaction[] }
 
 export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).
@@ -38,9 +37,8 @@ function Dashboard({ session }: { session: Session }) {
 
   const load = useCallback(async () => {
     try {
-      // REC-01jm-T04: los recordatorios se cargan con lo demás; comparten Reintentar y autoRefresh.
-      const [settings, transactions, reminders] = await Promise.all([getSettings(), listTransactions(), listReminders()])
-      setData({ settings, transactions, reminders })
+      const [settings, transactions] = await Promise.all([getSettings(), listTransactions()])
+      setData({ settings, transactions })
       setError(null)
     } catch (e) {
       const failure = toUiError(e)
@@ -88,7 +86,7 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   if (route === 'movimientos') return (
     <TransactionsPanel transactions={data.transactions} filter={filter} onFilterChange={onFilterChange} onTransactionSaved={reload} />
   )
-  if (route === 'recordatorios') return <RemindersView reminders={data.reminders} transactions={data.transactions} reload={reload} />
+  if (route === 'recordatorios') return <RemindersView transactions={data.transactions} />
   if (route === 'cuenta') return <AccountView settings={data.settings} onSettingsSaved={reload} />
   if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
   return <DashboardView settings={data.settings} transactions={data.transactions} reload={reload} />

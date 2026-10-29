@@ -46,7 +46,7 @@ export function ReminderForm({ onSaved }: { onSaved: () => void }) {
       <fieldset disabled={saving} style={{ display: 'grid', gap: 8 }}>
         <h3 id="reminder-form-title" style={{ margin: 0 }}>Agregar recordatorio</h3>
         <label htmlFor="reminder-description">Descripción</label>
-        <input id="reminder-description" required value={fields.description} onChange={set('description')} />
+        <input id="reminder-description" maxLength={60} required value={fields.description} onChange={set('description')} />
         <label htmlFor="reminder-amount">Monto</label>
         <input id="reminder-amount" inputMode="decimal" required value={fields.amount} onChange={set('amount')} />
         <label htmlFor="reminder-currency">Moneda</label>
