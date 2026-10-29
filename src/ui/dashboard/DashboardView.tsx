@@ -13,8 +13,8 @@ import './dashboard.css'
 type Props = { settings: Settings; transactions: Transaction[]; now?: Date }
 
 export function DashboardView({ settings, transactions, now = new Date() }: Props) {
-  const summary = summaryFor(settings, transactions, now)
-  const { pending } = splitCredit(transactions, now)
+  const { settled, pending } = splitCredit(transactions, now)
+  const summary = summaryFor(settings, settled)
   // TC-01jm-T05: lo que se puede gastar ya descuenta la deuda de la tarjeta (solo CRC).
   const limitCents = summary && summary.balanceCrcCents - pending.crcCents
   return (

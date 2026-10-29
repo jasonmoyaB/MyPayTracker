@@ -14,3 +14,7 @@ spec.md + plan.md de esta carpeta. Regla ponytail: reutilizar lo existente, sin 
   - Evidencia: rojo 3 fallos (PaymentField undefined, formatDay is not a function); verde 16/16 en transactions; typecheck y test OK (268).
 - [x] TC-01jm-T05 Prueba + `summaryFor` con `splitCredit`, `CreditCard` (corte, pago, deuda, límite, quiebra) y `AffordCheck` con el límite [src/ui/dashboard/*] (AC-2, AC-3) (depende de T02, T03)
   - Evidencia: rojo 2 fallos en DashboardView.test.tsx (no aparecía ₡150 000 ni "Puedes gastar"); verde 10/10 (AC-2 deuda, fechas y "te faltarían ₡50 000"; AC-3 saldo −₡50 000); typecheck y test OK (271).
+
+## Correcciones de revisión
+- [x] TC-01jm-T06 "Próximo pago" = pago más temprano de la deuda pendiente (`pending.dueAt`, oculto sin deuda); `splitCredit` una sola vez en DashboardView; `CUT_DAY`/`DUE_DAY` sin export; plan: el método se deriva a efectivo al ser ingreso [src/domain/credit.ts, src/ui/dashboard/*, plan.md]
+  - Evidencia: rojo 7 fallos (nextCutAt is not a function, pending sin dueAt, "Próximo pago: 20 dic" ausente); verde credit 9/9 y dashboard 10/10; typecheck y test OK (272).

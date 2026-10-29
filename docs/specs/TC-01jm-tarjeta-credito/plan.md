@@ -25,7 +25,7 @@ al pago, la compra ya está dentro del saldo del banco y no se resta otra vez.
   - `Transaction` y `NewTransaction` ganan `paymentMethod: 'cash' | 'credit'`.
   - `listTransactions` lee la columna; `addManualTransaction` la escribe.
 - **UI de movimientos**
-  - Formulario: select "Método de pago", solo para gastos. Al cambiar a ingreso vuelve a efectivo.
+  - Formulario: select "Método de pago", solo para gastos. Si el tipo es ingreso se guarda efectivo (se deriva al guardar).
   - Fila: "Tarjeta · se paga el …".
 - **UI del Resumen**
   - `summaryFor` aplica `splitCredit` antes de resumir.

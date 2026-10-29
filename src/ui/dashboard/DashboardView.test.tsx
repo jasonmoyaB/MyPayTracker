@@ -77,12 +77,13 @@ describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
     expect(html).toContain(formatMoney(150_000_00, 'CRC'))
     expect(html).toContain(formatMoney(200_000_00, 'CRC'))
     expect(html).toContain(`Al pagar la tarjeta te faltarían ${formatMoney(50_000_00, 'CRC')}`)
-    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 nov']) expect(html).toContain(day)
+    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 dic']) expect(html).toContain(day)
   })
   it('AC-3: desde el 20 la compra es gasto: saldo −₡50 000 y sin deuda', () => {
     const html = render({ settings: salary, transactions: credit, now: new Date('2026-12-21T12:00:00-06:00') })
     expect(html).toContain(formatMoney(-50_000_00, 'CRC'))
     expect(html).not.toContain('te faltarían')
+    expect(html).not.toContain('Próximo pago')
   })
   it('con límite positivo dice cuánto se puede gastar', () => {
     const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })

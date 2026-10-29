@@ -1,15 +1,16 @@
-import { nextCreditDates } from '../../domain/credit'
+import { nextCutAt } from '../../domain/credit'
 import { formatDay, formatMoney } from '../format'
 
-type Props = { pending: { crcCents: number; usdCents: number }; limitCents: number | null; now: Date }
+type Props = { pending: { crcCents: number; usdCents: number; dueAt: string | null }; limitCents: number | null; now: Date }
 
 // TC-01jm-T05: recuerda corte y pago y dice cuánto queda tras pagar la deuda (solo CRC; USD aparte).
 export function CreditCard({ pending, limitCents, now }: Props) {
-  const { cutAt, dueAt } = nextCreditDates(now)
   return (
     <section className="card" aria-labelledby="credit-title" style={{ display: 'grid', gap: 8 }}>
       <h2 id="credit-title">Tarjeta de crédito</h2>
-      <p className="muted" style={{ margin: 0 }}>Próximo corte: {formatDay(cutAt)} · Próximo pago: {formatDay(dueAt)}</p>
+      <p className="muted" style={{ margin: 0 }}>
+        Próximo corte: {formatDay(nextCutAt(now))}{pending.dueAt && ` · Próximo pago: ${formatDay(pending.dueAt)}`}
+      </p>
       <p className="amount" style={{ margin: 0 }}>Deuda pendiente: {formatMoney(pending.crcCents, 'CRC')}</p>
       {pending.usdCents > 0 && <p className="muted amount" style={{ margin: 0 }}>Deuda en dólares: {formatMoney(pending.usdCents, 'USD')}</p>}
       <LimitLine limitCents={limitCents} hasDebt={pending.crcCents > 0} />

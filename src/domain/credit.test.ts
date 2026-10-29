@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creditDueAt, nextCreditDates, splitCredit, type CreditMovement } from './credit'
+import { creditDueAt, nextCutAt, splitCredit, type CreditMovement } from './credit'
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
@@ -22,17 +22,12 @@ describe('TC-01jm AC-1: creditDueAt', () => {
   })
 })
 
-describe('nextCreditDates', () => {
-  it('el 28 oct: corte 6 nov y pago 20 nov', () => {
-    const { cutAt, dueAt } = nextCreditDates(new Date('2026-10-28T12:00:00-06:00'))
-    expect(at(cutAt)).toBe(at('2026-11-06T00:00:00-06:00'))
-    expect(at(dueAt)).toBe(at('2026-11-20T00:00:00-06:00'))
+describe('nextCutAt', () => {
+  it('el 28 oct: corte 6 nov', () => {
+    expect(at(nextCutAt(new Date('2026-10-28T12:00:00-06:00')))).toBe(at('2026-11-06T00:00:00-06:00'))
   })
-  it('el 6 y el 20 todavía son de este mes', () => {
-    const { cutAt, dueAt } = nextCreditDates(new Date('2026-12-06T23:00:00-06:00'))
-    expect(at(cutAt)).toBe(at('2026-12-06T00:00:00-06:00'))
-    expect(at(dueAt)).toBe(at('2026-12-20T00:00:00-06:00'))
-    expect(at(nextCreditDates(new Date('2026-12-21T00:00:00-06:00')).dueAt)).toBe(at('2027-01-20T00:00:00-06:00'))
+  it('el 6 todavía es corte de este mes', () => {
+    expect(at(nextCutAt(new Date('2026-12-06T23:00:00-06:00')))).toBe(at('2026-12-06T00:00:00-06:00'))
   })
 })
 
@@ -44,13 +39,21 @@ describe('TC-01jm AC-2/AC-3: splitCredit con summarize', () => {
   it('antes del 20: saldo 150 000 y deuda 200 000 (USD aparte)', () => {
     const { settled, pending } = splitCredit([salary, purchase, usd], new Date('2026-10-28T12:00:00-06:00'))
     expect(summarize(0, settled).balanceCrcCents).toBe(15_000_000)
-    expect(pending).toEqual({ crcCents: 20_000_000, usdCents: 5_000 })
+    expect(pending).toEqual({ crcCents: 20_000_000, usdCents: 5_000, dueAt: creditDueAt(purchase.occurredAt) })
   })
   it('desde el 20: ya no es deuda, entra como gasto con fecha de pago', () => {
     const { settled, pending } = splitCredit([salary, purchase], new Date('2026-11-20T00:00:00-06:00'))
     expect(summarize(0, settled).balanceCrcCents).toBe(-5_000_000)
-    expect(pending).toEqual({ crcCents: 0, usdCents: 0 })
+    expect(pending).toEqual({ crcCents: 0, usdCents: 0, dueAt: null })
     expect(at(settled[1].occurredAt)).toBe(at('2026-11-20T00:00:00-06:00'))
+  })
+})
+
+describe('TC-01jm-T06: pending.dueAt es el pago más temprano de la deuda', () => {
+  it('compra del 10 nov vista el 15 nov → 20 dic, no el 20 nov del calendario', () => {
+    const { pending } = splitCredit([m('2026-11-10T12:00:00-06:00', 100), m('2026-12-10T12:00:00-06:00', 100)],
+      new Date('2026-11-15T12:00:00-06:00'))
+    expect(at(pending.dueAt!)).toBe(at('2026-12-20T00:00:00-06:00'))
   })
 })
 
