@@ -37,6 +37,7 @@ function AmountFields({ state: s }: { state: TransactionFormState }) {
     <select id="transaction-direction" value={s.direction} onChange={e => s.setDirection(e.target.value as typeof s.direction)}>
       <option value="out">Gasto</option><option value="in">Ingreso</option>
     </select>
+    <PaymentField state={s} />
   </>
 }
 
@@ -46,5 +47,18 @@ function DetailFields({ state: s }: { state: TransactionFormState }) {
     <input id="transaction-description" required value={s.description} onChange={e => s.setDescription(e.target.value)} />
     <label htmlFor="transaction-date">Fecha y hora (Costa Rica)</label>
     <input id="transaction-date" type="datetime-local" required value={s.date} onChange={e => s.setDate(e.target.value)} />
+  </>
+}
+
+type PaymentState = Pick<TransactionFormState, 'direction' | 'paymentMethod' | 'setPaymentMethod'>
+
+// TC-01jm-T04: la tarjeta solo difiere gastos; en ingresos ni se ofrece.
+export function PaymentField({ state: s }: { state: PaymentState }) {
+  if (s.direction !== 'out') return null
+  return <>
+    <label htmlFor="transaction-payment">Método de pago</label>
+    <select id="transaction-payment" value={s.paymentMethod} onChange={e => s.setPaymentMethod(e.target.value as typeof s.paymentMethod)}>
+      <option value="cash">Efectivo o débito</option><option value="credit">Tarjeta de crédito</option>
+    </select>
   </>
 }

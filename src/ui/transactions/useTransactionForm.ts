@@ -9,15 +9,18 @@ function useFields() {
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<NewTransaction['currency']>('CRC')
   const [direction, setDirection] = useState<NewTransaction['direction']>('out')
+  const [paymentMethod, setPaymentMethod] = useState<NewTransaction['paymentMethod']>('cash')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(() => costaRicaDateTime(new Date()))
-  return { amount, setAmount, currency, setCurrency, direction, setDirection, description, setDescription, date, setDate }
+  return { amount, setAmount, currency, setCurrency, direction, setDirection, paymentMethod, setPaymentMethod, description, setDescription, date, setDate }
 }
 
 export function useTransactionForm(onSaved: () => void) {
   const fields = useFields()
   const toast = useToast()
   const { amount, currency, direction, description, date } = fields
+  // TC-01jm-T04: solo los gastos pueden ser con tarjeta (la BD también lo exige).
+  const paymentMethod = direction === 'out' ? fields.paymentMethod : 'cash'
   const [amountError, setAmountError] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -35,7 +38,7 @@ export function useTransactionForm(onSaved: () => void) {
     pending.current = true
     setSaving(true)
     // Si falla, el toast avisa y los campos se conservan.
-    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt, paymentMethod: 'cash' }),
+    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt, paymentMethod }),
       toast, 'Movimiento guardado')
     pending.current = false
     setSaving(false)

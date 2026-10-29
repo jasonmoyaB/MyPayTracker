@@ -13,3 +13,8 @@ export function formatDate(iso: string): string {
 export function formatSigned(cents: number, currency: Currency): string {
   return `${cents < 0 ? '−' : '+'}${formatMoney(Math.abs(cents), currency)}`
 }
+
+// TC-01jm-T04: fechas de corte/pago sin hora ("20 nov"); a las 00:00 la hora solo confunde.
+export function formatDay(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', timeZone: 'America/Costa_Rica' }).format(new Date(iso))
+}

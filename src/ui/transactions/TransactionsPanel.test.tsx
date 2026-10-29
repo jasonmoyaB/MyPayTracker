@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { TransactionsPanel } from './TransactionsPanel'
-import { formatDate, formatMoney } from '../format'
+import { PaymentField } from './TransactionForm'
+import { formatDate, formatDay, formatMoney } from '../format'
 import type { Transaction } from '../../data/transactions'
 import type { MovementFilter } from '../../domain/movementFilter'
 
@@ -53,5 +54,23 @@ describe('MOV-01jm: la lista aplica el filtro', () => {
     expect(html).toContain('No hay movimientos con estos filtros')
     expect(html).toContain('Limpiar filtros')
     expect(html).not.toContain('<ul')
+  })
+})
+
+describe('TC-01jm AC-4: método de pago', () => {
+  const field = (direction: 'in' | 'out') => renderToStaticMarkup(
+    <PaymentField state={{ direction, paymentMethod: 'credit', setPaymentMethod: () => {} }} />)
+  it('en gastos se elige efectivo/débito o tarjeta', () => {
+    const html = field('out')
+    for (const text of ['Método de pago', 'Efectivo o débito', 'Tarjeta de crédito']) expect(html).toContain(text)
+  })
+  it('en ingresos no se muestra', () => {
+    expect(field('in')).toBe('')
+  })
+  it('la fila de tarjeta muestra el día de pago en lugar de "Manual"', () => {
+    const html = render([{ ...transaction, paymentMethod: 'credit', occurredAt: '2026-10-28T13:45:00-06:00' }])
+    expect(formatDay('2026-11-20T06:00:00.000Z')).toBe('20 nov')
+    expect(html).toContain('Tarjeta · se paga el 20 nov')
+    expect(html).not.toContain('Manual')
   })
 })

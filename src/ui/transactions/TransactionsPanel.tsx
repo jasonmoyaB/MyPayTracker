@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
 import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
-import { formatDate, formatMoney } from '../format'
+import { creditDueAt } from '../../domain/credit'
+import { formatDate, formatDay, formatMoney } from '../format'
 import { FilterTotals } from './FilterTotals'
 import { MovementFilters } from './MovementFilters'
 import { TransactionForm } from './TransactionForm'
@@ -61,7 +62,7 @@ function TransactionRow({ transaction: t }: { transaction: Transaction }) {
       <div className="transaction-description">
         <span>{t.description}</span>
         <span className="muted"><time dateTime={t.occurredAt}>{formatDate(t.occurredAt)}</time></span>
-        <span className="muted">{t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'}</span>
+        <span className="muted">{originLabel(t)}</span>
       </div>
       <div className="transaction-amount">
         <span className="amount">{incoming ? '+' : '−'}{formatMoney(t.amountCents, t.currency)}</span>
@@ -69,4 +70,9 @@ function TransactionRow({ transaction: t }: { transaction: Transaction }) {
       </div>
     </li>
   )
+}
+
+function originLabel(t: Transaction): string {
+  if (t.paymentMethod === 'credit') return `Tarjeta · se paga el ${formatDay(creditDueAt(t.occurredAt))}`
+  return t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'
 }
