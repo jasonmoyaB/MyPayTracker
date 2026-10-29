@@ -1,3 +1,4 @@
+import { useId, useRef } from 'react'
 import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
 import { formatDay, formatMoney } from '../format'
 import { DebtForm } from './DebtForm'
@@ -29,16 +30,38 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
       <LimitLine limitCents={limitCents} hasDebt={pending.crcCents > 0} />
       <SalaryLine scheduleCrc={pending.scheduleCrc} salaryCents={salaryCents} />
       {purchases.length > 0 && <ul className="dashboard-list" aria-label="Productos en deuda">
-        {purchases.map((p, i) => <li key={i}>
-          <span className="dashboard-text">
-            <span>{p.description}</span>
-            <span className="muted">{p.count} {p.count === 1 ? 'cuota' : 'cuotas'} · próxima {formatMoney(p.nextCents, p.currency)} el {formatDay(p.nextDueAt)}</span>
-          </span>
-          <span className="amount">{formatMoney(p.remainingCents, p.currency)}</span>
-        </li>)}
+        {purchases.map((p, i) => <PurchaseRow key={i} purchase={p} />)}
       </ul>}
       <DebtForm onSaved={onSaved} />
     </section>
+  )
+}
+
+// TC-06jm-T01: <dialog> nativo; Esc, foco atrapado y vuelta del foco al botón los da el navegador.
+function PurchaseRow({ purchase: p }: { purchase: Purchase }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const money = (cents: number) => formatMoney(cents, p.currency)
+  return (
+    <li>
+      <button type="button" className="dashboard-row-button" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
+        <span className="dashboard-text">
+          <span>{p.description}</span>
+          <span className="muted">{p.count} {p.count === 1 ? 'cuota' : 'cuotas'} · próxima {money(p.nextCents)} el {formatDay(p.nextDueAt)}</span>
+        </span>
+        <span className="amount">{money(p.remainingCents)}</span>
+      </button>
+      <dialog ref={dialog} aria-labelledby={titleId} className="dashboard-dialog">
+        <h3 id={titleId} style={{ margin: 0 }}>{p.description}</h3>
+        <p style={{ margin: 0 }}>Falta {money(p.remainingCents)}</p>
+        <table>
+          <caption className="muted">Cuotas pendientes</caption>
+          <thead><tr><th scope="col">Fecha</th><th scope="col">Cuota</th></tr></thead>
+          <tbody>{p.dues.map(d => <tr key={d.dueAt}><td>{formatDay(d.dueAt)}</td><td>{money(d.cents)}</td></tr>)}</tbody>
+        </table>
+        <form method="dialog"><button type="submit">Cerrar</button></form>
+      </dialog>
+    </li>
   )
 }
 

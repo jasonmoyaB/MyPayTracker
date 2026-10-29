@@ -86,6 +86,6 @@ export function pendingPurchases<T extends CreditMovement & { description: strin
     if (m.paymentMethod !== 'credit') return []
     const left = installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).filter((d) => Date.parse(d.dueAt) > now.getTime())
     if (left.length === 0) return []
-    return [{ description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents, nextDueAt: left[0].dueAt }]
+    return [{ description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents, nextDueAt: left[0].dueAt, dues: left }]
   })
 }

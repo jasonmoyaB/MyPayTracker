@@ -26,3 +26,21 @@
 .dashboard-list li + li { border-top: 1px solid var(--color-border); }
 .dashboard-text { display: grid; min-width: 0; overflow-wrap: anywhere; }
 .dashboard-list .amount { display: grid; text-align: right; flex-shrink: 0; }
+
+/* TC-06jm-T01: el producto es un botón que abre su detalle, pero se ve como una fila de la lista. */
+.dashboard-row-button {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;
+  min-height: 44px; padding: 0; border: 0; border-radius: 4px; background: none; color: inherit;
+  font-weight: inherit; text-align: left;
+}
+.dashboard-row-button:hover { background: none; }
+.dashboard-row-button:hover .dashboard-text > :first-child { text-decoration: underline; }
+.dashboard-row-button .amount { flex-shrink: 0; }
+/* Va dentro de .dashboard-list: no usa .amount para no heredar su grid alineado a la derecha. */
+.dashboard-dialog { width: min(420px, calc(100vw - 32px)); padding: 20px; border-radius: 12px; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.dashboard-dialog[open] { display: grid; gap: 12px; }
+.dashboard-dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+.dashboard-dialog table { width: 100%; border-collapse: collapse; }
+.dashboard-dialog caption { text-align: left; padding-bottom: 4px; }
+.dashboard-dialog th, .dashboard-dialog td { padding: 8px 0; text-align: left; border-top: 1px solid var(--color-border); }
+.dashboard-dialog th:last-child, .dashboard-dialog td:last-child { text-align: right; }

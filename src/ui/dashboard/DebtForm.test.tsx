@@ -38,7 +38,7 @@ describe('TC-05jm-T03: productos en deuda y total del 20', () => {
     const html = renderToStaticMarkup(<ToastProvider>
       <CreditCard pending={{ ...pending, crcCents: 65_000_00 }} limitCents={null} salaryCents={null} now={new Date('2026-10-29T12:00:00-06:00')}
         onSaved={() => {}} dueNextCents={15_000_00}
-        purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z' }]} />
+        purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z', dues: [] }]} />
     </ToastProvider>)
     expect(html).toMatch(/<dt>Pagas el 20 nov<\/dt><dd class="amount">₡15/)
     expect(html).toContain('Tele')
@@ -46,3 +46,21 @@ describe('TC-05jm-T03: productos en deuda y total del 20', () => {
     expect(html).toMatch(/<span class="amount">₡60.000,00<\/span>/)
   })
 })
+
+describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
+  it('AC-1/AC-2: el producto es un botón que abre su dialog con las cuotas pendientes', () => {
+    const dues = ['2026-11-20T06:00:00.000Z', '2026-12-20T06:00:00.000Z', '2027-01-20T06:00:00.000Z']
+      .map((dueAt, k) => ({ dueAt, cents: k === 0 ? 11_666_68 : 11_666_66 }))
+    const html = renderToStaticMarkup(<ToastProvider>
+      <CreditCard pending={{ ...pending, crcCents: 35_000_00 }} limitCents={null} salaryCents={null} now={new Date('2026-10-29T12:00:00-06:00')}
+        onSaved={() => {}} dueNextCents={11_666_68}
+        purchases={[{ description: 'anillo', currency: 'CRC', remainingCents: 35_000_00, count: 3, nextCents: 11_666_68, nextDueAt: dues[0].dueAt, dues }]} />
+    </ToastProvider>)
+    expect(html).toMatch(/<button type="button" class="dashboard-row-button" aria-haspopup="dialog"/)
+    expect(html).toMatch(/<dialog[^>]*>.*<h3[^>]*>anillo<\/h3>.*Falta ₡35.000,00/)
+    for (const day of ['20 nov', '20 dic', '20 ene']) expect(html).toMatch(new RegExp(`<td>${day}</td>`))
+    expect(html).toContain('<th scope="col">Cuota</th>')
+    expect(html).toMatch(/<form method="dialog"><button[^>]*>Cerrar<\/button><\/form>/)
+  })
+})
+
