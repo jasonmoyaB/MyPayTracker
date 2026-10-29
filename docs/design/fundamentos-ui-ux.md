@@ -46,7 +46,7 @@ Indicar cuándo se sincronizaron los datos bancarios. Si faltan movimientos o la
 | Iconos | Una familia coherente, tamaño habitual `20px`; los decorativos se ocultan a lectores de pantalla |
 | Sombras | `--glass-shadow` en superficies de vidrio; fuera de ellas, solo capas flotantes |
 
-**Vidrio:** desenfoque moderado y opacidad alta para no depender del fondo; nunca vidrio dentro de vidrio (coste de GPU en móviles). Si el navegador no lo soporta o el usuario pide menos transparencia, las superficies son opacas.
+**Vidrio:** opacidad alta para no depender del fondo. Desenfoque solo en capas flotantes (navegación, toasts); las tarjetas no desenfocan porque cuesta frames de scroll (PERF-01jm). Fondo sin `fixed`. Si el navegador no lo soporta o el usuario pide menos transparencia, las superficies son opacas.
 
 Los controles solo con iconos necesitan nombre accesible y un área interactiva mínima de `44 × 44px`. Los estados hover no sustituyen la interacción táctil ni el foco de teclado.
 

@@ -170,7 +170,7 @@ Contraste del tema oscuro (mismo método que §6):
 
 ## 9. Vidrio (UX-01jm)
 
-Tarjetas, navegación, toasts y diálogos son paneles translúcidos con desenfoque sobre un fondo fijo con tres manchas radiales suaves (`--blob-1` verde, `--blob-2` azul, `--blob-3` arena; UX-04jm) y un grano SVG muy tenue (`--grain-opacity`). Sin vidrio dentro de vidrio: dentro de una tarjeta se usa `--color-surface-muted`.
+Tarjetas, navegación, toasts y diálogos son paneles translúcidos sobre un fondo fijo con tres manchas radiales suaves (`--blob-1` verde, `--blob-2` azul, `--blob-3` arena; UX-04jm) y un grano SVG muy tenue como primera capa del fondo, sin `background-attachment: fixed`. Sin vidrio dentro de vidrio: dentro de una tarjeta se usa `--color-surface-muted`.
 
 | Token | Claro | Oscuro |
 | --- | --- | --- |
@@ -181,8 +181,7 @@ Tarjetas, navegación, toasts y diálogos son paneles translúcidos con desenfoq
 | `--glass-shadow` | `0 1px 2px …4%, 0 12px 32px -8px …12%` | `0 1px 2px …30%, 0 16px 40px -12px …55%` |
 | `--blob-1` / `--blob-2` / `--blob-3` | `#CFE6DC` / `#D6E2F3` / `#EAE6D7` | `#1A3A31` / `#1A2A42` / `#2A2A1E` |
 | `--glass-blur` | `20px` | `20px` |
-| `--grain-opacity` | `0.05` | `0.07` |
 
-- Superficies: `backdrop-filter` y `-webkit-backdrop-filter` con `blur(var(--glass-blur)) saturate(160%)` y `box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow)`.
+- Desenfoque (PERF-01jm): solo en capas flotantes con contenido debajo (navegación y toasts). Las tarjetas no desenfocan: detrás solo hay degradado y re-desenfocar tarjetas altas hacía el scroll a ~27 fps. Capas flotantes: `backdrop-filter` y `-webkit-backdrop-filter` con `blur(var(--glass-blur)) saturate(160%)` y `box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow)`.
 - Fallback: sin soporte de `backdrop-filter` o con `prefers-reduced-transparency: reduce`, vuelven a `--color-surface` opaco con `--color-border`.
 - Contraste: `src/ui/theme.contrast.test.ts` exige ≥ 4.5:1 para texto principal y secundario sobre cada vidrio mezclado con el fondo y con cada mancha opaca (peor caso), en ambos temas. Si cambias un token de vidrio, el test lo valida.
