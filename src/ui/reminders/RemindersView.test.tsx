@@ -82,7 +82,7 @@ describe('REC-01jm-T09: modal con toda la deuda de la tarjeta', () => {
     expect(html.match(/aria-haspopup="dialog"/g)).toHaveLength(2)
     expect(html).toMatch(/Debes ₡35.000,00/)
     for (const row of ['<td>20 nov</td><td>₡15.000,00</td>', '<td>20 dic</td><td>₡10.000,00</td>', '<td>20 ene</td><td>₡10.000,00</td>',
-      '<td>anillo</td><td>₡30.000,00</td>', '<td>súper</td><td>₡5.000,00</td>']) expect(html).toMatch(new RegExp(row))
+      '<th scope="col">Al mes</th>', '<td>anillo</td><td>₡10.000,00</td><td>₡30.000,00</td>', '<td>súper</td><td>₡5.000,00</td><td>₡5.000,00</td>']) expect(html).toMatch(new RegExp(row))
   })
 })
 

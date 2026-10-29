@@ -44,7 +44,8 @@
 .dashboard-dialog table { width: 100%; border-collapse: collapse; }
 .dashboard-dialog caption { text-align: left; padding-bottom: 4px; }
 .dashboard-dialog th, .dashboard-dialog td { padding: 8px 0; text-align: left; border-top: 1px solid var(--color-border); }
-.dashboard-dialog th:last-child, .dashboard-dialog td:last-child { text-align: right; }
+/* REC-01jm-T11: toda columna de montos (la segunda en adelante) va a la derecha. */
+.dashboard-dialog th + th, .dashboard-dialog td + td { text-align: right; }
 
 /* REC-01jm-T10: campana del encabezado con la cantidad de pagos que vencen pronto. */
 .bell { position: relative; padding: 8px 10px; display: inline-grid; place-items: center; }

@@ -7,7 +7,7 @@ pagos mensuales (p. ej. Spotify ₡2 000 cada mes) y el pago de la tarjeta, y un
 - Agregar un recordatorio mensual: descripción, monto, moneda (CRC/USD) y día del mes (1–31). Se pueden borrar.
   Si la descripción habla de la tarjeta ("pagar tarjeta", "crédito", "TC"…), el monto ofrece "Usar deuda actual":
   llena lo que vence el próximo 20 de la tarjeta (CRC). Esos recordatorios y la fila de la tarjeta abren un modal
-  con toda la deuda, el pago de cada mes y lo que falta por producto (mismo `<dialog>` de TC-06jm).
+  con toda la deuda, el pago de cada mes y, por producto, cuánto paga al mes y lo que falta (`<dialog>` de TC-06jm).
 - La pantalla lista cada recordatorio con su próxima fecha y monto, y arriba el pago de la tarjeta: "Tarjeta de
   crédito · 20 nov · ₡30 666,70" (lo que vence ese 20, de las compras registradas). Sin deuda, no aparece.
 - Push (a los dispositivos con notificaciones activas): 3 días antes ("Spotify: vence en 3 días, ₡2 000") y el día

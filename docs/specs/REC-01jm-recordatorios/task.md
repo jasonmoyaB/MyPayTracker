@@ -24,3 +24,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "sin aria-haspopup ni tablas de deuda"; verde 361/361; typecheck, test y build OK.
 - [x] REC-01jm-T10 Prueba + campana en el encabezado con lo que vence en 0–3 días (`dueSoon`) [src/domain/reminder.ts, src/ui/reminders/NotificationBell.tsx, src/ui/App.tsx]
   - Evidencia: rojo "dueSoon is not a function" y "Cannot find module ./NotificationBell"; verde 365/365; typecheck, test y build OK; en localhost la campana muestra Spotify (vence en 3 días).
+- [x] REC-01jm-T11 Prueba + columna "Al mes" (próxima cuota) por producto en el modal de deuda [src/ui/reminders/CardDebtDialog.tsx]
+  - Evidencia: rojo "sin columna Al mes"; verde 365/365; typecheck, test y build OK; en localhost el modal muestra la cuota de cada producto.

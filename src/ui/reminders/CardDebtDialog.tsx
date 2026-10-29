@@ -31,9 +31,10 @@ export function CardDebtDialog({ transactions, now, children }: Props) {
         </table>
         <table>
           <caption className="muted">Por producto</caption>
-          <thead><tr><th scope="col">Producto</th><th scope="col">Falta</th></tr></thead>
+          <thead><tr><th scope="col">Producto</th><th scope="col">Al mes</th><th scope="col">Falta</th></tr></thead>
           <tbody>{pendingPurchases(transactions, now).map((p, i) => (
-            <tr key={i}><td>{p.description}</td><td>{formatMoney(p.remainingCents, p.currency)}</td></tr>
+            // REC-01jm-T11: "Al mes" = su próxima cuota (las siguientes son iguales o un céntimo menos).
+            <tr key={i}><td>{p.description}</td><td>{formatMoney(p.nextCents, p.currency)}</td><td>{formatMoney(p.remainingCents, p.currency)}</td></tr>
           ))}</tbody>
         </table>
         <form method="dialog"><button type="submit">Cerrar</button></form>
