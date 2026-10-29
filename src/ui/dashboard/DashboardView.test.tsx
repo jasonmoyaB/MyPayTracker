@@ -77,18 +77,21 @@ describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
     const html = render({ settings: salary, transactions: credit })
     expect(html).toContain(formatMoney(150_000_00, 'CRC'))
     expect(html).toContain(formatMoney(200_000_00, 'CRC'))
-    expect(html).toContain(`Al pagar la tarjeta te faltarían ${formatMoney(50_000_00, 'CRC')}`)
-    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 nov']) expect(html).toContain(day)
+    expect(html).toContain(`Al pagar te faltarían ${formatMoney(50_000_00, 'CRC')}`)
+    expect(html).toContain('Corte 6 dic · Pago 20 nov')
+    // UX-05jm AC-1: las cifras van en recuadros como "Este mes".
+    expect(html).toMatch(/<dt>Deuda total<\/dt><dd class="amount">[^<]*200/)
+    expect(html).toContain('<dt>Pagas el 20 nov</dt>')
   })
   it('AC-3: desde el 20 la compra es gasto: saldo −₡50 000 y sin deuda', () => {
     const html = render({ settings: salary, transactions: credit, now: new Date('2026-11-21T12:00:00-06:00') })
     expect(html).toContain(formatMoney(-50_000_00, 'CRC'))
     expect(html).not.toContain('te faltarían')
-    expect(html).not.toContain('Próximo pago')
+    expect(html).not.toContain('· Pago')
   })
   it('con límite positivo dice cuánto se puede gastar', () => {
     const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })
-    expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')} sin quedar en quiebra`)
+    expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')}`)
   })
 })
 
@@ -97,8 +100,8 @@ describe('TC-02jm: cuotas futuras contra el salario', () => {
   const future = [tx('2026-11-10T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
   it('el límite de hoy no la resta y avisa que ese pago supera el salario', () => {
     const html = render({ settings: { salaryCents: 150_000_00, account: null }, transactions: future })
-    expect(html).toContain(`Puedes gastar ${formatMoney(150_000_00, 'CRC')} sin quedar en quiebra`)
-    expect(html).toContain(`Tu pago del 20 dic (${formatMoney(200_000_00, 'CRC')}) supera tu salario`)
+    expect(html).toContain(`Puedes gastar ${formatMoney(150_000_00, 'CRC')}`)
+    expect(html).toContain(`El pago del 20 dic (${formatMoney(200_000_00, 'CRC')}) supera tu salario`)
   })
   it('¿Puedo comprar esto? ofrece tarjeta y tasa cero', () => {
     const html = render({ settings: { salaryCents: 150_000_00, account: null }, transactions: future })

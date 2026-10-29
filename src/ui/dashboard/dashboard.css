@@ -1,5 +1,7 @@
 /* DASH-01jm-T03: Resumen en tarjetas de vidrio; una columna en móvil, dos en escritorio. */
 .dashboard { display: grid; gap: 24px; min-width: 0; }
+/* UX-05jm-T01: si el card vecino de la fila es más alto, el contenido queda arriba en vez de estirarse. */
+.dashboard > .card { align-content: start; }
 @media (min-width: 768px) {
   .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-balance { grid-column: 1 / -1; }

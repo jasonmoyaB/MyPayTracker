@@ -40,7 +40,9 @@ describe('TC-05jm-T03: productos en deuda y total del 20', () => {
         onSaved={() => {}} dueNextCents={15_000_00}
         purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z' }]} />
     </ToastProvider>)
-    expect(html).toContain('Total a pagar el 20 nov: ₡15')
-    expect(html).toMatch(/<li[^>]*>Tele: faltan ₡60.000,00 · 6 cuotas, próxima ₡10.000,00 el 20 nov<\/li>/)
+    expect(html).toMatch(/<dt>Pagas el 20 nov<\/dt><dd class="amount">₡15/)
+    expect(html).toContain('Tele')
+    expect(html).toMatch(/6 cuotas · próxima ₡10.000,00 el 20 nov/)
+    expect(html).toMatch(/<span class="amount">₡60.000,00<\/span>/)
   })
 })
