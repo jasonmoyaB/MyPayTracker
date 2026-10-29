@@ -23,9 +23,13 @@
   --color-info-soft: #EDF3FB;
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
   /* UX-01jm: vidrio y manchas del fondo (paleta-de-colores.md §9). */
-  --blob-1: #CFE6DC; --blob-2: #D6E2F3; --glass-blur: 16px;
+  --blob-1: #CFE6DC; --blob-2: #D6E2F3; --blob-3: #EAE6D7; --glass-blur: 20px;
   --glass-bg: rgb(255 255 255 / 0.72); --glass-bg-strong: rgb(255 255 255 / 0.86);
-  --glass-border: rgb(255 255 255 / 0.7); --glass-shadow: 0 8px 24px rgb(32 40 36 / 8%);
+  --glass-border: rgb(255 255 255 / 0.7); --glass-highlight: rgb(255 255 255 / 0.9);
+  --glass-shadow: 0 1px 2px rgb(32 40 36 / 4%), 0 12px 32px -8px rgb(32 40 36 / 12%);
+  --grain-opacity: 0.05;
+  /* UX-04jm: forma y ritmo compartidos (fundamentos-ui-ux.md §5). */
+  --radius-lg: 20px; --radius-md: 12px; --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* THEME-01jm-T02: tema oscuro (paleta-de-colores.md §8). El bloque se repite porque CSS no deja
@@ -52,9 +56,11 @@
   --color-danger-soft: #331A1A;
   --color-info: #8DB4E8;
   --color-info-soft: #172436;
-  --blob-1: #1A3A31; --blob-2: #1A2A42;
+  --blob-1: #1A3A31; --blob-2: #1A2A42; --blob-3: #2A2A1E;
   --glass-bg: rgb(26 32 29 / 0.62); --glass-bg-strong: rgb(26 32 29 / 0.8);
-  --glass-border: rgb(255 255 255 / 0.08); --glass-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+  --glass-border: rgb(255 255 255 / 0.08); --glass-highlight: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 40px -12px rgb(0 0 0 / 55%);
+  --grain-opacity: 0.07;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -79,71 +85,98 @@
     --color-danger-soft: #331A1A;
     --color-info: #8DB4E8;
     --color-info-soft: #172436;
-    --blob-1: #1A3A31; --blob-2: #1A2A42;
+    --blob-1: #1A3A31; --blob-2: #1A2A42; --blob-3: #2A2A1E;
     --glass-bg: rgb(26 32 29 / 0.62); --glass-bg-strong: rgb(26 32 29 / 0.8);
-    --glass-border: rgb(255 255 255 / 0.08); --glass-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+    --glass-border: rgb(255 255 255 / 0.08); --glass-highlight: rgb(255 255 255 / 0.06);
+    --glass-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 40px -12px rgb(0 0 0 / 55%);
+    --grain-opacity: 0.07;
   }
 }
+
 
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
   min-height: 100dvh;
+  /* UX-04jm: tres manchas fijas; el vidrio necesita algo detrás que desenfocar. */
   background:
-    radial-gradient(40rem 30rem at 0% 0%, var(--blob-1), transparent 70%),
-    radial-gradient(36rem 28rem at 100% 35%, var(--blob-2), transparent 70%),
+    radial-gradient(42rem 32rem at -5% -10%, var(--blob-1), transparent 70%),
+    radial-gradient(38rem 30rem at 105% 30%, var(--blob-2), transparent 70%),
+    radial-gradient(34rem 26rem at 30% 110%, var(--blob-3), transparent 70%),
     var(--color-bg);
+  background-attachment: fixed;
   color: var(--color-text);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 16px/1.5 "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+/* Grano muy tenue: quita el aspecto de degradado plano sin tocar el contraste del texto. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 24px; }
 @media (min-width: 768px) { main { padding: 32px; } }
+/* Login y pantalla de error: una columna estrecha centrada en la ventana. */
+.center-screen { max-width: 440px; min-height: 100dvh; align-content: center; }
 
-h1, h2 { margin: 0; font-weight: 600; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.015em; }
 h1 { font-size: 24px; }
-h2 { font-size: 20px; }
+h2 { font-size: 17px; }
+h3 { font-size: 16px; }
 
-.card { border-radius: 12px; padding: 20px; display: grid; gap: 12px; }
+.card { border-radius: var(--radius-lg); padding: 24px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+/* La cuadrícula ya separa; así no hace falta `margin: 0` en cada párrafo. */
+.card p { margin: 0; }
 /* UX-01jm-T01: superficies de vidrio; sin vidrio dentro de vidrio para no encarecer el desenfoque. */
-.card, header, dialog {
-  background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+.card, dialog {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
 }
-header { padding: 12px 16px; border-radius: 12px; }
+/* UX-04jm: entrada discreta; cada pantalla vuelve a montar sus tarjetas. */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+.card { animation: rise 520ms var(--ease) both; }
+
 .muted { color: var(--color-text-secondary); font-size: 14px; }
 .amount { font-variant-numeric: tabular-nums; }
+a { color: var(--color-primary); font-weight: 600; text-underline-offset: 3px; }
 
-label { display: grid; gap: 4px; font-size: 14px; color: var(--color-text-secondary); }
+label { display: grid; gap: 6px; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
 input, select {
-  min-height: 44px; padding: 8px 12px; font: inherit; color: var(--color-text);
-  background: var(--glass-bg-strong); border: 1px solid var(--color-border-control); border-radius: 8px;
+  min-height: 44px; padding: 8px 14px; font: inherit; font-weight: 400; color: var(--color-text);
+  background: var(--glass-bg-strong); border: 1px solid var(--color-border-control); border-radius: var(--radius-md);
+  transition: border-color 160ms, box-shadow 160ms;
 }
+input:hover, select:hover { border-color: var(--color-text-secondary); }
 button {
-  min-height: 44px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer;
-  border: 1px solid var(--color-primary); border-radius: 8px;
+  min-height: 44px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--color-primary); border-radius: var(--radius-md);
   background: var(--color-primary); color: var(--color-on-primary);
-  transition: background-color 150ms;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15), 0 1px 2px rgb(0 0 0 / 0.12);
+  transition: background-color 160ms, border-color 160ms, transform 160ms var(--ease);
 }
-button:hover { background: var(--color-primary-hover); }
-button:disabled { cursor: not-allowed; background: var(--color-surface-muted); color: var(--color-text-secondary); border-color: var(--color-border-control); }
-button.secondary { background: var(--color-surface); color: var(--color-primary); }
+button:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+button:active:not(:disabled) { transform: scale(0.98); }
+button:disabled { cursor: not-allowed; background: var(--color-surface-muted); color: var(--color-text-secondary); border-color: var(--color-border-control); box-shadow: none; }
+button.secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-border); box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); }
+button.secondary:hover { background: var(--color-primary-soft); border-color: var(--color-primary-soft); }
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
 .status-success { color: var(--color-success); background: var(--color-success-soft); }
 .status-warning { color: var(--color-warning); background: var(--color-warning-soft); }
 .status-danger { color: var(--color-danger); background: var(--color-danger-soft); }
-.status-success, .status-warning, .status-danger { padding: 8px 12px; border-radius: 8px; }
+.status-success, .status-warning, .status-danger { padding: 10px 14px; border-radius: var(--radius-md); }
 
 /* Sin desenfoque o con menos transparencia pedida: superficies opacas. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .card, header, dialog { background: var(--color-surface); border-color: var(--color-border); }
+  .card, dialog { background: var(--color-surface); border-color: var(--color-border); }
   input, select { background: var(--color-surface); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .card, header, dialog { background: var(--color-surface); border-color: var(--color-border); }
+  .card, dialog { background: var(--color-surface); border-color: var(--color-border); }
   input, select { background: var(--color-surface); }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

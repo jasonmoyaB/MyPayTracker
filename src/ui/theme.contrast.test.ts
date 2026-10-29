@@ -44,7 +44,7 @@ const themes = {
 describe('AC-2: texto con contraste AA sobre el vidrio', () => {
   for (const [name, t] of Object.entries(themes)) {
     for (const glass of ['--glass-bg', '--glass-bg-strong']) {
-      for (const backdrop of ['--color-bg', '--blob-1', '--blob-2']) {
+      for (const backdrop of ['--color-bg', '--blob-1', '--blob-2', '--blob-3']) {
         for (const text of ['--color-text', '--color-text-secondary']) {
           it(`${name}: ${text} sobre ${glass} encima de ${backdrop} ≥ 4.5`, () => {
             const surface = over(color(t[glass]), color(t[backdrop]))
