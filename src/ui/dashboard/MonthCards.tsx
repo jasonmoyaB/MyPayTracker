@@ -5,7 +5,7 @@ import { formatMoney, formatSigned } from '../format'
 export function MonthCards({ stats }: { stats: MonthStats }) {
   const empty = stats.incomeCents === 0 && stats.expenseCents === 0
   return (
-    <section className="card" aria-labelledby="month-title">
+    <section className="card dashboard-month-card" aria-labelledby="month-title">
       <h2 id="month-title">Este mes</h2>
       {empty ? <p className="muted">Sin movimientos este mes.</p> : (
         <dl className="dashboard-month">

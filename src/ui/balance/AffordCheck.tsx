@@ -28,20 +28,20 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'grid', gap: 8 }}>
-      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>¿Puedo comprar esto?</h3>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
-        <label style={{ flex: '1 1 160px' }}>
+    <form className="afford" onSubmit={onSubmit}>
+      <h3>¿Puedo comprar esto?</h3>
+      <div className="inline-form">
+        <label>
           Precio en colones
           <input inputMode="decimal" autoComplete="off" placeholder="3490.50" value={price} onChange={(e) => setPrice(e.target.value)} />
         </label>
-        <label style={{ flex: '1 1 160px' }}>
+        <label>
           Forma de pago
           <select value={plan} onChange={(e) => setPlan(e.target.value === 'cash' ? 'cash' : (Number(e.target.value) as Plan))}>
             {PLANS.map((p) => <option key={p} value={p}>{optionLabel(p)}</option>)}
           </select>
         </label>
-        <label style={{ flex: '1 1 160px' }}>
+        <label>
           Plata extra que te entra (opcional)
           <input inputMode="decimal" autoComplete="off" placeholder="0" value={extra} onChange={(e) => setExtra(e.target.value)} />
         </label>
@@ -54,9 +54,9 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
 }
 
 function ResultMessage({ result }: { result: Recommendation | 'invalid' }) {
-  if (result === 'invalid') return <p className="status-danger" style={{ margin: 0 }}>Escribe montos mayores que cero, por ejemplo 3490.50.</p>
+  if (result === 'invalid') return <p className="status-danger">Escribe montos mayores que cero, por ejemplo 3490.50.</p>
   const { tone, lines } = affordText(result)
   return <>{lines.map((line, i) => (
-    <p key={i} className={i === lines.length - 1 ? `status-${tone} amount` : 'muted amount'} style={{ margin: 0 }}>{line}</p>
+    <p key={i} className={i === lines.length - 1 ? `status-${tone} amount` : 'muted amount'}>{line}</p>
   ))}</>
 }

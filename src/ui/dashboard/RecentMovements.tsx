@@ -7,7 +7,7 @@ type Props = { transactions: Transaction[]; lastEmailAt: string | null }
 export function RecentMovements({ transactions, lastEmailAt }: Props) {
   const recent = transactions.slice(0, 5)
   return (
-    <section className="card" aria-labelledby="recent-title">
+    <section className="card dashboard-recent" aria-labelledby="recent-title">
       <div className="dashboard-heading">
         <h2 id="recent-title">Últimos movimientos</h2>
         <a href="#/movimientos">Ver todos</a>
@@ -15,7 +15,7 @@ export function RecentMovements({ transactions, lastEmailAt }: Props) {
       {recent.length === 0 ? <p className="muted">Aún no hay movimientos.</p> : (
         <ul className="dashboard-list">{recent.map((t) => <Row key={t.id} t={t} />)}</ul>
       )}
-      <p className="muted" style={{ margin: 0 }}>
+      <p className="muted">
         {lastEmailAt ? `Último correo leído: ${formatDate(lastEmailAt)}` : 'Aún no se ha leído ningún correo.'}
       </p>
     </section>

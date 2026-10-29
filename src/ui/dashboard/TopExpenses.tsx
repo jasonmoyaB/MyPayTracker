@@ -3,7 +3,7 @@ import { formatMoney } from '../format'
 
 export function TopExpenses({ items }: { items: TopExpense[] }) {
   return (
-    <section className="card" aria-labelledby="top-title">
+    <section className="card dashboard-top" aria-labelledby="top-title">
       <h2 id="top-title">Más gasto este mes</h2>
       {items.length === 0 ? <p className="muted">Sin gastos este mes.</p> : (
         <ol className="dashboard-list">

@@ -8,8 +8,8 @@ const VERDICT = { si: 'Sí', ajustado: 'Ajustado', no: 'No' } as const
 // TC-03jm-T01: cuota mensual de cada plazo (la primera lleva el resto de centavos) con su recomendación.
 export function PlanTable({ rows }: { rows: Recommendation[] }) {
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table className="amount" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+    <div className="table-scroll">
+      <table className="amount">
         <caption>Cuota por plazo</caption>
         <thead>
           <tr><th scope="col">Plazo</th><th scope="col">Cuota al mes</th><th scope="col">Primer pago</th><th scope="col">Recomendación</th></tr>
