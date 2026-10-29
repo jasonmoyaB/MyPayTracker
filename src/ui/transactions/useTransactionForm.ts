@@ -10,9 +10,10 @@ function useFields() {
   const [currency, setCurrency] = useState<NewTransaction['currency']>('CRC')
   const [direction, setDirection] = useState<NewTransaction['direction']>('out')
   const [paymentMethod, setPaymentMethod] = useState<NewTransaction['paymentMethod']>('cash')
+  const [installments, setInstallments] = useState(1)
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(() => costaRicaDateTime(new Date()))
-  return { amount, setAmount, currency, setCurrency, direction, setDirection, paymentMethod, setPaymentMethod, description, setDescription, date, setDate }
+  return { amount, setAmount, currency, setCurrency, direction, setDirection, paymentMethod, setPaymentMethod, installments, setInstallments, description, setDescription, date, setDate }
 }
 
 export function useTransactionForm(onSaved: () => void) {
@@ -21,6 +22,8 @@ export function useTransactionForm(onSaved: () => void) {
   const { amount, currency, direction, description, date } = fields
   // TC-01jm-T04: solo los gastos pueden ser con tarjeta (la BD también lo exige).
   const paymentMethod = direction === 'out' ? fields.paymentMethod : 'cash'
+  // TC-02jm-T04: el plazo solo aplica a tarjeta (la BD también lo exige).
+  const installments = paymentMethod === 'credit' ? fields.installments : 1
   const [amountError, setAmountError] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -38,7 +41,7 @@ export function useTransactionForm(onSaved: () => void) {
     pending.current = true
     setSaving(true)
     // Si falla, el toast avisa y los campos se conservan.
-    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt, paymentMethod }),
+    const failed = await saveWithToast(() => addManualTransaction({ amountCents, currency, direction, description: description.trim(), occurredAt, paymentMethod, installments }),
       toast, 'Movimiento guardado')
     pending.current = false
     setSaving(false)

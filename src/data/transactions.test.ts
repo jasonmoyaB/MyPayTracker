@@ -4,7 +4,7 @@ import { addManualTransaction, listTransactions } from './transactions'
 
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
-    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit' }
+    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3 }
   const order = vi.fn(async () => ({ data: [row], error: null }))
   const select = vi.fn(() => ({ order }))
   const insert = vi.fn(async () => ({ error: null }))
@@ -32,11 +32,13 @@ describe('TC-01jm AC-4: lee y guarda el método de pago', () => {
     const [t] = await listTransactions()
     expect(db.select).toHaveBeenCalledWith(expect.stringContaining('payment_method'))
     expect(t.paymentMethod).toBe('credit')
+    expect(db.select).toHaveBeenCalledWith(expect.stringContaining('installments'))
+    expect(t.installments).toBe(3)
   })
   it('addManualTransaction inserta payment_method', async () => {
     await addManualTransaction({ amountCents: 200_050, currency: 'CRC', direction: 'out', description: 'Zapatos',
-      occurredAt: '2026-10-10T12:00:00-06:00', paymentMethod: 'credit' })
-    expect(db.insert).toHaveBeenCalledWith(expect.objectContaining({ payment_method: 'credit', amount: '2000.50' }))
+      occurredAt: '2026-10-10T12:00:00-06:00', paymentMethod: 'credit', installments: 3 })
+    expect(db.insert).toHaveBeenCalledWith(expect.objectContaining({ payment_method: 'credit', amount: '2000.50', installments: 3 }))
   })
 })
 

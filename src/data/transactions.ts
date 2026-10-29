@@ -16,15 +16,17 @@ export type Transaction = {
   occurredAt: string
   // TC-01jm-T03: credit difiere el gasto a su día de pago (ver domain/credit.ts).
   paymentMethod: PaymentMethod
+  // TC-02jm-T04: plazo de tasa cero (1 = un pago); solo > 1 con tarjeta.
+  installments: number
 }
 
-export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt' | 'paymentMethod'>
+export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt' | 'paymentMethod' | 'installments'>
 
 // RLS ya filtra por user_id; más recientes primero.
 export async function listTransactions(): Promise<Transaction[]> {
   const { data, error } = await supabase
     .from('transactions')
-    .select('id, amount, currency, direction, source, description, occurred_at, payment_method')
+    .select('id, amount, currency, direction, source, description, occurred_at, payment_method, installments')
     .order('occurred_at', { ascending: false })
   if (error) throw error
   return data.map((r) => ({
@@ -36,6 +38,7 @@ export async function listTransactions(): Promise<Transaction[]> {
     description: r.description,
     occurredAt: r.occurred_at,
     paymentMethod: r.payment_method,
+    installments: r.installments,
   }))
 }
 
@@ -49,6 +52,7 @@ export async function addManualTransaction(t: NewTransaction): Promise<void> {
     description: t.description,
     occurred_at: t.occurredAt,
     payment_method: t.paymentMethod,
+    installments: t.installments,
   })
   if (error) throw error
 }

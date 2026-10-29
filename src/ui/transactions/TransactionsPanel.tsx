@@ -5,7 +5,7 @@ import { creditDueAt } from '../../domain/credit'
 import { formatDate, formatDay, formatMoney } from '../format'
 import { FilterTotals } from './FilterTotals'
 import { MovementFilters } from './MovementFilters'
-import { TransactionForm } from './TransactionForm'
+import { planLabel, TransactionForm } from './TransactionForm'
 import './transactions.css'
 
 export type TransactionsPanelProps = {
@@ -73,6 +73,8 @@ function TransactionRow({ transaction: t }: { transaction: Transaction }) {
 }
 
 function originLabel(t: Transaction): string {
-  if (t.paymentMethod === 'credit') return `Tarjeta · se paga el ${formatDay(creditDueAt(t.occurredAt))}`
+  const due = formatDay(creditDueAt(t.occurredAt))
+  if (t.paymentMethod === 'credit' && t.installments > 1) return `Tarjeta · ${planLabel(t.installments).toLowerCase()} · primera cuota el ${due}`
+  if (t.paymentMethod === 'credit') return `Tarjeta · se paga el ${due}`
   return t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'
 }

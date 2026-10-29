@@ -50,7 +50,7 @@ describe('AC-2: saldo negativo', () => {
   it('aviso neutro, válido con saldo de cuenta o salario', () => {
     const html = renderToStaticMarkup(<DashboardView settings={{ salaryCents: 0, account: null }}
       transactions={[{ id: '1', occurredAt: '2026-11-01T10:00:00-06:00', amountCents: 100, direction: 'out',
-        description: 'x', currency: 'CRC', source: 'manual', paymentMethod: 'cash' }]} />)
+        description: 'x', currency: 'CRC', source: 'manual', paymentMethod: 'cash', installments: 1 }]} />)
     expect(html).toContain('tus gastos superan tu saldo')
     expect(html).not.toContain('salario más tus ingresos')
   })

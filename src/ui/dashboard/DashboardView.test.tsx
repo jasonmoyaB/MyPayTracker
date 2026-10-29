@@ -8,7 +8,7 @@ const now = new Date('2026-11-15T18:00:00Z')
 let id = 0
 const tx = (occurredAt: string, amountCents: number, direction: 'in' | 'out', description: string,
   extra: Partial<Transaction> = {}): Transaction =>
-  ({ id: String(++id), occurredAt, amountCents, direction, description, currency: 'CRC', source: 'manual', paymentMethod: 'cash', ...extra })
+  ({ id: String(++id), occurredAt, amountCents, direction, description, currency: 'CRC', source: 'manual', paymentMethod: 'cash', installments: 1, ...extra })
 
 const transactions = [
   tx('2026-11-14T10:00:00-06:00', 50_000_00, 'in', 'Salario', { source: 'email_regex' }),

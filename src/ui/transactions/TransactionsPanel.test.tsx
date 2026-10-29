@@ -10,7 +10,7 @@ vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
 
 const transaction: Transaction = {
   id: '1', amountCents: 349050, currency: 'CRC', direction: 'out', source: 'manual',
-  description: 'Compra semanal', occurredAt: '2026-10-28T13:45:00-06:00', paymentMethod: 'cash',
+  description: 'Compra semanal', occurredAt: '2026-10-28T13:45:00-06:00', paymentMethod: 'cash', installments: 1,
 }
 const income: Transaction = { ...transaction, id: '2', direction: 'in', source: 'email_regex', description: 'Salario' }
 const all: MovementFilter = { from: null, to: null, direction: 'all' }
@@ -59,7 +59,7 @@ describe('MOV-01jm: la lista aplica el filtro', () => {
 
 describe('TC-01jm AC-4: método de pago', () => {
   const field = (direction: 'in' | 'out') => renderToStaticMarkup(
-    <PaymentField state={{ direction, paymentMethod: 'credit', setPaymentMethod: () => {} }} />)
+    <PaymentField state={{ direction, paymentMethod: 'credit', setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
   it('en gastos se elige efectivo/débito o tarjeta', () => {
     const html = field('out')
     for (const text of ['Método de pago', 'Efectivo o débito', 'Tarjeta de crédito']) expect(html).toContain(text)
@@ -72,5 +72,23 @@ describe('TC-01jm AC-4: método de pago', () => {
     expect(formatDay('2026-11-20T06:00:00.000Z')).toBe('20 nov')
     expect(html).toContain('Tarjeta · se paga el 20 nov')
     expect(html).not.toContain('Manual')
+  })
+})
+
+describe('TC-02jm: plazo de tasa cero', () => {
+  it('con tarjeta se elige un pago o tasa cero 3, 6, 10 o 12 meses', () => {
+    const html = renderToStaticMarkup(<PaymentField state={{ direction: 'out', paymentMethod: 'credit',
+      setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
+    expect(html).toContain('<label for="transaction-installments">Plazo</label>')
+    for (const n of [3, 6, 10, 12]) expect(html).toContain(`Tasa cero ${n} meses`)
+  })
+  it('con efectivo no se ofrece plazo', () => {
+    const html = renderToStaticMarkup(<PaymentField state={{ direction: 'out', paymentMethod: 'cash',
+      setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
+    expect(html).not.toContain('Plazo')
+  })
+  it('la fila muestra el plazo y la primera cuota', () => {
+    const html = render([{ ...transaction, paymentMethod: 'credit', installments: 6, occurredAt: '2026-10-28T13:45:00-06:00' }])
+    expect(html).toContain('Tarjeta · tasa cero 6 meses · primera cuota el 20 nov')
   })
 })

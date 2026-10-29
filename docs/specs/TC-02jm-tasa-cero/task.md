@@ -10,5 +10,6 @@ spec.md + plan.md de esta carpeta. Depende de TC-01jm. Regla ponytail.
   - Evidencia: rojo "installmentDues/nextPayDay is not a function"; verde 15/15 en credit.test.ts (AC-1, resto en primera cuota, agenda, dueBy); typecheck y test OK.
 - [x] TC-02jm-T03 Prueba + `recommend` con veredicto si/ajustado/no [src/domain/recommend.ts] (AC-2–AC-4)
   - Evidencia: rojo "Cannot find module ./recommend"; verde 8/8 (AC-2 por pago y por salario, AC-3 22 % y 44 %, AC-4, agenda previa, efectivo, sin salario); typecheck y test OK (287).
-- [ ] TC-02jm-T04 `installments` en datos; select "Plazo" en el formulario y etiqueta en la fila [src/data/transactions.ts, src/ui/transactions/*] (AC-5)
+- [x] TC-02jm-T04 `installments` en datos; select "Plazo" en el formulario y etiqueta en la fila [src/data/transactions.ts, src/ui/transactions/*] (AC-5)
+  - Evidencia: rojo 2 fallos (sin select "Plazo", fila sin plazo) + 9 errores TS de fixtures sin installments; verde 290 tests; `planLabel` compartido; typecheck y test OK.
 - [ ] TC-02jm-T05 Prueba + `AffordCheck` con forma de pago, plata extra y recomendación; límite y aviso mensual en Resumen [src/ui/balance/*, src/ui/dashboard/*] (AC-2–AC-4)

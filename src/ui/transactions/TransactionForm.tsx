@@ -1,3 +1,4 @@
+import { PLANS } from '../../domain/recommend'
 import { useTransactionForm, type TransactionFormState } from './useTransactionForm'
 
 type Props = { onSaved: () => void; onCancel: () => void }
@@ -50,7 +51,7 @@ function DetailFields({ state: s }: { state: TransactionFormState }) {
   </>
 }
 
-type PaymentState = Pick<TransactionFormState, 'direction' | 'paymentMethod' | 'setPaymentMethod'>
+type PaymentState = Pick<TransactionFormState, 'direction' | 'paymentMethod' | 'setPaymentMethod' | 'installments' | 'setInstallments'>
 
 // TC-01jm-T04: la tarjeta solo difiere gastos; en ingresos ni se ofrece.
 export function PaymentField({ state: s }: { state: PaymentState }) {
@@ -60,5 +61,14 @@ export function PaymentField({ state: s }: { state: PaymentState }) {
     <select id="transaction-payment" value={s.paymentMethod} onChange={e => s.setPaymentMethod(e.target.value as typeof s.paymentMethod)}>
       <option value="cash">Efectivo o débito</option><option value="credit">Tarjeta de crédito</option>
     </select>
+    {s.paymentMethod === 'credit' && <>
+      <label htmlFor="transaction-installments">Plazo</label>
+      <select id="transaction-installments" value={s.installments} onChange={e => s.setInstallments(Number(e.target.value))}>
+        {PLANS.filter(p => p !== 'cash').map(n => <option key={n} value={n}>{planLabel(n)}</option>)}
+      </select>
+    </>}
   </>
 }
+
+// TC-02jm-T04: compartido con la fila y con "¿Puedo comprar esto?".
+export const planLabel = (n: number) => (n === 1 ? 'Un solo pago' : `Tasa cero ${n} meses`)
