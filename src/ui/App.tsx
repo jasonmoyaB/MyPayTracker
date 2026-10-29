@@ -51,12 +51,7 @@ function Dashboard({ session }: { session: Session }) {
   useEffect(() => autoRefresh(() => void load()), [load])
 
   // NAV-02jm: tema, contraseña y cerrar sesión viven en Opciones.
-  const header = (
-    <header className="app-header">
-      <img src="/icons/icon-192.png" alt="" width="32" height="32" />
-      <h1>MyPayTracker</h1>
-    </header>
-  )
+  const header = <header><h1>MyPayTracker</h1></header>
   return (
     <AppShell route={route} header={header}>
       <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()}

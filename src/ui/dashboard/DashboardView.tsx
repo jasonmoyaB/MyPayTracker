@@ -25,7 +25,7 @@ export function DashboardView({ settings, transactions, now = new Date() }: Prop
       <TopExpenses items={topExpenses(transactions, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
       {summary && (
-        <section className="card dashboard-afford">
+        <section className="card">
           <AffordCheck balanceCents={summary.balanceCrcCents} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now} />
         </section>
       )}

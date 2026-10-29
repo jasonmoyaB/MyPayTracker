@@ -15,10 +15,10 @@ Indicar cuándo se sincronizaron los datos bancarios. Si faltan movimientos o la
 
 ## 3. Tipografía y números
 
-- Fuente Geist (Google Fonts, `display=swap`) con fallback `system-ui, -apple-system, "Segoe UI", sans-serif` (UX-04jm). Títulos con `letter-spacing` ligeramente negativo.
+- Usar la fuente del sistema: `system-ui, -apple-system, "Segoe UI", sans-serif`. No requiere descargar tipografías.
 - Texto base: `16px`, interlineado `1.5`. Metadatos: `14px`; etiquetas siempre legibles.
-- Títulos de tarjeta: `17px`, peso `600`; título de la app `18px`.
-- Saldo principal: `clamp(40px, 10vw, 72px)`, peso `600`, `letter-spacing: -0.04em`; su etiqueta va pequeña y en texto secundario.
+- Títulos de sección: `20–24px`, peso `600`.
+- Saldo principal: `36–48px`, peso `600`, con ajuste para móvil e importes largos.
 - Pesos habituales: `400` y `600`; evitar que todo esté en negrita.
 - Importes con `font-variant-numeric: tabular-nums` y alineación derecha en listas.
 - Formatear dinero con `Intl.NumberFormat` según moneda y configuración regional; no truncar cifras para hacerlas encajar.
@@ -36,17 +36,14 @@ Indicar cuándo se sincronizaron los datos bancarios. Si faltan movimientos o la
 
 | Componente | Regla |
 | --- | --- |
-| Tarjetas | Radio `--radius-lg` (`20px`), padding `24px`, vidrio translúcido (`--glass-bg`) con borde claro y brillo interior; ver [paleta §9](./paleta-de-colores.md#9-vidrio-ux-01jm) |
-| Resumen | Bento de 6 columnas desde `960px` con `grid-auto-flow: dense`; cada fila suma 6 (`bento.test.ts`) |
-| Navegación | Píldora de vidrio pegajosa arriba; en móvil, flotante abajo a `12px` de los bordes |
-| Botones | Altura mínima `44px`, radio `--radius-md` (`12px`), etiqueta con verbo claro; presets de filtro como chips redondos |
-| Campos | Altura mínima `44px`, radio `12px`, etiqueta persistente, borde de control y ayuda cuando sea necesaria |
-| Estadísticas | Sin cajas anidadas: separador izquierdo de `2px` con `--color-border` |
+| Tarjetas | Radio `12px`, padding `20–24px`, vidrio translúcido (`--glass-bg`) con borde claro sutil; ver [paleta §9](./paleta-de-colores.md#9-vidrio-ux-01jm) |
+| Botones | Altura mínima `44px`, radio `8px`, etiqueta con verbo claro |
+| Campos | Altura mínima `44px`, etiqueta persistente, borde de control y ayuda cuando sea necesaria |
 | Listas | Separadores suaves, espacio vertical suficiente y sin bordes alrededor de cada dato |
 | Iconos | Una familia coherente, tamaño habitual `20px`; los decorativos se ocultan a lectores de pantalla |
 | Sombras | `--glass-shadow` en superficies de vidrio; fuera de ellas, solo capas flotantes |
 
-**Vidrio:** opacidad alta para no depender del fondo. Desenfoque solo en capas flotantes (navegación, toasts); las tarjetas no desenfocan porque cuesta frames de scroll (PERF-01jm). Fondo sin `fixed`. Si el navegador no lo soporta o el usuario pide menos transparencia, las superficies son opacas.
+**Vidrio:** desenfoque moderado y opacidad alta para no depender del fondo; nunca vidrio dentro de vidrio (coste de GPU en móviles). Si el navegador no lo soporta o el usuario pide menos transparencia, las superficies son opacas.
 
 Los controles solo con iconos necesitan nombre accesible y un área interactiva mínima de `44 × 44px`. Los estados hover no sustituyen la interacción táctil ni el foco de teclado.
 
@@ -60,7 +57,7 @@ Los controles solo con iconos necesitan nombre accesible y un área interactiva 
 - **Deshabilitado:** explicar el motivo cuando no sea evidente; no depender solo de una menor opacidad.
 - **Teclado:** orden lógico, foco visible y restauración del foco al cerrar un diálogo.
 
-Transiciones discretas de `120–180ms` para color y opacidad. Las tarjetas entran con un fundido de `8px` escalonado `60ms` (`--ease`). Respetar `prefers-reduced-motion` (sin transiciones ni animaciones); evitar contadores de dinero animados, rebotes y movimientos decorativos.
+Transiciones discretas de `120–180ms` para color y opacidad. Respetar `prefers-reduced-motion`; evitar contadores de dinero animados, rebotes y movimientos decorativos.
 
 ## 7. Voz de la interfaz
 

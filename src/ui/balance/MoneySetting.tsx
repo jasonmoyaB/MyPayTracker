@@ -20,15 +20,15 @@ export function MoneySetting(props: MoneySettingProps) {
   const [editing, setEditing] = useState(false)
   if (props.valueCents !== null && !editing) {
     return (
-      <p className="muted amount money-value">
+      <p className="muted amount" style={{ margin: 0, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         {props.label}: {formatMoney(props.valueCents, 'CRC')}{props.note && ` · ${props.note}`}
         <button className="secondary" onClick={() => setEditing(true)}>Editar</button>
       </p>
     )
   }
   return (
-    <div className="stack">
-      {props.valueCents === null && <p>{props.emptyHint}</p>}
+    <div style={{ display: 'grid', gap: 8 }}>
+      {props.valueCents === null && <p style={{ margin: 0 }}>{props.emptyHint}</p>}
       <MoneyForm
         {...props}
         onCancel={props.valueCents === null ? undefined : () => setEditing(false)}
@@ -59,14 +59,14 @@ function MoneyForm({ label, valueCents, save, successMessage, onSaved, onCancel 
   }
 
   return (
-    <form className="inline-form" onSubmit={(e) => void onSubmit(e)}>
-      <label>
+    <form onSubmit={(e) => void onSubmit(e)} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
+      <label style={{ flex: '1 1 160px' }}>
         {label} en colones
         <input inputMode="decimal" autoComplete="off" value={text} onChange={(e) => setText(e.target.value)} />
       </label>
       <button type="submit" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
       {onCancel && <button type="button" className="secondary" onClick={onCancel} disabled={saving}>Cancelar</button>}
-      {error && <p role="alert" className="status-danger">{error}</p>}
+      {error && <p role="alert" className="status-danger" style={{ margin: 0, flexBasis: '100%' }}>{error}</p>}
     </form>
   )
 }

@@ -170,18 +170,17 @@ Contraste del tema oscuro (mismo método que §6):
 
 ## 9. Vidrio (UX-01jm)
 
-Tarjetas, navegación, toasts y diálogos son paneles translúcidos sobre un fondo fijo con tres manchas radiales suaves (`--blob-1` verde, `--blob-2` azul, `--blob-3` arena; UX-04jm) y un grano SVG muy tenue como primera capa del fondo, sin `background-attachment: fixed`. Sin vidrio dentro de vidrio: dentro de una tarjeta se usa `--color-surface-muted`.
+Tarjetas, encabezado y diálogos son paneles translúcidos con desenfoque sobre un fondo con dos manchas radiales suaves (`--blob-1` verde, `--blob-2` azul) que se desvanecen sobre `--color-bg`. Sin vidrio dentro de vidrio.
 
 | Token | Claro | Oscuro |
 | --- | --- | --- |
 | `--glass-bg` | `rgb(255 255 255 / 0.72)` | `rgb(26 32 29 / 0.62)` |
 | `--glass-bg-strong` (campos) | `rgb(255 255 255 / 0.86)` | `rgb(26 32 29 / 0.8)` |
 | `--glass-border` | `rgb(255 255 255 / 0.7)` | `rgb(255 255 255 / 0.08)` |
-| `--glass-highlight` (brillo interior superior) | `rgb(255 255 255 / 0.9)` | `rgb(255 255 255 / 0.06)` |
-| `--glass-shadow` | `0 1px 2px …4%, 0 12px 32px -8px …12%` | `0 1px 2px …30%, 0 16px 40px -12px …55%` |
-| `--blob-1` / `--blob-2` / `--blob-3` | `#CFE6DC` / `#D6E2F3` / `#EAE6D7` | `#1A3A31` / `#1A2A42` / `#2A2A1E` |
-| `--glass-blur` | `20px` | `20px` |
+| `--glass-shadow` | `0 8px 24px rgb(32 40 36 / 8%)` | `0 8px 24px rgb(0 0 0 / 30%)` |
+| `--blob-1` / `--blob-2` | `#CFE6DC` / `#D6E2F3` | `#1A3A31` / `#1A2A42` |
+| `--glass-blur` | `16px` | `16px` |
 
-- Desenfoque (PERF-01jm): solo en capas flotantes con contenido debajo (navegación y toasts). Las tarjetas no desenfocan: detrás solo hay degradado y re-desenfocar tarjetas altas hacía el scroll a ~27 fps. Capas flotantes: `backdrop-filter` y `-webkit-backdrop-filter` con `blur(var(--glass-blur)) saturate(160%)` y `box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow)`.
+- Superficies: `backdrop-filter` y `-webkit-backdrop-filter` con `blur(var(--glass-blur)) saturate(140%)`.
 - Fallback: sin soporte de `backdrop-filter` o con `prefers-reduced-transparency: reduce`, vuelven a `--color-surface` opaco con `--color-border`.
 - Contraste: `src/ui/theme.contrast.test.ts` exige ≥ 4.5:1 para texto principal y secundario sobre cada vidrio mezclado con el fondo y con cada mancha opaca (peor caso), en ambos temas. Si cambias un token de vidrio, el test lo valida.
