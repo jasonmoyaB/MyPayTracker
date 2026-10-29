@@ -48,6 +48,13 @@ describe('PWA-01jm service worker', () => {
       body: '₡3 490,00 · Super', icon: '/icons/icon-192.png', data: { url: '/#/movimientos' },
     }))
   })
+  it('REC-01jm-T05: abre la URL del aviso solo si es una sección de la app (/#/...)', async () => {
+    const { self, fire } = loadWorker()
+    await fire('push', { data: { json: () => ({ title: 'Recordatorio de pago', body: 'x', url: '/#/recordatorios' }) } })
+    await fire('push', { data: { json: () => ({ title: 'Otro', body: 'x', url: 'https://otro.sitio/#/' }) } })
+    const urls = self.registration.showNotification.mock.calls.map((c: unknown[]) => (c[1] as { data: { url: string } }).data.url)
+    expect(urls).toEqual(['/#/recordatorios', '/#/movimientos'])
+  })
   it('AC-7: clic enfoca la ventana abierta y la lleva a Movimientos', async () => {
     const client = { navigate: vi.fn(async () => client), focus: vi.fn(async () => client) }
     const { self, fire } = loadWorker([client])

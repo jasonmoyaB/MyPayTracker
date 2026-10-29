@@ -30,16 +30,20 @@ export async function notifyNewMovements(db: SupabaseClient, ownerId: string, ro
   try {
     const send = await sender()
     if (!send) return
-    const { data, error } = await db.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', ownerId)
-    if (error) throw error
-    const gone = await sendAll(data as Subscription[], rows.map(toMovement), send)
-    if (gone.length > 0) {
-      const { error: deleteError } = await db.from('push_subscriptions').delete().in('id', gone)
-      if (deleteError) throw deleteError
-    }
+    await pushToOwner(db, ownerId, rows.map((r) => JSON.stringify(movementNotification(toMovement(r)))), send)
   } catch (e) {
     console.error('Notificaciones push fallaron:', e instanceof Error ? e.message : String(e))
   }
+}
+
+// REC-01jm-T05: envía cada payload a las suscripciones del dueño y borra las vencidas. Lo reutiliza reminders.ts.
+export async function pushToOwner(db: SupabaseClient, ownerId: string, payloads: string[], send: SendPush): Promise<void> {
+  const { data, error } = await db.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', ownerId)
+  if (error) throw error
+  const gone = await sendAll(data as Subscription[], payloads, send)
+  if (gone.length === 0) return
+  const { error: deleteError } = await db.from('push_subscriptions').delete().in('id', gone)
+  if (deleteError) throw deleteError
 }
 
 const toMovement = (r: InsertedRow): MovementInput => ({
@@ -50,10 +54,9 @@ const toMovement = (r: InsertedRow): MovementInput => ({
 })
 
 // Devuelve los ids que el servicio de push rechazó por vencidos (404/410); a esos no se reintenta.
-async function sendAll(subs: Subscription[], movements: MovementInput[], send: SendPush): Promise<string[]> {
+async function sendAll(subs: Subscription[], payloads: string[], send: SendPush): Promise<string[]> {
   const gone = new Set<string>()
-  for (const movement of movements) {
-    const payload = JSON.stringify(movementNotification(movement))
+  for (const payload of payloads) {
     for (const sub of subs.filter((s) => !gone.has(s.id))) {
       try {
         await send({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload)

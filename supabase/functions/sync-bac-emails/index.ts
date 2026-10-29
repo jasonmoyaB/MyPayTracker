@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
 import { notifyNewMovements } from './push.ts'
+import { notifyReminders } from './reminders.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
 // CRON-02jm: desde oct 2026 sin fecha de fin (lo anterior ya está en el saldo de cuenta, BAL-01jm).
@@ -60,6 +61,8 @@ Deno.serve(async (req) => {
     })
     if (authError) throw authError
     if (!authorized) return Response.json({ error: 'No autorizado' }, { status: 401 })
+    // REC-01jm-T05: antes de Gmail para que un fallo de Google no los bloquee; nunca lanza (captura sus errores).
+    await notifyReminders(db, env('OWNER_USER_ID'), new Date())
 
     const token = await accessToken()
     const ids = await listMessageIds(token)

@@ -8,16 +8,18 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 self.addEventListener('push', (event) => {
   let payload = {}
   try { payload = event.data ? event.data.json() : {} } catch { payload = { body: event.data.text() } }
-  const { title = 'MyPayTracker', body = '' } = payload
+  const { title = 'MyPayTracker', body = '', url } = payload
+  // REC-01jm-T05: el aviso puede llevar su sección; solo rutas propias (/#/...), nunca otro sitio.
+  const target = typeof url === 'string' && url.startsWith('/#/') ? url : MOVEMENTS_URL
   event.waitUntil(self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192.png',
     badge: '/icons/favicon-32.png',
-    data: { url: MOVEMENTS_URL },
+    data: { url: target },
   }))
 })
 
-// Enfoca una ventana ya abierta y la lleva a Movimientos; si no hay, abre una.
+// Enfoca una ventana ya abierta y la lleva a la sección del aviso; si no hay, abre una.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = (event.notification.data && event.notification.data.url) || MOVEMENTS_URL

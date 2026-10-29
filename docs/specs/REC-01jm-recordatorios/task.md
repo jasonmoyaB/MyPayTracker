@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "Cannot find module ./reminders"; verde 4/4 nuevas en src/data/reminders.test.ts; typecheck y test OK (337).
 - [x] REC-01jm-T04 Prueba + pantalla Recordatorios: ruta, pestaña, fila de tarjeta, lista, formulario y borrar [src/ui/reminders/*, src/ui/route.ts, src/ui/AppShell.tsx, src/ui/App.tsx] (AC-1, AC-4)
   - Evidencia: rojo 4 fallos (ruta, 5 enlaces/íconos, pantalla en App) y "Cannot find module ./ReminderForm"; verde 6/6 en RemindersView.test.tsx + route/App/screenFocus; typecheck, test (346) y build OK.
-- [ ] REC-01jm-T05 Prueba + `notifyReminders` con reclamo atómico, antes del sync de Gmail; SW abre la URL del aviso [supabase/functions/sync-bac-emails/*, public/sw.js] (AC-2–AC-5)
+- [x] REC-01jm-T05 Prueba + `notifyReminders` con reclamo atómico, antes del sync de Gmail; SW abre la URL del aviso [supabase/functions/sync-bac-emails/*, public/sw.js] (AC-2–AC-5)
+  - Evidencia: rojo "Cannot find module ./reminders.ts" y SW abría siempre Movimientos; verde 8/8 en reminders.test.ts + pwa.test.ts + push.test.ts intacto; typecheck, test (354) y build OK.
