@@ -23,3 +23,9 @@ describe('AC-6: el login muestra el logo horizontal', () => {
     expect(markup).toMatch(/<img src="\/icons\/logo.png" alt="MyPayTracker" width="640" height="213"/)
   })
 })
+
+describe('UX-03jm-T03: el login no muestra el botón de tema', () => {
+  it('el tema se cambia en Opciones', () => {
+    expect(renderToStaticMarkup(<LoginView />)).not.toMatch(/Tema (claro|oscuro)/)
+  })
+})
