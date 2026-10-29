@@ -1,16 +1,14 @@
 import { saveAccountBalanceCents, saveSalaryCents, type Settings } from '../../data/settings'
-import { ChangePasswordView } from '../auth/ChangePasswordView'
 import { MoneySetting } from '../balance/MoneySetting'
 import { formatDate } from '../format'
 import { PushToggle } from './PushToggle'
 
 type Props = {
-  email: string
   settings: Settings
   onSettingsSaved: () => void
 }
 
-export function AccountView({ email, settings, onSettingsSaved }: Props) {
+export function AccountView({ settings, onSettingsSaved }: Props) {
   const { account } = settings
   return (
     <>
@@ -35,7 +33,6 @@ export function AccountView({ email, settings, onSettingsSaved }: Props) {
           onSaved={onSettingsSaved}
         />
       </section>
-      <ChangePasswordView email={email} />
       <PushToggle />
     </>
   )

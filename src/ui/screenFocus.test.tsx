@@ -32,7 +32,7 @@ describe('AC-1: al cambiar de sección', () => {
     ['Resumen', <DashboardView settings={settings} transactions={[]} />],
     ['Movimientos', <TransactionsPanel transactions={[]} filter={{ from: null, to: null, direction: 'all' }}
       onFilterChange={() => {}} onTransactionSaved={() => {}} />],
-    ['Cuenta', <ToastProvider><AccountView email="a@b.c" settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
+    ['Cuenta', <ToastProvider><AccountView settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
   ])('el primer h2 de %s es enfocable por código (tabindex -1)', (_, screen) => {
     expect(firstH2(renderToStaticMarkup(screen))).toContain('tabindex="-1"')
   })

@@ -10,17 +10,16 @@ vi.mock('../../data/push', () => ({ saveSubscription: vi.fn(), deleteSubscriptio
 
 const render = (settings: Parameters<typeof AccountView>[0]['settings']) => renderToStaticMarkup(
   <ToastProvider>
-    <AccountView email="yo@correo.com" settings={settings} onSettingsSaved={() => {}} />
+    <AccountView settings={settings} onSettingsSaved={() => {}} />
   </ToastProvider>,
 )
 
 describe('AC-8: Cuenta', () => {
-  it('reúne saldo en BAC, salario y cambiar contraseña', () => {
+  it('reúne saldo en BAC y salario; cambiar contraseña está en Opciones (NAV-02jm)', () => {
     const html = render({ salaryCents: 500_000_00, account: { cents: 120_000_00, asOf: '2026-11-01T10:00:00-06:00' } })
     expect(html).toContain(`Saldo actual en BAC: ${formatMoney(120_000_00, 'CRC')}`)
     expect(html).toContain(`Salario: ${formatMoney(500_000_00, 'CRC')}`)
-    expect(html).toContain('Cambiar contraseña')
-    expect(html.match(/autoComplete="new-password"/g)).toHaveLength(2)
+    expect(html).not.toContain('Cambiar contraseña')
   })
   it('sin datos pide registrarlos y sin onBack no muestra "Volver"', () => {
     const html = render({ salaryCents: null, account: null })

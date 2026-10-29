@@ -21,7 +21,15 @@ describe('AC-1: cada sección muestra su pantalla', () => {
   it('Cuenta', () => {
     const html = render({ route: 'cuenta' })
     expect(html).toContain('Saldo y salario')
+    expect(html).not.toContain('Cambiar contraseña')
+  })
+  it('Opciones (NAV-02jm)', () => {
+    vi.stubGlobal('document', { documentElement: { dataset: {} } })
+    vi.stubGlobal('matchMedia', () => ({ matches: false }))
+    const html = render({ route: 'opciones' })
+    vi.unstubAllGlobals()
     expect(html).toContain('Cambiar contraseña')
+    expect(html).toContain('Cerrar sesión')
   })
   it('un error de carga se muestra sobre los datos con "Reintentar"', () => {
     const html = render({ error: 'Sin conexión.' })

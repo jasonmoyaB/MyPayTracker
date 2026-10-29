@@ -9,9 +9,9 @@ import { useToast } from './toast/ToastProvider'
 import { AccountView } from './account/AccountView'
 import { AppShell } from './AppShell'
 import { LoginView } from './auth/LoginView'
+import { OptionsView } from './options/OptionsView'
 import { DashboardView } from './dashboard/DashboardView'
 import { useRoute, type Route } from './route'
-import { ThemeToggle } from './theme/ThemeToggle'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
 type Data = { settings: Settings; transactions: Transaction[] }
@@ -50,15 +50,8 @@ function Dashboard({ session }: { session: Session }) {
   useEffect(() => { void load() }, [load])
   useEffect(() => autoRefresh(() => void load()), [load])
 
-  const header = (
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-      <h1>MyPayTracker</h1>
-      <span className="muted">
-        {session.email} <ThemeToggle />{' '}
-        <button className="secondary" onClick={() => void signOut()}>Cerrar sesión</button>
-      </span>
-    </header>
-  )
+  // NAV-02jm: tema, contraseña y cerrar sesión viven en Opciones.
+  const header = <header><h1>MyPayTracker</h1></header>
   return (
     <AppShell route={route} header={header}>
       <DashboardBody route={route} email={session.email} data={data} error={error} reload={() => void load()}
@@ -92,6 +85,7 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   if (route === 'movimientos') return (
     <TransactionsPanel transactions={data.transactions} filter={filter} onFilterChange={onFilterChange} onTransactionSaved={reload} />
   )
-  if (route === 'cuenta') return <AccountView email={email} settings={data.settings} onSettingsSaved={reload} />
+  if (route === 'cuenta') return <AccountView settings={data.settings} onSettingsSaved={reload} />
+  if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
   return <DashboardView settings={data.settings} transactions={data.transactions} />
 }
