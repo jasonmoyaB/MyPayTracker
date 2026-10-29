@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creditDueAt, dueBy, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, splitCredit, type CreditMovement } from './credit'
+import { creditDueAt, dueBy, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, pendingPurchases, splitCredit, type CreditMovement } from './credit'
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
@@ -126,5 +126,22 @@ describe('TC-04jm-T02: ongoingPurchase (deuda que ya venía pagando)', () => {
   it('lo que queda nunca da más cuotas que el plazo ni menos de una', () => {
     expect(ongoingPurchase(120_000_00, 12, 120_000_00, new Date()).installments).toBe(12)
     expect(ongoingPurchase(120_000_00, 12, 1, new Date()).installments).toBe(1)
+  })
+})
+
+describe('TC-05jm-T01: cuota mensual y productos en deuda', () => {
+  const now = new Date('2026-10-29T12:00:00-06:00')
+  it('AC-3: queda ₡60 000 pagando ₡10 000 al mes → 6 cuotas sin importar el plazo; tope 12', () => {
+    expect(ongoingPurchase(60_000_00, 1, 60_000_00, now, 10_000_00).installments).toBe(6)
+    expect(ongoingPurchase(500_000_00, 3, 500_000_00, now, 10_000_00).installments).toBe(12)
+  })
+  it('AC-1: lista lo que falta de cada compra con tarjeta; las pagadas y en efectivo no salen', () => {
+    const tele = { ...ongoingPurchase(60_000_00, 6, 60_000_00, now, 10_000_00), amountCents: 60_000_00, description: 'Tele' }
+    const list = pendingPurchases([
+      { ...m(tele.occurredAt, tele.amountCents), installments: tele.installments, description: 'Tele' },
+      { ...m('2026-09-01T12:00:00-06:00', 5_000_00), description: 'Vieja' },
+      { ...m('2026-10-25T12:00:00-06:00', 5_000_00, 'cash'), description: 'Súper' },
+    ], now)
+    expect(list).toEqual([{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00 }])
   })
 })

@@ -70,9 +70,22 @@ export function splitCredit<T extends CreditMovement>(movements: T[], now: Date)
 // TC-04jm-T02: deuda que ya venía pagando = compra con tarjeta por lo que queda, en tantas cuotas como quepan
 // (máximo el plazo). Entre el corte y el 20 la fecha se lleva al corte de este mes: así su primera cuota vence
 // este 20 (nextPayDay) y no el del mes siguiente, que inflaría "Puedes gastar".
-export function ongoingPurchase(priceCents: number, months: number, remainingCents: number, now: Date) {
-  const installments = Math.max(1, Math.min(months, Math.ceil(remainingCents / Math.floor(priceCents / months))))
+// TC-05jm-T01: con la cuota que ya paga al mes, las cuotas salen de ella (tope 12, el check de 0009), no del plazo.
+export function ongoingPurchase(priceCents: number, months: number, remainingCents: number, now: Date, monthlyCents?: number) {
+  const installments = monthlyCents
+    ? Math.min(12, Math.ceil(remainingCents / monthlyCents))
+    : Math.max(1, Math.min(months, Math.ceil(remainingCents / Math.floor(priceCents / months))))
   const day = new Date(now.getTime() - CR_OFFSET_MS).getUTCDate()
   const occurredAt = day > CUT_DAY && day <= DUE_DAY ? crDay(now, CUT_DAY, 31) : now.toISOString()
   return { installments, occurredAt }
+}
+
+// TC-05jm-T01: lo que falta de cada compra con tarjeta; mismo criterio que splitCredit (vencida = pagada).
+export function pendingPurchases<T extends CreditMovement & { description: string }>(movements: T[], now: Date) {
+  return movements.flatMap((m) => {
+    if (m.paymentMethod !== 'credit') return []
+    const left = installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).filter((d) => Date.parse(d.dueAt) > now.getTime())
+    if (left.length === 0) return []
+    return [{ description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents }]
+  })
 }
