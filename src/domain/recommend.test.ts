@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { recommend } from './recommend'
+import { comparePlans, recommend } from './recommend'
 
 const beforeCut = new Date('2026-10-03T12:00:00-06:00') // compra en tarjeta se paga el 20 oct (próximo pago)
 const afterCut = new Date('2026-11-10T12:00:00-06:00') // entre corte y pago: primer pago el 20 dic, no el próximo 20 nov
@@ -39,5 +39,14 @@ describe('TC-02jm: recommend', () => {
   it('sin salario solo evalúa el próximo pago', () => {
     expect(recommend({ ...base, salaryCents: null, plan: 3, now: afterCut }))
       .toMatchObject({ verdict: 'si', shareOfSalary: null })
+  })
+})
+
+describe('TC-03jm AC-1: comparePlans', () => {
+  it('cuota y veredicto de cada plazo con tarjeta', () => {
+    const { plan: _, ...input } = { ...base, plan: 1, now: afterCut }
+    expect(comparePlans(input).map((r) => [r.months, r.cuotaCents, r.verdict])).toEqual([
+      [1, 20_000_000, 'no'], [3, 6_666_668, 'ajustado'], [6, 3_333_335, 'si'], [10, 2_000_000, 'si'], [12, 1_666_674, 'si'],
+    ])
   })
 })

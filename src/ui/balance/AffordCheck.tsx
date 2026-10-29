@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { parseAmountToCents } from '../../domain/amount'
-import { PLANS, recommend, type Plan, type Recommendation } from '../../domain/recommend'
+import { comparePlans, PLANS, recommend, type Plan, type Recommendation } from '../../domain/recommend'
 import { planLabel } from '../transactions/TransactionForm'
 import { affordText } from './affordText'
+import { PlanTable } from './PlanTable'
 
 type Props = { balanceCents: number; salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date }
 
@@ -14,13 +15,16 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
   const [plan, setPlan] = useState<Plan>('cash')
   const [extra, setExtra] = useState('')
   const [result, setResult] = useState<Recommendation | 'invalid' | null>(null)
+  const [rows, setRows] = useState<Recommendation[]>([])
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     const priceCents = parseAmountToCents(price)
     const extraCents = extra.trim() === '' ? 0 : parseAmountToCents(extra)
-    if (priceCents === null || extraCents === null) return setResult('invalid')
-    setResult(recommend({ priceCents, plan, balanceCents, extraCents, salaryCents, scheduleCrc, now }))
+    if (priceCents === null || extraCents === null) { setRows([]); return setResult('invalid') }
+    const input = { priceCents, balanceCents, extraCents, salaryCents, scheduleCrc, now }
+    setResult(recommend({ ...input, plan }))
+    setRows(comparePlans(input))
   }
 
   return (
@@ -44,6 +48,7 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
         <button type="submit">Calcular</button>
       </div>
       <div role="status">{result && <ResultMessage result={result} />}</div>
+      {rows.length > 0 && <PlanTable rows={rows} />}
     </form>
   )
 }

@@ -18,7 +18,7 @@ export type Recommendation = {
   shareOfSalary: number | null
 }
 
-type Input = {
+export type Input = {
   priceCents: number; plan: Plan; balanceCents: number; extraCents: number
   salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date
 }
@@ -44,3 +44,7 @@ export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCe
   if (shareOfSalary !== null && shareOfSalary > HEALTHY_SHARE) return { ...result, verdict: 'ajustado', reason: 'salario' }
   return { ...result, verdict: 'si', reason: null }
 }
+
+// TC-03jm-T01: la misma recomendación para cada plazo con tarjeta, para compararlos de un vistazo.
+export const comparePlans = (input: Omit<Input, 'plan'>): Recommendation[] =>
+  PLANS.filter((plan) => plan !== 'cash').map((plan) => recommend({ ...input, plan }))

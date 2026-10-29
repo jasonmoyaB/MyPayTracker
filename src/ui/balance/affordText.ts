@@ -1,6 +1,9 @@
 import type { Recommendation } from '../../domain/recommend'
 import { formatDay, formatMoney } from '../format'
 
+// TC-03jm: compartido con PlanTable.
+export const TONE = { si: 'success', ajustado: 'warning', no: 'danger' } as const
+
 const crc = (cents: number) => formatMoney(cents, 'CRC')
 const pct = (share: number) => `${Math.round(share * 100)} %`
 
