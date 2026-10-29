@@ -1,12 +1,16 @@
-import { nextCutAt } from '../../domain/credit'
+import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
 import { formatDay, formatMoney } from '../format'
 import { DebtForm } from './DebtForm'
 
 type Pending = { crcCents: number; usdCents: number; dueAt: string | null; scheduleCrc: Record<string, number> }
-type Props = { pending: Pending; limitCents: number | null; salaryCents: number | null; now: Date; onSaved: () => void }
+type Purchase = ReturnType<typeof pendingPurchases>[number]
+type Props = {
+  pending: Pending; limitCents: number | null; salaryCents: number | null; now: Date; onSaved: () => void
+  dueNextCents: number; purchases: Purchase[]
+}
 
 // TC-01jm-T05: recuerda corte y pago y dice cuánto queda tras pagar la deuda (solo CRC; USD aparte).
-export function CreditCard({ pending, limitCents, salaryCents, now, onSaved }: Props) {
+export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, dueNextCents, purchases }: Props) {
   return (
     <section className="card" aria-labelledby="credit-title" style={{ display: 'grid', gap: 8 }}>
       <h2 id="credit-title">Tarjeta de crédito</h2>
@@ -14,9 +18,16 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved }: P
         Próximo corte: {formatDay(nextCutAt(now))}{pending.dueAt && ` · Próximo pago: ${formatDay(pending.dueAt)}`}
       </p>
       <p className="amount" style={{ margin: 0 }}>Deuda pendiente: {formatMoney(pending.crcCents, 'CRC')}</p>
+      {/* TC-05jm-T03: lo que vence el próximo 20, solo CRC. */}
+      {pending.crcCents > 0 && <p className="amount" style={{ margin: 0 }}>Total a pagar el {formatDay(nextPayDay(now))}: {formatMoney(dueNextCents, 'CRC')}</p>}
       {pending.usdCents > 0 && <p className="muted amount" style={{ margin: 0 }}>Deuda en dólares: {formatMoney(pending.usdCents, 'USD')}</p>}
       <LimitLine limitCents={limitCents} hasDebt={pending.crcCents > 0} />
       <SalaryLine scheduleCrc={pending.scheduleCrc} salaryCents={salaryCents} />
+      {purchases.length > 0 && <ul style={{ margin: 0, paddingLeft: 20 }}>
+        {purchases.map((p, i) => <li key={i} className="amount">
+          {p.description}: faltan {formatMoney(p.remainingCents, p.currency)} · {p.count} {p.count === 1 ? 'cuota' : 'cuotas'}, próxima de {formatMoney(p.nextCents, p.currency)}
+        </li>)}
+      </ul>}
       <DebtForm onSaved={onSaved} />
     </section>
   )
