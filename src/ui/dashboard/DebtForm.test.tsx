@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../toast/ToastProvider'
-import { CreditCard } from './CreditCard'
+import { CreditCard, outsideRect } from './CreditCard'
 import { checkDebt } from './DebtForm'
 
 vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
@@ -64,3 +64,12 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
   })
 })
 
+describe('TC-06jm-T02: tocar fuera cierra el modal', () => {
+  const rect = { left: 100, right: 500, top: 50, bottom: 400 }
+  it('fuera del recuadro sí; dentro (incluido el borde) no', () => {
+    expect(outsideRect(rect, 50, 200)).toBe(true)
+    expect(outsideRect(rect, 300, 450)).toBe(true)
+    expect(outsideRect(rect, 300, 200)).toBe(false)
+    expect(outsideRect(rect, 100, 50)).toBe(false)
+  })
+})

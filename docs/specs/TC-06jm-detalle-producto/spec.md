@@ -5,7 +5,7 @@ del calendario. Al tocar un producto quiere un modal con todas sus cuotas pendie
 ## Requisitos
 - Cada producto de la lista se puede tocar (y activar con teclado); abre un modal con:
   nombre, total que falta y una tabla con cada cuota pendiente (fecha de pago y monto).
-- El modal se cierra con "Cerrar" o con Esc y el foco vuelve al producto.
+- El modal se cierra con "Cerrar", con Esc o tocando fuera de él, y el foco vuelve al producto.
 - La fila de la lista se ve igual que hoy.
 ## Restricciones
 - `<dialog>` nativo: sin dependencias ni animaciones (UX-04jm se revirtió por lag).
@@ -16,4 +16,4 @@ del calendario. Al tocar un producto quiere un modal con todas sus cuotas pendie
   "Falta ₡35 000".
 - AC-2: cada producto es un botón con `aria-haspopup="dialog"` y su propio modal.
 ## Supuestos
-- Clic fuera del modal no lo cierra (Esc y "Cerrar" bastan); agregarlo si hace falta.
+- Tocar fuera se detecta por coordenadas (el fondo es parte del `<dialog>`); `closedby="any"` aún no está en Safari.

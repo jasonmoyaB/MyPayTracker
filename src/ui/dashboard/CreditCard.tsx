@@ -37,6 +37,11 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
   )
 }
 
+// TC-06jm-T02: el fondo oscuro es parte del <dialog>, así que el clic se compara contra su recuadro.
+// ponytail: cambiar por closedby="any" cuando Safari lo soporte.
+type Rect = { left: number; right: number; top: number; bottom: number }
+export const outsideRect = (r: Rect, x: number, y: number) => x < r.left || x > r.right || y < r.top || y > r.bottom
+
 // TC-06jm-T01: <dialog> nativo; Esc, foco atrapado y vuelta del foco al botón los da el navegador.
 function PurchaseRow({ purchase: p }: { purchase: Purchase }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -51,7 +56,8 @@ function PurchaseRow({ purchase: p }: { purchase: Purchase }) {
         </span>
         <span className="amount">{money(p.remainingCents)}</span>
       </button>
-      <dialog ref={dialog} aria-labelledby={titleId} className="dashboard-dialog">
+      <dialog ref={dialog} aria-labelledby={titleId} className="dashboard-dialog"
+        onClick={e => { if (e.target === e.currentTarget && outsideRect(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY)) e.currentTarget.close() }}>
         <h3 id={titleId} style={{ margin: 0 }}>{p.description}</h3>
         <p style={{ margin: 0 }}>Falta {money(p.remainingCents)}</p>
         <table>
