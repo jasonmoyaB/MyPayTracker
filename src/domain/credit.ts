@@ -1,5 +1,6 @@
-import { CR_OFFSET_MS } from './date'
-import type { SummaryMovement } from './summary'
+// REC-01jm-T02: con extensión porque la Edge Function (Deno) importa este archivo (ver notification.ts).
+import { CR_OFFSET_MS } from './date.ts'
+import type { SummaryMovement } from './summary.ts'
 
 // TC-01jm: una sola tarjeta (la de la hermana) con corte y pago fijos; sin config (ponytail).
 const CUT_DAY = 6
@@ -41,6 +42,20 @@ export function nextPayDay(now: Date): string {
 // Lo que vence hasta `at` (incluida). Claves ISO UTC: comparar texto = comparar fechas.
 export function dueBy(scheduleCrc: Record<string, number>, at: string): number {
   return Object.entries(scheduleCrc).reduce((sum, [dueAt, cents]) => (dueAt <= at ? sum + cents : sum), 0)
+}
+
+// REC-01jm-T02: lo que vence justo en `dueAt` (un 20), por moneda. No usa splitCredit: el mismo 20 ya las da por pagadas.
+export function dueOn(movements: CreditMovement[], dueAt: string) {
+  const total = { crcCents: 0, usdCents: 0 }
+  for (const m of movements) {
+    if (m.paymentMethod !== 'credit') continue
+    for (const d of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
+      if (d.dueAt !== dueAt) continue
+      if (m.currency === 'USD') total.usdCents += d.cents
+      else total.crcCents += d.cents
+    }
+  }
+  return total
 }
 
 // El día de corte aún cuenta como "próximo" mientras sea ese día en CR.

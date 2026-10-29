@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creditDueAt, dueBy, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, pendingPurchases, splitCredit, type CreditMovement } from './credit'
+import { creditDueAt, dueBy, dueOn, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, pendingPurchases, splitCredit, type CreditMovement } from './credit'
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
@@ -146,5 +146,18 @@ describe('TC-05jm-T01: cuota mensual y productos en deuda', () => {
     // TC-06jm-T01: el calendario pendiente para el modal del producto.
     expect(list[0].dues).toHaveLength(6)
     expect(list[0].dues[5]).toEqual({ dueAt: '2027-04-20T06:00:00.000Z', cents: 10_000_00 })
+  })
+})
+
+describe('REC-01jm AC-4: dueOn = cuotas que vencen ese 20, por moneda', () => {
+  it('₡10 000 + ₡20 666,70 el 20 nov → ₡30 666,70; USD aparte; otras fechas y efectivo no cuentan', () => {
+    const nov20 = '2026-11-20T06:00:00.000Z'
+    expect(dueOn([
+      m('2026-10-10T12:00:00-06:00', 10_000_00),
+      { ...m('2026-10-01T12:00:00-06:00', 41_333_40), installments: 2 },
+      m('2026-10-12T12:00:00-06:00', 15_00, 'credit', 'out', 'USD'),
+      m('2026-10-02T12:00:00-06:00', 5_000_00),
+      m('2026-10-20T12:00:00-06:00', 9_00, 'cash'),
+    ], nov20)).toEqual({ crcCents: 30_666_70, usdCents: 15_00 })
   })
 })

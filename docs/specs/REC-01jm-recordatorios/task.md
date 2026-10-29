@@ -6,7 +6,8 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
 ## Tareas
 - [x] REC-01jm-T01 Prueba + migración `reminders` con RLS y `settings.card_notified_on`, sin aplicar [supabase/migrations/0010_reminders.sql] (AC-6)
   - Evidencia: rojo ENOENT al leer 0010_reminders.sql; verde 3/3 en src/data/reminders.test.ts; typecheck y test OK (324).
-- [ ] REC-01jm-T02 Prueba + `nextDueOn`, `reminderPhase`, `reminderNotification` y `dueOn` [src/domain/reminder.ts, src/domain/credit.ts] (AC-1, AC-2, AC-4)
+- [x] REC-01jm-T02 Prueba + `nextDueOn`, `reminderPhase`, `reminderNotification` y `dueOn` [src/domain/reminder.ts, src/domain/credit.ts] (AC-1, AC-2, AC-4)
+  - Evidencia: rojo "Cannot find module ./reminder" y "dueOn is not a function"; verde 9/9 nuevas en reminder.test.ts y credit.test.ts; typecheck y test OK (333).
 - [ ] REC-01jm-T03 Prueba + `listReminders`/`addReminder`/`deleteReminder` [src/data/reminders.ts]
 - [ ] REC-01jm-T04 Prueba + pantalla Recordatorios: ruta, pestaña, fila de tarjeta, lista, formulario y borrar [src/ui/reminders/*, src/ui/route.ts, src/ui/AppShell.tsx, src/ui/App.tsx] (AC-1, AC-4)
 - [ ] REC-01jm-T05 Prueba + `notifyReminders` con reclamo atómico, antes del sync de Gmail; SW abre la URL del aviso [supabase/functions/sync-bac-emails/*, public/sw.js] (AC-2–AC-5)

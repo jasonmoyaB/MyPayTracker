@@ -1,5 +1,6 @@
-import type { Currency } from './bankEmail'
-import { availableBalance, type Movement } from './balance'
+// REC-01jm-T02: con extensión; credit.ts (importado por la Edge Function) depende de este archivo.
+import type { Currency } from './bankEmail.ts'
+import { availableBalance, type Movement } from './balance.ts'
 
 export type SummaryMovement = Movement & { currency: Currency }
 
