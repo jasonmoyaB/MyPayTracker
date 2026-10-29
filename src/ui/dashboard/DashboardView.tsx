@@ -1,6 +1,6 @@
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
-import { splitCredit } from '../../domain/credit'
+import { dueBy, nextPayDay, splitCredit } from '../../domain/credit'
 import { lastEmailMovement, monthStats, topExpenses } from '../../domain/monthStats'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard, summaryFor } from './BalanceCard'
@@ -15,16 +15,20 @@ type Props = { settings: Settings; transactions: Transaction[]; now?: Date }
 export function DashboardView({ settings, transactions, now = new Date() }: Props) {
   const { settled, pending } = splitCredit(transactions, now)
   const summary = summaryFor(settings, settled)
-  // TC-01jm-T05: lo que se puede gastar ya descuenta la deuda de la tarjeta (solo CRC).
-  const limitCents = summary && summary.balanceCrcCents - pending.crcCents
+  // TC-02jm-T05: hoy solo resta lo que vence el próximo 20; las cuotas posteriores salen del salario de ese mes.
+  const limitCents = summary && summary.balanceCrcCents - dueBy(pending.scheduleCrc, nextPayDay(now))
   return (
     <div className="dashboard">
       <BalanceCard summary={summary} />
-      <CreditCard pending={pending} limitCents={limitCents} now={now} />
+      <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} />
       <MonthCards stats={monthStats(transactions, now)} />
       <TopExpenses items={topExpenses(transactions, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
-      {limitCents !== null && <section className="card"><AffordCheck balanceCents={limitCents} /></section>}
+      {summary && (
+        <section className="card">
+          <AffordCheck balanceCents={summary.balanceCrcCents} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now} />
+        </section>
+      )}
     </div>
   )
 }

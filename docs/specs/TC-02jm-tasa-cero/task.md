@@ -12,4 +12,5 @@ spec.md + plan.md de esta carpeta. Depende de TC-01jm. Regla ponytail.
   - Evidencia: rojo "Cannot find module ./recommend"; verde 8/8 (AC-2 por pago y por salario, AC-3 22 % y 44 %, AC-4, agenda previa, efectivo, sin salario); typecheck y test OK (287).
 - [x] TC-02jm-T04 `installments` en datos; select "Plazo" en el formulario y etiqueta en la fila [src/data/transactions.ts, src/ui/transactions/*] (AC-5)
   - Evidencia: rojo 2 fallos (sin select "Plazo", fila sin plazo) + 9 errores TS de fixtures sin installments; verde 290 tests; `planLabel` compartido; typecheck y test OK.
-- [ ] TC-02jm-T05 Prueba + `AffordCheck` con forma de pago, plata extra y recomendación; límite y aviso mensual en Resumen [src/ui/balance/*, src/ui/dashboard/*] (AC-2–AC-4)
+- [x] TC-02jm-T05 Prueba + `AffordCheck` con forma de pago, plata extra y recomendación; límite y aviso mensual en Resumen [src/ui/balance/*, src/ui/dashboard/*] (AC-2–AC-4)
+  - Evidencia: rojo "Cannot find module ./affordText" y 2 fallos en DashboardView.test (sin aviso de salario ni forma de pago); verde 298 tests (affordText 6, Resumen con pago futuro); prueba TC-01jm AC-2 movida a compra del 25 oct (vence el próximo 20) por la nueva regla del límite; typecheck, test y build OK.

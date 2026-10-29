@@ -69,18 +69,18 @@ describe('AC-9: estados vacíos', () => {
 })
 
 describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
-  // Compra el 10 nov (después del corte) → se paga el 20 dic.
-  const credit = [tx('2026-11-10T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+  // Compra el 25 oct (después del corte del 6 oct) → se paga el 20 nov, el próximo pago visto el 15 nov.
+  const credit = [tx('2026-10-25T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
   const salary = { salaryCents: 150_000_00, account: null }
   it('AC-2: antes del pago: saldo intacto, deuda, fechas y aviso de quiebra', () => {
     const html = render({ settings: salary, transactions: credit })
     expect(html).toContain(formatMoney(150_000_00, 'CRC'))
     expect(html).toContain(formatMoney(200_000_00, 'CRC'))
     expect(html).toContain(`Al pagar la tarjeta te faltarían ${formatMoney(50_000_00, 'CRC')}`)
-    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 dic']) expect(html).toContain(day)
+    for (const day of ['Próximo corte: 6 dic', 'Próximo pago: 20 nov']) expect(html).toContain(day)
   })
   it('AC-3: desde el 20 la compra es gasto: saldo −₡50 000 y sin deuda', () => {
-    const html = render({ settings: salary, transactions: credit, now: new Date('2026-12-21T12:00:00-06:00') })
+    const html = render({ settings: salary, transactions: credit, now: new Date('2026-11-21T12:00:00-06:00') })
     expect(html).toContain(formatMoney(-50_000_00, 'CRC'))
     expect(html).not.toContain('te faltarían')
     expect(html).not.toContain('Próximo pago')
@@ -88,5 +88,20 @@ describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
   it('con límite positivo dice cuánto se puede gastar', () => {
     const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })
     expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')} sin quedar en quiebra`)
+  })
+})
+
+describe('TC-02jm: cuotas futuras contra el salario', () => {
+  // Compra el 10 nov → se paga el 20 dic: no resta hoy, pero ese mes supera el salario.
+  const future = [tx('2026-11-10T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+  it('el límite de hoy no la resta y avisa que ese pago supera el salario', () => {
+    const html = render({ settings: { salaryCents: 150_000_00, account: null }, transactions: future })
+    expect(html).toContain(`Puedes gastar ${formatMoney(150_000_00, 'CRC')} sin quedar en quiebra`)
+    expect(html).toContain(`Tu pago del 20 dic (${formatMoney(200_000_00, 'CRC')}) supera tu salario`)
+  })
+  it('¿Puedo comprar esto? ofrece tarjeta y tasa cero', () => {
+    const html = render({ settings: { salaryCents: 150_000_00, account: null }, transactions: future })
+    for (const text of ['Forma de pago', 'Efectivo o débito', 'Tarjeta, un solo pago', 'Tasa cero 12 meses', 'Plata extra'])
+      expect(html).toContain(text)
   })
 })

@@ -1,19 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import { parseAmountToCents } from '../../domain/amount'
-import { formatMoney } from '../format'
+import { PLANS, recommend, type Plan, type Recommendation } from '../../domain/recommend'
+import { planLabel } from '../transactions/TransactionForm'
+import { affordText } from './affordText'
 
-type Result = { kind: 'ok' | 'short'; cents: number } | { kind: 'invalid' }
+type Props = { balanceCents: number; salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date }
 
-export function AffordCheck({ balanceCents }: { balanceCents: number }) {
+const optionLabel = (p: Plan) => (p === 'cash' ? 'Efectivo o débito' : p === 1 ? 'Tarjeta, un solo pago' : planLabel(p))
+
+// TC-02jm-T05: recomienda según la forma de pago: el próximo 20 sale del saldo (+ extra); las cuotas, del salario.
+export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Props) {
   const [price, setPrice] = useState('')
-  const [result, setResult] = useState<Result | null>(null)
+  const [plan, setPlan] = useState<Plan>('cash')
+  const [extra, setExtra] = useState('')
+  const [result, setResult] = useState<Recommendation | 'invalid' | null>(null)
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     const priceCents = parseAmountToCents(price)
-    if (priceCents === null) return setResult({ kind: 'invalid' })
-    const left = balanceCents - priceCents
-    setResult(left >= 0 ? { kind: 'ok', cents: left } : { kind: 'short', cents: -left })
+    const extraCents = extra.trim() === '' ? 0 : parseAmountToCents(extra)
+    if (priceCents === null || extraCents === null) return setResult('invalid')
+    setResult(recommend({ priceCents, plan, balanceCents, extraCents, salaryCents, scheduleCrc, now }))
   }
 
   return (
@@ -24,6 +31,16 @@ export function AffordCheck({ balanceCents }: { balanceCents: number }) {
           Precio en colones
           <input inputMode="decimal" autoComplete="off" placeholder="3490.50" value={price} onChange={(e) => setPrice(e.target.value)} />
         </label>
+        <label style={{ flex: '1 1 160px' }}>
+          Forma de pago
+          <select value={plan} onChange={(e) => setPlan(e.target.value === 'cash' ? 'cash' : (Number(e.target.value) as Plan))}>
+            {PLANS.map((p) => <option key={p} value={p}>{optionLabel(p)}</option>)}
+          </select>
+        </label>
+        <label style={{ flex: '1 1 160px' }}>
+          Plata extra que te entra (opcional)
+          <input inputMode="decimal" autoComplete="off" placeholder="0" value={extra} onChange={(e) => setExtra(e.target.value)} />
+        </label>
         <button type="submit">Calcular</button>
       </div>
       <div role="status">{result && <ResultMessage result={result} />}</div>
@@ -31,8 +48,10 @@ export function AffordCheck({ balanceCents }: { balanceCents: number }) {
   )
 }
 
-function ResultMessage({ result }: { result: Result }) {
-  if (result.kind === 'invalid') return <p className="status-danger" style={{ margin: 0 }}>Escribe un precio mayor que cero, por ejemplo 3490.50.</p>
-  if (result.kind === 'ok') return <p className="status-success amount" style={{ margin: 0 }}>Sí, te quedarían {formatMoney(result.cents, 'CRC')}</p>
-  return <p className="status-warning amount" style={{ margin: 0 }}>Te faltan {formatMoney(result.cents, 'CRC')}</p>
+function ResultMessage({ result }: { result: Recommendation | 'invalid' }) {
+  if (result === 'invalid') return <p className="status-danger" style={{ margin: 0 }}>Escribe montos mayores que cero, por ejemplo 3490.50.</p>
+  const { tone, lines } = affordText(result)
+  return <>{lines.map((line, i) => (
+    <p key={i} className={i === lines.length - 1 ? `status-${tone} amount` : 'muted amount'} style={{ margin: 0 }}>{line}</p>
+  ))}</>
 }
