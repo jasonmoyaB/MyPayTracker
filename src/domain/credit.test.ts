@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creditDueAt, dueBy, installmentDues, nextCutAt, nextPayDay, splitCredit, type CreditMovement } from './credit'
+import { creditDueAt, dueBy, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, splitCredit, type CreditMovement } from './credit'
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
@@ -93,5 +93,38 @@ describe('TC-02jm: próximo día 20 y lo que vence hasta ahí', () => {
   it('dueBy suma solo lo que vence hasta la fecha', () => {
     const schedule = { '2026-11-20T06:00:00.000Z': 100, '2026-12-20T06:00:00.000Z': 50 }
     expect(dueBy(schedule, '2026-11-20T06:00:00.000Z')).toBe(100)
+  })
+})
+
+describe('TC-04jm-T02: ongoingPurchase (deuda que ya venía pagando)', () => {
+  const dues = (now: string, price: number, months: number, remaining: number) => {
+    const { installments, occurredAt } = ongoingPurchase(price, months, remaining, new Date(now))
+    return installmentDues(occurredAt, remaining, installments).map(d => [at(d.dueAt), d.cents])
+  }
+  const nov20 = at('2026-11-20T00:00:00-06:00')
+  const dec20 = at('2026-12-20T00:00:00-06:00')
+  it('AC-1: 29 oct, ₡120 000 a 12 meses, queda ₡60 000 → 6 cuotas de ₡10 000 desde el 20 nov', () => {
+    const d = dues('2026-10-29T12:00:00-06:00', 120_000_00, 12, 60_000_00)
+    expect(d).toHaveLength(6)
+    expect(d[0]).toEqual([nov20, 10_000_00])
+    expect(d.every(([, c]) => c === 10_000_00)).toBe(true)
+  })
+  it('AC-2: 15 nov, mismo caso → primera cuota el 20 nov', () => {
+    expect(dues('2026-11-15T12:00:00-06:00', 120_000_00, 12, 60_000_00)[0]).toEqual([nov20, 10_000_00])
+  })
+  it('AC-3: un solo pago de ₡50 000 el 29 oct vence el 20 nov', () => {
+    expect(dues('2026-10-29T12:00:00-06:00', 50_000_00, 1, 50_000_00)).toEqual([[nov20, 50_000_00]])
+  })
+  it('AC-4: ₡100 000 a 3 meses, queda ₡50 000 → 2 cuotas de ₡25 000', () => {
+    expect(dues('2026-10-29T12:00:00-06:00', 100_000_00, 3, 50_000_00).map(([, c]) => c)).toEqual([25_000_00, 25_000_00])
+  })
+  it('bordes: el 20 aún paga ese 20; el 6 (corte) paga el 20 de ese mes; el 21 pasa al siguiente', () => {
+    expect(dues('2026-11-20T23:00:00-06:00', 50_000_00, 1, 50_000_00)[0][0]).toBe(nov20)
+    expect(dues('2026-11-06T23:00:00-06:00', 50_000_00, 1, 50_000_00)[0][0]).toBe(nov20)
+    expect(dues('2026-11-21T00:00:00-06:00', 50_000_00, 1, 50_000_00)[0][0]).toBe(dec20)
+  })
+  it('lo que queda nunca da más cuotas que el plazo ni menos de una', () => {
+    expect(ongoingPurchase(120_000_00, 12, 120_000_00, new Date()).installments).toBe(12)
+    expect(ongoingPurchase(120_000_00, 12, 1, new Date()).installments).toBe(1)
   })
 })

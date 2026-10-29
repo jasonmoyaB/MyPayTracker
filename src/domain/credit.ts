@@ -66,3 +66,13 @@ export function splitCredit<T extends CreditMovement>(movements: T[], now: Date)
   }
   return { settled, pending }
 }
+
+// TC-04jm-T02: deuda que ya venía pagando = compra con tarjeta por lo que queda, en tantas cuotas como quepan
+// (máximo el plazo). Entre el corte y el 20 la fecha se lleva al corte de este mes: así su primera cuota vence
+// este 20 (nextPayDay) y no el del mes siguiente, que inflaría "Puedes gastar".
+export function ongoingPurchase(priceCents: number, months: number, remainingCents: number, now: Date) {
+  const installments = Math.max(1, Math.min(months, Math.ceil(remainingCents / Math.floor(priceCents / months))))
+  const day = new Date(now.getTime() - CR_OFFSET_MS).getUTCDate()
+  const occurredAt = day > CUT_DAY && day <= DUE_DAY ? crDay(now, CUT_DAY, 31) : now.toISOString()
+  return { installments, occurredAt }
+}
