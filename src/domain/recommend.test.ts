@@ -50,3 +50,25 @@ describe('TC-03jm AC-1: comparePlans', () => {
     ])
   })
 })
+
+describe('SIM-01jm: libre por mes', () => {
+  const scheduleCrc = { '2026-11-20T06:00:00.000Z': 5_000_000, '2026-12-20T06:00:00.000Z': 10_000_000 }
+  it('AC-1: cada cuota nueva con las cuotas del mes y lo que queda del salario', () => {
+    const r = recommend({ ...base, priceCents: 3_000_000, plan: 3, scheduleCrc, now: afterCut })
+    expect(r.monthly).toEqual([
+      { dueAt: '2026-12-20T06:00:00.000Z', cuotasCents: 11_000_000, freeCents: 4_000_000 },
+      { dueAt: '2027-01-20T06:00:00.000Z', cuotasCents: 1_000_000, freeCents: 14_000_000 },
+      { dueAt: '2027-02-20T06:00:00.000Z', cuotasCents: 1_000_000, freeCents: 14_000_000 },
+    ])
+  })
+  it('AC-2: lo que vence el próximo 20 sale del saldo y puede quedar negativo', () => {
+    expect(recommend({ ...base, plan: 1, now: beforeCut }).monthly)
+      .toEqual([{ dueAt: '2026-10-20T06:00:00.000Z', cuotasCents: 20_000_000, freeCents: -5_000_000 }])
+  })
+  it('AC-3: sin salario los meses siguientes no tienen libre', () => {
+    expect(recommend({ ...base, salaryCents: null, plan: 3, now: afterCut }).monthly.map((m) => m.freeCents)).toEqual([null, null, null])
+  })
+  it('efectivo: sin meses', () => {
+    expect(recommend({ ...base, plan: 'cash', now: afterCut }).monthly).toEqual([])
+  })
+})

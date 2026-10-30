@@ -4,7 +4,7 @@ import { formatMoney } from '../format'
 import { affordText } from './affordText'
 
 const r = (over: Partial<Recommendation>): Recommendation => ({ verdict: 'si', reason: null, leftCents: 0, months: 3,
-  cuotaCents: 3_000_000, firstDueAt: '2026-12-20T06:00:00.000Z', worstMonthCents: 3_000_000, shareOfSalary: 0.2, ...over })
+  cuotaCents: 3_000_000, firstDueAt: '2026-12-20T06:00:00.000Z', worstMonthCents: 3_000_000, shareOfSalary: 0.2, monthly: [], ...over })
 
 describe('TC-02jm: textos de la recomendación', () => {
   it('cuota, plazo y primer pago', () => {

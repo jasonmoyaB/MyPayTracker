@@ -16,6 +16,8 @@ export type Recommendation = {
   firstDueAt: string | null
   worstMonthCents: number | null // cuotas del mes más cargado después del próximo pago
   shareOfSalary: number | null
+  // SIM-01jm-T01: por cada cuota nueva, todo lo que vence ese 20 y lo que queda libre (null sin salario).
+  monthly: { dueAt: string; cuotasCents: number; freeCents: number | null }[]
 }
 
 export type Input = {
@@ -30,7 +32,7 @@ export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCe
   if (plan === 'cash') {
     const leftCents = available - priceCents
     return { verdict: leftCents >= 0 ? 'si' : 'no', reason: leftCents >= 0 ? null : 'pago', leftCents,
-      months: null, cuotaCents: null, firstDueAt: null, worstMonthCents: null, shareOfSalary: null }
+      months: null, cuotaCents: null, firstDueAt: null, worstMonthCents: null, shareOfSalary: null, monthly: [] }
   }
   const dues = installmentDues(now.toISOString(), priceCents, plan)
   const schedule = { ...scheduleCrc }
@@ -38,7 +40,10 @@ export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCe
   const leftCents = available - dues.filter((d) => d.dueAt <= payDay).reduce((sum, d) => sum + d.cents, 0)
   const worstMonthCents = Math.max(0, ...Object.entries(schedule).filter(([at]) => at > payDay).map(([, cents]) => cents))
   const shareOfSalary = salaryCents ? worstMonthCents / salaryCents : null
-  const result = { leftCents, months: plan, cuotaCents: dues[0].cents, firstDueAt: dues[0].dueAt, worstMonthCents, shareOfSalary }
+  // Misma regla que el veredicto: el próximo 20 sale del saldo (leftCents); los siguientes, del salario.
+  const monthly = dues.map(({ dueAt }) => ({ dueAt, cuotasCents: schedule[dueAt],
+    freeCents: dueAt <= payDay ? leftCents : salaryCents === null ? null : salaryCents - schedule[dueAt] }))
+  const result = { leftCents, months: plan, cuotaCents: dues[0].cents, firstDueAt: dues[0].dueAt, worstMonthCents, shareOfSalary, monthly }
   if (leftCents < 0) return { ...result, verdict: 'no', reason: 'pago' }
   if (salaryCents !== null && worstMonthCents > salaryCents) return { ...result, verdict: 'no', reason: 'salario' }
   if (shareOfSalary !== null && shareOfSalary > HEALTHY_SHARE) return { ...result, verdict: 'ajustado', reason: 'salario' }
