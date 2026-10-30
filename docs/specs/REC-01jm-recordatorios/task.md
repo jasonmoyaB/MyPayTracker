@@ -30,3 +30,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: componente real a 390px con CSS real; foco inicial en el título; NotificationBell.test.tsx actualizado; 373/373, build OK.
 - [x] REC-01jm-T13 Campana en móvil: desplegable bajo el encabezado a la derecha (no hoja abajo) y botones compactos (40px) a la derecha [src/ui/dashboard/dashboard.css, NotificationBell.tsx]
   - Evidencia: app de producción en iframe 390px con el CSS nuevo inyectado; dialog arriba en 100px (header termina en 94); 373/373, build OK.
+- [x] REC-01jm-T14 Safari iOS: <dialog> sin height fit-content se estiraba a toda la pantalla (botones gigantes); fit-content + align-content start en .dashboard-dialog (los 3 modales) [src/ui/dashboard/dashboard.css]
+  - Evidencia: captura del dev en iPhone; reproducido en Chrome forzando height:auto → modal 570px y botón 168px; con el fix 187px y 40px; 373/373, build OK.

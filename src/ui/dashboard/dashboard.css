@@ -39,7 +39,10 @@
 /* Va dentro de .dashboard-list: no usa .amount para no heredar su grid alineado a la derecha. */
 /* Con 12 cuotas la tabla llenaba la pantalla del móvil: alto tope y scroll adentro. */
 .dashboard-dialog { width: min(420px, calc(100vw - 32px)); max-height: 75dvh; overflow-y: auto; overscroll-behavior: contain; padding: 20px; border-radius: 12px; color: var(--color-text); font-variant-numeric: tabular-nums; }
-.dashboard-dialog[open] { display: grid; gap: 12px; }
+/* Safari iOS no trae height: fit-content en <dialog>: con inset 0 se estiraba a toda la pantalla y el grid
+   repartía ese alto entre las filas (botones gigantes). Alto según contenido y filas arriba en todos los navegadores. */
+.dashboard-dialog { height: fit-content; }
+.dashboard-dialog[open] { display: grid; gap: 12px; align-content: start; }
 .dashboard-dialog::backdrop { background: rgb(0 0 0 / 0.5); }
 .dashboard-dialog a { color: var(--color-primary); font-weight: 600; }
 .dashboard-dialog table { width: 100%; border-collapse: collapse; }
@@ -68,7 +71,7 @@
 }
 /* Modal de la campana: monto entero a la derecha y acciones compactas abajo a la derecha. */
 .bell-money { flex-shrink: 0; white-space: nowrap; font-weight: 600; }
-.bell-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 0; }
+.bell-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 0; }
 .bell-actions button, .dashboard-dialog .bell-actions .button {
   display: inline-grid; place-items: center; min-height: 40px; padding: 6px 14px; border-radius: 8px; font-size: 14px;
 }
