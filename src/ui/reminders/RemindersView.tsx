@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { deleteReminder, listReminders, type Reminder } from '../../data/reminders'
+import { deleteReminder, listReminders, markReminderPaid, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { dueOn, nextPayDay } from '../../domain/credit'
 import { isCardPayment, nextDueOn } from '../../domain/reminder'
@@ -54,11 +54,12 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
   const payDay = nextPayDay(now)
   const card = dueOn(transactions, payDay)
   // REC-01jm-T06: un doble toque no lanza dos borrados (mismo bloqueo que el formulario).
-  async function remove(id: string) {
+  // REC-02jm-T03: "Pagado" comparte el bloqueo: una sola escritura a la vez.
+  async function run(write: () => Promise<void>, done: string) {
     if (pending.current) return
     pending.current = true
     setDeleting(true)
-    const failed = await saveWithToast(() => deleteReminder(id), toast, 'Recordatorio borrado')
+    const failed = await saveWithToast(write, toast, done)
     pending.current = false
     setDeleting(false)
     if (!failed) reload()
@@ -82,8 +83,14 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
               {isCardPayment(r.description)
                 ? <CardDebtDialog transactions={transactions} now={now}><ReminderText r={r} now={now} /></CardDebtDialog>
                 : <ReminderText r={r} now={now} />}
-              <button type="button" className="secondary" disabled={deleting} onClick={() => void remove(r.id)}
-                aria-label={`Borrar ${r.description}`}>Borrar</button>
+              <span style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <button type="button" className="secondary" disabled={deleting}
+                  onClick={() => void run(() => markReminderPaid(r.id, nextDueOn(r.day, now, r.paidOn)), 'Marcado como pagado')}
+                  aria-label={`Marcar ${r.description} como pagado`}>Pagado</button>
+                <button type="button" className="secondary" disabled={deleting}
+                  onClick={() => void run(() => deleteReminder(r.id), 'Recordatorio borrado')}
+                  aria-label={`Borrar ${r.description}`}>Borrar</button>
+              </span>
             </li>
           ))}
         </ul>}
@@ -97,7 +104,7 @@ function ReminderText({ r, now }: { r: Reminder; now: Date }) {
     <span className="dashboard-text">
       <span>{r.description}</span>
       {/* nextDueOn da la fecha CR; a las 00:00 CR para que formatDay no la corra un día. */}
-      <span className="muted">Próximo pago {formatDay(`${nextDueOn(r.day, now)}T00:00:00-06:00`)} · día {r.day}</span>
+      <span className="muted">Próximo pago {formatDay(`${nextDueOn(r.day, now, r.paidOn)}T00:00:00-06:00`)} · día {r.day}</span>
     </span>
     <span className="amount">{formatMoney(r.amountCents, r.currency)}</span>
   </>

@@ -6,7 +6,7 @@ import { ToastProvider } from '../toast/ToastProvider'
 import { checkReminder } from './ReminderForm'
 import { RemindersList, RemindersView } from './RemindersView'
 
-vi.mock('../../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn() }))
+vi.mock('../../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn(), markReminderPaid: vi.fn() }))
 
 const now = new Date('2026-10-29T12:00:00-06:00')
 const credit = (occurredAt: string, amountCents: number, currency: 'CRC' | 'USD' = 'CRC'): Transaction => ({ id: occurredAt, amountCents,
@@ -57,6 +57,12 @@ describe('REC-01jm-T06: correcciones de review', () => {
     const html = view({ reminders: null, error: 'Sin conexión.' })
     expect(html).toMatch(/role="alert".*No pudimos cargar tus recordatorios\. Sin conexión\..*Reintentar/)
     expect(html).not.toContain('Agregar recordatorio')
+  })
+  it('REC-02jm: cada recordatorio tiene "Pagado"; ya pagado muestra el mes siguiente', () => {
+    const html = renderToStaticMarkup(<ToastProvider><RemindersList reminders={[{ id: 'r1', description: 'Spotify', amountCents: 2000_00, currency: 'CRC', day: 15, paidOn: '2026-11-15' }]}
+      transactions={[]} reload={() => {}} now={now} /></ToastProvider>)
+    expect(html).toMatch(/aria-label="Marcar Spotify como pagado"[^>]*>Pagado<\/button>/)
+    expect(html).toContain('15 dic')
   })
   it('Borrar va en un botón deshabilitable y la descripción tiene tope de 60', () => {
     const html = render()

@@ -27,4 +27,7 @@ describe('REC-01jm-T10: campana de notificaciones', () => {
     expect(html).toContain('aria-label="Notificaciones: nada por pagar"')
     expect(html).toContain('Nada por pagar en los próximos 3 días.')
   })
+  it('REC-02jm AC-2: un recordatorio ya pagado no avisa', () => {
+    expect(bellItems([{ ...spotify, paidOn: '2026-11-19' }], [], now)).toEqual([])
+  })
 })

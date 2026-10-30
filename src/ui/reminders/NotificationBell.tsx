@@ -12,7 +12,7 @@ import '../dashboard/dashboard.css'
 // REC-01jm-T10: lo que vence en 0–3 días, de los recordatorios y de la tarjeta (CRC y USD aparte, nunca sumados).
 export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date) {
   const items = reminders.flatMap((r) => {
-    const when = dueSoon(nextDueOn(r.day, now), now)
+    const when = dueSoon(nextDueOn(r.day, now, r.paidOn), now)
     return when ? [{ key: r.id, text: `${r.description}: ${when}, ${formatMoney(r.amountCents, r.currency)}` }] : []
   })
   const payDay = nextPayDay(now)

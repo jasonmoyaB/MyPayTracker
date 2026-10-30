@@ -35,10 +35,11 @@ export async function notifyReminders(db: SupabaseClient, ownerId: string, now: 
 
 // service_role no tiene RLS: se filtra por el dueño a mano.
 async function dueReminders(db: SupabaseClient, ownerId: string, now: Date): Promise<Due[]> {
-  const { data, error } = await db.from('reminders').select('id, description, amount, currency, day').eq('user_id', ownerId)
+  const { data, error } = await db.from('reminders').select('id, description, amount, currency, day, paid_on').eq('user_id', ownerId)
   if (error) throw error
   return data.flatMap((r) => {
-    const phase = reminderPhase(nextDueOn(r.day, now), now)
+    // REC-02jm-T03: paid_on salta el vencimiento ya pagado: ni "pronto" ni "hoy".
+    const phase = reminderPhase(nextDueOn(r.day, now, r.paid_on), now)
     if (!phase) return []
     return [{ table: 'reminders' as const, marker: 'notified_on', key: 'id', value: r.id, description: r.description, phase,
       amounts: [{ cents: numericToCents(r.amount), currency: currency(r.currency) }] }]

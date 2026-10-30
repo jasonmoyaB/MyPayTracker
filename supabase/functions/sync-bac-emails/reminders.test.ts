@@ -65,6 +65,15 @@ describe('REC-01jm AC-2/AC-3: avisos de recordatorios, uno por fecha', () => {
     expect(or).toHaveBeenCalledWith('reminders', 'notified_on.is.null,notified_on.neq.2026-11-12')
     expect(s.reminders[0].notified_on).toBe('2026-11-15')
   })
+  it('REC-02jm AC-2: ya pagado (paid_on = ese vencimiento) no manda push', async () => {
+    const s = state()
+    s.reminders[0].paid_on = '2026-11-15'
+    const { db } = fakeDb(s)
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyReminders(db, 'owner', cr('2026-11-12T09:00:00'), async () => send)
+    await notifyReminders(db, 'owner', cr('2026-11-15T09:00:00'), async () => send)
+    expect(send).not.toHaveBeenCalled()
+  })
   it('solo lee recordatorios del dueño (service_role no tiene RLS)', async () => {
     const { db, eqs } = fakeDb(state())
     await notifyReminders(db, 'owner', cr('2026-11-12T09:00:00'), async () => vi.fn<SendPush>(async () => {}))
