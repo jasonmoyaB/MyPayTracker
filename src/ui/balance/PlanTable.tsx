@@ -50,7 +50,7 @@ export function MonthTable({ rows, spendCents = 0 }: { rows: Recommendation['mon
               <td>{formatDay(m.dueAt)}</td>
               <td>{formatMoney(m.cuotasCents, 'CRC')}</td>
               {m.freeCents === null ? <td>—</td>
-                : <td className={m.freeCents < 0 ? 'status-danger' : undefined}>{formatMoney(m.freeCents, 'CRC')}</td>}
+                : <td>{m.freeCents < 0 ? <span className="status-danger">{formatMoney(m.freeCents, 'CRC')}</span> : formatMoney(m.freeCents, 'CRC')}</td>}
             </tr>
           ))}
         </tbody>

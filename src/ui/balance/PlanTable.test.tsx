@@ -36,7 +36,8 @@ describe('SIM-01jm: tabla de libre por mes', () => {
     for (const th of ['Mes', 'Cuotas', 'Libre']) expect(html).toContain(`<th scope="col">${th}</th>`)
   })
   it('AC-2: el negativo va en rojo; AC-3: sin salario, "—"', () => {
-    expect(html).toContain(`<td class="status-danger">${formatMoney(-5_000_000, 'CRC')}</td>`)
+    // UX-06jm-T03: el rojo va en una etiqueta, no en toda la celda.
+    expect(html).toContain(`<td><span class="status-danger">${formatMoney(-5_000_000, 'CRC')}</span></td>`)
     expect(html).toContain(`<td>${formatMoney(14_000_000, 'CRC')}</td>`)
     expect(html).toContain('<td>—</td>')
   })
