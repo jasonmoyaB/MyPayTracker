@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toAppError } from '../../data/errors'
 import { approve, deny, getAuthorization } from '../../data/oauth'
 
+// MCP-03jm-T02: el conector también cambia saldo y salario; el texto lo dice antes de aprobar.
 // MCP-01jm-T05: Supabase Auth manda aquí (/oauth/consent?authorization_id=…) cuando Claude o ChatGPT piden acceso.
 export function ConsentView({ authorizationId }: { authorizationId: string }) {
   const [clientName, setClientName] = useState<string | null>(null)
@@ -39,8 +40,8 @@ export function ConsentCard({ clientName, pending, error, onApprove, onDeny }: C
         {!clientName && !error && <p className="muted">Cargando…</p>}
         {clientName && (
           <>
-            <p><strong>{clientName}</strong> quiere leer tus movimientos (solo lectura)</p>
-            <p className="muted">No podrá crear, editar ni borrar nada.</p>
+            <p><strong>{clientName}</strong> quiere ver tus movimientos y cambiar tu saldo y salario</p>
+            <p className="muted">No podrá crear, editar ni borrar movimientos.</p>
             <button onClick={onApprove} disabled={pending}>Aprobar</button>
             <button className="secondary" onClick={onDeny} disabled={pending}>Rechazar</button>
           </>

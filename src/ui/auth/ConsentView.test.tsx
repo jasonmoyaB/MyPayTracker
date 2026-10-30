@@ -10,9 +10,10 @@ const card = (props: Partial<Parameters<typeof ConsentCard>[0]> = {}) => renderT
 )
 
 describe('AC-4: pantalla de consentimiento', () => {
-  it('muestra quién pide acceso, que es solo lectura, y Aprobar/Rechazar', () => {
+  it('MCP-03jm-T02: muestra quién pide acceso, qué puede cambiar, y Aprobar/Rechazar', () => {
     const html = card()
-    expect(html).toContain('<strong>Claude</strong> quiere leer tus movimientos (solo lectura)')
+    expect(html).toContain('<strong>Claude</strong> quiere ver tus movimientos y cambiar tu saldo y salario')
+    expect(html).toContain('No podrá crear, editar ni borrar movimientos.')
     expect(html).toMatch(/<button[^>]*>Aprobar<\/button>/)
     expect(html).toMatch(/<button[^>]*>Rechazar<\/button>/)
   })

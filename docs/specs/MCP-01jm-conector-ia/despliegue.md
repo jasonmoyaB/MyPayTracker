@@ -41,7 +41,7 @@ publishable key: `npx supabase@2.48.3 secrets set SUPABASE_ANON_KEY=<publishable
   **Developer mode** ON) → Create / Add → URL del paso 3, autenticación **OAuth**.
 
 En ambos se abre la app: si no hay sesión, inicia sesión; luego aparece
-"<cliente> quiere leer tus movimientos (solo lectura)" → **Aprobar**.
+"<cliente> quiere ver tus movimientos y cambiar tu saldo y salario" → **Aprobar**.
 
 ## 5. Probar
 1. Sin token: `curl -i -X POST https://<ref>.supabase.co/functions/v1/mcp` → `401` con
@@ -52,6 +52,15 @@ En ambos se abre la app: si no hay sesión, inicia sesión; luego aparece
    con el Resumen de la app (solo CRC).
 4. "Muéstrame mis gastos del 1 al 15 de este mes" → usa `movimientos`, cada uno con su moneda.
 5. Logs: Supabase → Edge Functions → `mcp` → Logs (`mcp falló:` con el detalle).
+
+## MCP-03jm: cambiar salario y saldo desde el chat
+Solo hay que redesplegar la función (paso 3) y la web (paso 2, por el texto nuevo del consentimiento).
+En Claude/ChatGPT: desconectar y volver a conectar el conector (o abrir un chat nuevo) para que vea
+`cambiar_salario` y `cambiar_saldo`. Ambas están marcadas como destructivas: el asistente pide
+confirmación antes de guardar.
+1. "Cambia mi salario mensual a 300 mil colones" → confirma → Cuenta muestra ₡300 000.
+2. "Mi saldo actual en BAC es 250000" → confirma → Cuenta muestra el saldo "registrado el <hoy>".
+3. "Cambia mi salario a cero" → el asistente recibe un error (igual que en Cuenta) y no guarda nada.
 
 ## Revocar el acceso
 - Desde el asistente: quitar el conector (Claude: Settings → Connectors; ChatGPT: Settings → Connectors).
