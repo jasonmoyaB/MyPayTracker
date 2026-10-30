@@ -4,10 +4,11 @@ import { centsToNumeric } from '../../../src/domain/money.ts'
 import { costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
 
 // Movimientos (ya en centavos) con occurred_at en [desdeIso, hastaIso), más recientes primero.
-export type Query = (desdeIso: string, hastaIso: string) => Promise<SpendMovement[]>
+// MCP-01jm-T07: tipo y límite van a la query para no traer de más.
+export type Query = (desdeIso: string, hastaIso: string, opts?: { direction?: 'in' | 'out'; limit?: number }) => Promise<SpendMovement[]>
 type Rpc = { jsonrpc?: string; id?: string | number | null; method?: string; params?: Record<string, unknown> }
 
-const VERSIONS = ['2025-06-18', '2025-03-26']
+const VERSIONS = ['2025-06-18', '2025-11-25', '2025-03-26']
 const MAX_MOVEMENTS = 200
 const DAY_MS = 86400000
 
@@ -63,12 +64,14 @@ async function movimientos(args: Record<string, unknown>, query: Query) {
   const hasta = dayStart(args.hasta)
   if (desde === null || hasta === null) return text('desde y hasta son obligatorias, con formato YYYY-MM-DD, p. ej. 2026-11-01.', true)
   if (desde > hasta) return text('desde no puede ser posterior a hasta.', true)
-  if (args.tipo !== undefined && args.tipo !== 'in' && args.tipo !== 'out') return text('tipo debe ser "in" (ingresos) o "out" (gastos).', true)
-  const rows = (await query(iso(desde), iso(hasta + DAY_MS))).filter((m) => !args.tipo || m.direction === args.tipo)
+  const tipo = args.tipo
+  if (tipo !== undefined && tipo !== 'in' && tipo !== 'out') return text('tipo debe ser "in" (ingresos) o "out" (gastos).', true)
+  // MCP-01jm-T07: uno de más para saber si se truncó sin contar todo el rango.
+  const rows = await query(iso(desde), iso(hasta + DAY_MS), { direction: tipo, limit: MAX_MOVEMENTS + 1 })
   return text({
-    total: rows.length,
+    truncado: rows.length > MAX_MOVEMENTS,
     movimientos: rows.slice(0, MAX_MOVEMENTS).map((m) => ({
-      fecha: m.occurredAt, descripcion: m.description, monto: centsToNumeric(m.amountCents),
+      fecha: costaRicaDateTime(new Date(m.occurredAt)), descripcion: m.description, monto: centsToNumeric(m.amountCents),
       moneda: m.currency, tipo: m.direction, metodo_pago: m.paymentMethod,
     })),
   })
@@ -92,7 +95,13 @@ async function result(msg: Rpc, query: Query): Promise<{ result: unknown } | { e
       // hasOwn: un nombre como "toString" no debe resolver a algo del prototipo.
       const handler = Object.hasOwn(HANDLERS, String(params.name)) ? HANDLERS[String(params.name)] : null
       if (!handler) return { error: { code: -32602, message: `Herramienta desconocida: ${params.name}` } }
-      return { result: await handler((params.arguments ?? {}) as Record<string, unknown>, query) }
+      try {
+        return { result: await handler((params.arguments ?? {}) as Record<string, unknown>, query) }
+      } catch (e) {
+        // MCP-01jm-T07: el detalle de PostgREST solo va al log; el asistente recibe un error de herramienta.
+        console.error('mcp: la consulta falló:', e)
+        return { result: text('No se pudieron leer los movimientos. Intenta de nuevo.', true) }
+      }
     }
     default:
       return { error: { code: -32601, message: `Método no soportado: ${msg.method}` } }

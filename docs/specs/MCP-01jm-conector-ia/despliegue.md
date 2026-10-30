@@ -30,6 +30,10 @@ exige un token válido en todo salvo `/.well-known/oauth-protected-resource`.
 
 URL del conector: `https://<ref>.supabase.co/functions/v1/mcp`
 
+Si el proyecto desactivó las legacy API keys, `SUPABASE_ANON_KEY` puede faltar en la función
+(responde 500 y el log dice `Falta el secret SUPABASE_ANON_KEY`). En ese caso defínelo con la
+publishable key: `npx supabase@2.48.3 secrets set SUPABASE_ANON_KEY=<publishable key>`.
+
 ## 4. Agregar el conector
 - **Claude** (claude.ai o la app de escritorio): Settings → Connectors → **Add custom connector** →
   nombre `MyPayTracker` y la URL del paso 3 → Connect.

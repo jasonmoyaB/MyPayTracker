@@ -6,3 +6,4 @@
 - [x] MCP-01jm-T04 (data) subir `@supabase/supabase-js` y `src/data/oauth.ts` (get/approve/deny) con test con el cliente simulado.
 - [x] MCP-01jm-T05 (ui) `ConsentView` + desvío en `App` cuando hay `authorization_id`, y `vercel.json` con rewrite; test de la vista (AC-4).
 - [x] MCP-01jm-T06 (docs) `despliegue.md` con los pasos manuales (OAuth Server, deploy `--no-verify-jwt`, conectar Claude/ChatGPT).
+- [x] MCP-01jm-T07 (functions) correcciones del review: fecha en hora CR, tipo y límite en la query, errores JSON-RPC, Bearer sin mayúsculas.

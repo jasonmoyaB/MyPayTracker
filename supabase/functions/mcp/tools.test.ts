@@ -17,6 +17,7 @@ describe('MCP-01jm-T02: protocolo', () => {
     expect(await init('2025-03-26')).toEqual({ jsonrpc: '2.0', id: 1, result: {
       protocolVersion: '2025-03-26', capabilities: { tools: {} }, serverInfo: expect.objectContaining({ name: 'mypaytracker' }),
     } })
+    expect(await init('2025-11-25')).toMatchObject({ result: { protocolVersion: '2025-11-25' } })
     expect(await init('1999-01-01')).toMatchObject({ result: { protocolVersion: '2025-06-18' } })
   })
   it('ping responde vacío y las notificaciones (sin id) no tienen respuesta', async () => {
@@ -58,20 +59,20 @@ describe('AC-2: resumen_mes', () => {
 })
 
 describe('AC-3: movimientos', () => {
-  it('rango inclusive en hora CR, filtra por tipo, monto decimal y moneda en cada uno', async () => {
+  it('rango inclusive en hora CR, tipo y límite en la query, fecha en hora CR, monto decimal y moneda', async () => {
     const query = vi.fn().mockResolvedValue([
-      mov('2026-11-03T10:00:00-06:00', 9_999, { currency: 'USD', description: 'Amazon', paymentMethod: 'credit' }),
-      mov('2026-11-02T10:00:00-06:00', 100_000, { direction: 'in', description: 'Salario' }),
+      mov('2026-11-03T16:00:00Z', 9_999, { currency: 'USD', description: 'Amazon', paymentMethod: 'credit' }),
     ])
     const res = payload(await call('movimientos', { desde: '2026-11-01', hasta: '2026-11-30', tipo: 'out' }, query))
-    expect(query).toHaveBeenCalledWith('2026-11-01T06:00:00.000Z', '2026-12-01T06:00:00.000Z')
-    expect(res).toEqual({ total: 1, movimientos: [{ fecha: '2026-11-03T10:00:00-06:00', descripcion: 'Amazon',
+    expect(query).toHaveBeenCalledWith('2026-11-01T06:00:00.000Z', '2026-12-01T06:00:00.000Z', { direction: 'out', limit: 201 })
+    expect(res).toEqual({ truncado: false, movimientos: [{ fecha: '2026-11-03T10:00', descripcion: 'Amazon',
       monto: '99.99', moneda: 'USD', tipo: 'out', metodo_pago: 'credit' }] })
   })
-  it('máximo 200 movimientos', async () => {
-    const query = vi.fn().mockResolvedValue(Array.from({ length: 250 }, () => mov('2026-11-03T10:00:00-06:00', 1)))
+  it('máximo 200 movimientos: pide 201 para saber si hay más', async () => {
+    const query = vi.fn().mockResolvedValue(Array.from({ length: 201 }, () => mov('2026-11-03T10:00:00-06:00', 1)))
     const res = payload(await call('movimientos', { desde: '2026-11-01', hasta: '2026-11-30' }, query))
-    expect(res.total).toBe(250)
+    expect(query).toHaveBeenCalledWith(expect.any(String), expect.any(String), { direction: undefined, limit: 201 })
+    expect(res.truncado).toBe(true)
     expect(res.movimientos).toHaveLength(200)
   })
   it('AC-5: fechas inválidas, invertidas o tipo raro → isError sin consultar', async () => {
@@ -81,5 +82,16 @@ describe('AC-3: movimientos', () => {
       expect(await call('movimientos', args, query)).toMatchObject({ result: { isError: true } })
     }
     expect(query).not.toHaveBeenCalled()
+  })
+})
+
+describe('MCP-01jm-T07: fallo de la consulta', () => {
+  it('devuelve isError con texto genérico y el detalle solo al log', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const res = await call('resumen_mes', { mes: '2026-11' }, vi.fn().mockRejectedValue({ message: 'permission denied for table x' }))
+    expect(res).toMatchObject({ result: { isError: true } })
+    expect(JSON.stringify(res)).not.toContain('permission denied')
+    expect(log).toHaveBeenCalled()
+    log.mockRestore()
   })
 })

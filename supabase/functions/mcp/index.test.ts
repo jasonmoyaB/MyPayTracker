@@ -16,6 +16,14 @@ describe('MCP-01jm-T03: el conector lee como el usuario', () => {
     expect(source).toMatch(/'WWW-Authenticate': `Bearer resource_metadata="\$\{METADATA\}"`/)
     expect(source).toMatch(/oauth-protected-resource/)
   })
+  it('MCP-01jm-T07: Bearer sin distinguir mayúsculas y 401 sin token antes de crear el cliente', () => {
+    expect(source).toMatch(/\/\^Bearer \(\.\+\)\$\/i/)
+    expect(source.indexOf('if (!token)')).toBeGreaterThan(-1)
+    expect(source.indexOf('if (!token)')).toBeLessThan(source.indexOf('createClient('))
+  })
+  it('MCP-01jm-T07: un body que no es objeto es -32600 con 400', () => {
+    expect(source).toMatch(/code: -32600/)
+  })
   it('los errores internos solo van al log y la respuesta es genérica', () => {
     expect(finalCatch).toMatch(/console\.error\(/)
     expect(finalCatch).toMatch(/status: 500/)
