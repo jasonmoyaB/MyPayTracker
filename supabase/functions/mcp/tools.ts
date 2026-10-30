@@ -1,11 +1,20 @@
 // MCP-01jm-T02: JSON-RPC de MCP sin estado y sin SDK; puro para testearlo sin red. La I/O vive en index.ts.
 import { costaRicaDateTime, costaRicaIso } from '../../../src/domain/date.ts'
 import { centsToNumeric } from '../../../src/domain/money.ts'
-import { costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
+import { parseAmountToCents } from '../../../src/domain/amount.ts'
+import { splitCredit } from '../../../src/domain/credit.ts'
+import { avgMonthlySpend, costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
+import { PLANS, recommend, type Plan } from '../../../src/domain/recommend.ts'
+import { summaryFor } from '../../../src/domain/summary.ts'
 
 // Movimientos (ya en centavos) con occurred_at en [desdeIso, hastaIso), más recientes primero.
 // MCP-01jm-T07: tipo y límite van a la query para no traer de más.
 export type Query = (desdeIso: string, hastaIso: string, opts?: { direction?: 'in' | 'out'; limit?: number }) => Promise<SpendMovement[]>
+// MCP-02jm-T02: todo lo que el Resumen usa para "¿Puedo comprar esto?" (ajustes + todos los movimientos).
+export type Ledger = () => Promise<{
+  settings: Parameters<typeof summaryFor>[0]
+  transactions: (SpendMovement & { installments: number })[]
+}>
 type Rpc = { jsonrpc?: string; id?: string | number | null; method?: string; params?: Record<string, unknown> }
 
 const VERSIONS = ['2025-06-18', '2025-11-25', '2025-03-26']
@@ -30,6 +39,22 @@ const TOOLS = [
         tipo: { type: 'string', enum: ['in', 'out'], description: 'in = ingresos, out = gastos; sin filtro por defecto' },
       },
       required: ['desde', 'hasta'],
+    },
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: 'puedo_comprar',
+    description: 'Recomendación de "¿Puedo comprar esto?" de la app para una compra en colones: veredicto (si/ajustado/no), cuota, '
+      + 'lo que queda hoy y lo libre mes a mes. queda_hoy = saldo + extra − lo que vence el próximo 20 (incluida esta compra si vence ahí); '
+      + 'cada mes siguiente sale del salario menos cuotas y gasto promedio. Lo sano: cuotas hasta 30 % del salario. No registra la compra.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        precio: { type: 'string', description: 'Precio en colones, p. ej. "80000" o "80000.50"' },
+        plazo: { type: 'string', enum: ['contado', '1', '3', '6', '10', '12'], description: 'contado = efectivo o débito; 1 = tarjeta en un pago; 3–12 = tasa cero BAC' },
+        extra: { type: 'string', description: 'Plata extra que le entra antes del próximo 20, en colones (opcional)' },
+      },
+      required: ['precio', 'plazo'],
     },
     annotations: { readOnlyHint: true },
   },
@@ -77,9 +102,39 @@ async function movimientos(args: Record<string, unknown>, query: Query) {
   })
 }
 
-const HANDLERS: Record<string, typeof resumenMes> = { resumen_mes: resumenMes, movimientos }
+// El asistente puede mandar 80000 en vez de "80000".
+const cents = (value: unknown) => (typeof value === 'string' || typeof value === 'number' ? parseAmountToCents(String(value)) : null)
+const day = (iso: string) => costaRicaDateTime(new Date(iso)).slice(0, 10)
 
-async function result(msg: Rpc, query: Query): Promise<{ result: unknown } | { error: { code: number; message: string } }> {
+async function puedoComprar(args: Record<string, unknown>, _query: Query, ledger: Ledger) {
+  const priceCents = cents(args.precio)
+  const extraCents = args.extra === undefined ? 0 : cents(args.extra)
+  const plan = (args.plazo === 'contado' ? 'cash' : Number(args.plazo)) as Plan
+  if (priceCents === null || extraCents === null) return text('precio y extra deben ser montos en colones mayores que cero, p. ej. "80000".', true)
+  if (!PLANS.includes(plan)) return text('plazo debe ser "contado", "1", "3", "6", "10" o "12".', true)
+  const { settings, transactions } = await ledger()
+  // Misma composición que DashboardView: saldo con lo ya cobrado de la tarjeta; lo pendiente va como calendario de cuotas.
+  const now = new Date()
+  const { settled, pending } = splitCredit(transactions, now)
+  const summary = summaryFor(settings, settled)
+  if (!summary) return text('Registra tu saldo de cuenta o tu salario en Cuenta (en la app) para poder calcularlo.', true)
+  const spendCents = avgMonthlySpend(transactions, now)
+  const r = recommend({ priceCents, plan, extraCents, balanceCents: summary.balanceCrcCents, salaryCents: settings.salaryCents,
+    scheduleCrc: pending.scheduleCrc, now, spendCents })
+  return text({
+    moneda: 'CRC', precio: centsToNumeric(priceCents), forma_pago: plan === 'cash' ? 'contado' : plan,
+    veredicto: r.verdict, razon: r.reason, queda_hoy: signed(r.leftCents),
+    meses: r.months, cuota: r.cuotaCents === null ? null : centsToNumeric(r.cuotaCents), primer_pago: r.firstDueAt && day(r.firstDueAt),
+    peor_mes_cuotas: r.worstMonthCents === null ? null : centsToNumeric(r.worstMonthCents),
+    porcentaje_salario: r.shareOfSalary === null ? null : Math.round(r.shareOfSalary * 100),
+    salario: settings.salaryCents === null ? null : centsToNumeric(settings.salaryCents), gasto_promedio_mes: centsToNumeric(spendCents),
+    mes_a_mes: r.monthly.map((m) => ({ fecha: day(m.dueAt), cuotas: centsToNumeric(m.cuotasCents), libre: m.freeCents === null ? null : signed(m.freeCents) })),
+  })
+}
+
+const HANDLERS: Record<string, typeof puedoComprar> = { resumen_mes: resumenMes, movimientos, puedo_comprar: puedoComprar }
+
+async function result(msg: Rpc, query: Query, ledger: Ledger): Promise<{ result: unknown } | { error: { code: number; message: string } }> {
   const params = msg.params ?? {}
   switch (msg.method) {
     case 'initialize': {
@@ -96,7 +151,7 @@ async function result(msg: Rpc, query: Query): Promise<{ result: unknown } | { e
       const handler = Object.hasOwn(HANDLERS, String(params.name)) ? HANDLERS[String(params.name)] : null
       if (!handler) return { error: { code: -32602, message: `Herramienta desconocida: ${params.name}` } }
       try {
-        return { result: await handler((params.arguments ?? {}) as Record<string, unknown>, query) }
+        return { result: await handler((params.arguments ?? {}) as Record<string, unknown>, query, ledger) }
       } catch (e) {
         // MCP-01jm-T07: el detalle de PostgREST solo va al log; el asistente recibe un error de herramienta.
         console.error('mcp: la consulta falló:', e)
@@ -109,7 +164,7 @@ async function result(msg: Rpc, query: Query): Promise<{ result: unknown } | { e
 }
 
 // null = notificación (sin id): index.ts responde 202 sin cuerpo.
-export async function handleRpc(msg: Rpc, query: Query) {
+export async function handleRpc(msg: Rpc, query: Query, ledger: Ledger) {
   if (msg.id === undefined || msg.id === null) return null
-  return { jsonrpc: '2.0', id: msg.id, ...(await result(msg, query)) }
+  return { jsonrpc: '2.0', id: msg.id, ...(await result(msg, query, ledger)) }
 }

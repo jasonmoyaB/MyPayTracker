@@ -1,7 +1,7 @@
 // MCP-01jm-T03: conector MCP (Streamable HTTP sin estado). Solo I/O; el protocolo vive en tools.ts.
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { numericToCents } from '../../../src/domain/money.ts'
-import { handleRpc, type Query } from './tools.ts'
+import { handleRpc, type Ledger, type Query } from './tools.ts'
 
 function env(name: string): string {
   const value = Deno.env.get(name)
@@ -12,6 +12,18 @@ function env(name: string): string {
 const SUPABASE_URL = env('SUPABASE_URL')
 const RESOURCE = `${SUPABASE_URL}/functions/v1/mcp`
 const METADATA = `${RESOURCE}/.well-known/oauth-protected-resource`
+
+const COLUMNS = 'amount, currency, direction, source, description, occurred_at, payment_method'
+// deno-lint-ignore no-explicit-any
+const toMovement = (r: any) => ({
+  amountCents: numericToCents(r.amount),
+  currency: r.currency,
+  direction: r.direction,
+  source: r.source,
+  description: r.description,
+  occurredAt: r.occurred_at,
+  paymentMethod: r.payment_method,
+})
 
 const unauthorized = () => Response.json({ error: 'unauthorized' }, {
   status: 401,
@@ -42,7 +54,7 @@ Deno.serve(async (req) => {
     const query: Query = async (desdeIso, hastaIso, opts = {}) => {
       let q = db
         .from('transactions')
-        .select('amount, currency, direction, source, description, occurred_at, payment_method')
+        .select(COLUMNS)
         .gte('occurred_at', desdeIso)
         .lt('occurred_at', hastaIso)
         .order('occurred_at', { ascending: false })
@@ -50,15 +62,24 @@ Deno.serve(async (req) => {
       if (opts.limit) q = q.limit(opts.limit)
       const { data, error } = await q
       if (error) throw error
-      return data.map((r) => ({
-        amountCents: numericToCents(r.amount),
-        currency: r.currency,
-        direction: r.direction,
-        source: r.source,
-        description: r.description,
-        occurredAt: r.occurred_at,
-        paymentMethod: r.payment_method,
-      }))
+      return data.map(toMovement)
+    }
+    // MCP-02jm-T02: igual que listTransactions + getSettings en la app (mismo techo de 1000 filas de PostgREST).
+    const ledger: Ledger = async () => {
+      const [settings, transactions] = await Promise.all([
+        db.from('settings').select('salary, account_balance, account_balance_at').maybeSingle(),
+        db.from('transactions').select(`${COLUMNS}, installments`),
+      ])
+      if (settings.error) throw settings.error
+      if (transactions.error) throw transactions.error
+      const s = settings.data
+      return {
+        settings: {
+          salaryCents: s ? numericToCents(s.salary) : null,
+          account: s?.account_balance_at ? { cents: numericToCents(s.account_balance), asOf: s.account_balance_at } : null,
+        },
+        transactions: transactions.data.map((r) => ({ ...toMovement(r), installments: r.installments })),
+      }
     }
 
     let msg
@@ -71,7 +92,7 @@ Deno.serve(async (req) => {
     if (typeof msg !== 'object' || msg === null || Array.isArray(msg)) {
       return Response.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Petición inválida' } }, { status: 400 })
     }
-    const res = await handleRpc(msg, query)
+    const res = await handleRpc(msg, query, ledger)
     return res ? Response.json(res) : new Response(null, { status: 202 })
   } catch (e) {
     // El detalle (puede traer datos internos de PostgREST) solo va al log.

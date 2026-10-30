@@ -1,12 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SpendMovement } from '../../../src/domain/monthStats.ts'
+import { avgMonthlySpend } from '../../../src/domain/monthStats.ts'
+import { splitCredit } from '../../../src/domain/credit.ts'
+import { recommend } from '../../../src/domain/recommend.ts'
+import { summaryFor } from '../../../src/domain/summary.ts'
 import { handleRpc } from './tools.ts'
 
 const mov = (occurredAt: string, amountCents: number, over: Partial<SpendMovement> = {}): SpendMovement => ({
   occurredAt, amountCents, direction: 'out', description: 'Super', currency: 'CRC', source: 'manual', paymentMethod: 'cash', ...over,
 })
-const call = (name: string, args: unknown, query = vi.fn().mockResolvedValue([])) =>
-  handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, query)
+const call = (name: string, args: unknown, query = vi.fn().mockResolvedValue([]), ledger = vi.fn()) =>
+  handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, query, ledger)
 const payload = (res: unknown) => JSON.parse((res as { result: { content: { text: string }[] } }).result.content[0].text)
 
 afterEach(() => vi.useRealTimers())
@@ -24,9 +28,9 @@ describe('MCP-01jm-T02: protocolo', () => {
     expect(await handleRpc({ jsonrpc: '2.0', id: 'a', method: 'ping' }, vi.fn())).toEqual({ jsonrpc: '2.0', id: 'a', result: {} })
     expect(await handleRpc({ jsonrpc: '2.0', method: 'notifications/initialized' }, vi.fn())).toBeNull()
   })
-  it('tools/list trae las 2 herramientas, todas de solo lectura', async () => {
+  it('tools/list trae las 3 herramientas, todas de solo lectura', async () => {
     const res = await handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, vi.fn()) as { result: { tools: { name: string; annotations: unknown }[] } }
-    expect(res.result.tools.map((t) => t.name)).toEqual(['resumen_mes', 'movimientos'])
+    expect(res.result.tools.map((t) => t.name)).toEqual(['resumen_mes', 'movimientos', 'puedo_comprar'])
     for (const t of res.result.tools) expect(t.annotations).toEqual({ readOnlyHint: true })
   })
   it('método o herramienta desconocidos → error JSON-RPC', async () => {
@@ -93,5 +97,46 @@ describe('MCP-01jm-T07: fallo de la consulta', () => {
     expect(JSON.stringify(res)).not.toContain('permission denied')
     expect(log).toHaveBeenCalled()
     log.mockRestore()
+  })
+})
+
+describe('MCP-02jm-T02: puedo_comprar', () => {
+  const NOW = new Date('2026-10-30T18:00:00Z')
+  const settings = { salaryCents: 50_000_000, account: { cents: 30_000_000, asOf: '2026-10-01T06:00:00Z' } }
+  const transactions = [
+    { ...mov('2026-10-05T15:00:00Z', 1_000_000), installments: 1 },
+    { ...mov('2026-10-10T15:00:00Z', 3_000_000, { paymentMethod: 'credit', description: 'Tienda' }), installments: 3 },
+  ]
+  const ledger = () => vi.fn().mockResolvedValue({ settings, transactions })
+
+  it('AC-1: mismo resultado que recommend con las entradas del Resumen', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const res = payload(await call('puedo_comprar', { precio: '80000', plazo: '3' }, vi.fn(), ledger()))
+    const { settled, pending } = splitCredit(transactions, NOW)
+    const r = recommend({ priceCents: 8_000_000, plan: 3, extraCents: 0, now: NOW, salaryCents: settings.salaryCents,
+      balanceCents: summaryFor(settings, settled)!.balanceCrcCents, scheduleCrc: pending.scheduleCrc,
+      spendCents: avgMonthlySpend(transactions, NOW) })
+    expect(res).toMatchObject({ veredicto: r.verdict, razon: r.reason, meses: 3, cuota: (r.cuotaCents! / 100).toFixed(2), queda_hoy: expect.any(String) })
+    expect(res.queda_hoy).toBe((r.leftCents < 0 ? '-' : '') + (Math.abs(r.leftCents) / 100).toFixed(2))
+    expect(res.mes_a_mes).toHaveLength(3)
+    expect(res.mes_a_mes[2].libre).toBe(((r.monthly[2].freeCents ?? 0) / 100).toFixed(2))
+  })
+  it('acepta números y "contado"; contado no trae cuota', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const res = payload(await call('puedo_comprar', { precio: 80000, plazo: 'contado', extra: 5000 }, vi.fn(), ledger()))
+    expect(res).toMatchObject({ forma_pago: 'contado', cuota: null, mes_a_mes: [] })
+  })
+  it('AC-2: precio o plazo inválidos → isError sin consultar', async () => {
+    const l = ledger()
+    for (const args of [{ precio: '-5', plazo: '3' }, { precio: 'ochenta', plazo: '3' }, { precio: '80000', plazo: '24' }, { precio: '80000' }, { precio: '80000', plazo: '3', extra: 'x' }]) {
+      expect(await call('puedo_comprar', args, vi.fn(), l)).toMatchObject({ result: { isError: true } })
+    }
+    expect(l).not.toHaveBeenCalled()
+  })
+  it('AC-3: sin saldo ni salario pide registrarlos en Cuenta', async () => {
+    const l = vi.fn().mockResolvedValue({ settings: { salaryCents: null, account: null }, transactions: [] })
+    const res = await call('puedo_comprar', { precio: '80000', plazo: '3' }, vi.fn(), l) as { result: { isError: boolean; content: { text: string }[] } }
+    expect(res.result.isError).toBe(true)
+    expect(res.result.content[0].text).toMatch(/Cuenta/)
   })
 })
