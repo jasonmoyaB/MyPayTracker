@@ -14,13 +14,14 @@ const tele: Transaction = { id: 't', amountCents: 30_000_00, currency: 'CRC', di
 
 describe('REC-01jm-T10: campana de notificaciones', () => {
   it('junta recordatorios y tarjeta que vencen en 0–3 días; lo lejano no sale', () => {
-    expect(bellItems([spotify, netflix], [tele], now).map(i => i.text)).toEqual([
-      `Spotify: vence mañana, ${formatMoney(2000_00, 'CRC')}`, `Tarjeta de crédito: vence en 2 días, ${formatMoney(30_000_00, 'CRC')}`])
+    expect(bellItems([spotify, netflix], [tele], now).map(({ title, when, money }) => ({ title, when, money }))).toEqual([
+      { title: 'Spotify', when: 'vence mañana', money: formatMoney(2000_00, 'CRC') },
+      { title: 'Tarjeta de crédito', when: 'vence en 2 días', money: formatMoney(30_000_00, 'CRC') }])
   })
   it('la campana muestra la cantidad y abre un dialog que lleva a Recordatorios', () => {
     const html = renderToStaticMarkup(<NotificationBell transactions={[tele]} now={now} initial={[spotify]} />)
     expect(html).toContain('aria-label="Notificaciones: 2 por pagar"')
-    expect(html).toMatch(/<dialog[^>]*>.*Spotify: vence mañana.*href="#\/recordatorios"/)
+    expect(html).toMatch(/<dialog[^>]*>.*<strong>Spotify<\/strong><span class="muted">vence mañana<\/span>.*href="#\/recordatorios"/)
   })
   it('sin nada por vencer lo dice y no muestra cantidad', () => {
     const html = renderToStaticMarkup(<NotificationBell transactions={[]} now={now} initial={[]} />)

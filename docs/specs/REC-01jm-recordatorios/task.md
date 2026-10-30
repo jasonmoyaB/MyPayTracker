@@ -26,3 +26,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "dueSoon is not a function" y "Cannot find module ./NotificationBell"; verde 365/365; typecheck, test y build OK; en localhost la campana muestra Spotify (vence en 3 días).
 - [x] REC-01jm-T11 Prueba + columna "Al mes" (próxima cuota) por producto en el modal de deuda [src/ui/reminders/CardDebtDialog.tsx]
   - Evidencia: rojo "sin columna Al mes"; verde 365/365; typecheck, test y build OK; en localhost el modal muestra la cuota de cada producto.
+- [x] REC-01jm-T12 Modal de la campana responsive: nombre + "vence…" (rojo si es hoy), monto entero a la derecha, Cerrar y Ver recordatorios del mismo ancho, sin anillo de foco al abrir [src/ui/reminders/NotificationBell.tsx, src/ui/dashboard/dashboard.css]
+  - Evidencia: componente real a 390px con CSS real; foco inicial en el título; NotificationBell.test.tsx actualizado; 373/373, build OK.

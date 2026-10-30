@@ -13,13 +13,13 @@ import '../dashboard/dashboard.css'
 export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date) {
   const items = reminders.flatMap((r) => {
     const when = dueSoon(nextDueOn(r.day, now, r.paidOn), now)
-    return when ? [{ key: r.id, text: `${r.description}: ${when}, ${formatMoney(r.amountCents, r.currency)}` }] : []
+    return when ? [{ key: r.id, title: r.description, when, money: formatMoney(r.amountCents, r.currency) }] : []
   })
   const payDay = nextPayDay(now)
   const card = dueOn(transactions, payDay)
   const when = dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
   const money = [card.crcCents > 0 && formatMoney(card.crcCents, 'CRC'), card.usdCents > 0 && formatMoney(card.usdCents, 'USD')].filter(Boolean)
-  if (when && money.length > 0) items.push({ key: 'tarjeta', text: `Tarjeta de crédito: ${when}, ${money.join(' y ')}` })
+  if (when && money.length > 0) items.push({ key: 'tarjeta', title: 'Tarjeta de crédito', when, money: money.join(' y ') })
   return items
 }
 
@@ -41,12 +41,24 @@ export function NotificationBell({ transactions, now = new Date(), initial }: Pr
       </button>
       <dialog ref={dialog} aria-label="Notificaciones" className="dashboard-dialog"
         onClick={e => { if (e.target === e.currentTarget && outsideRect(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY)) e.currentTarget.close() }}>
-        <h3 style={{ margin: 0 }}>Notificaciones</h3>
+        {/* tabIndex -1: showModal enfoca el título y no el link (no sale el anillo de foco al abrir con el dedo). */}
+        <h3 tabIndex={-1} className="bell-title" style={{ margin: 0 }}>Notificaciones</h3>
         {items.length === 0 ? <p className="muted" style={{ margin: 0 }}>Nada por pagar en los próximos 3 días.</p> : (
-          <ul className="dashboard-list">{items.map((i) => <li key={i.key}>{i.text}</li>)}</ul>
+          <ul className="dashboard-list">{items.map((i) => (
+            <li key={i.key}>
+              <span className="dashboard-text">
+                <strong>{i.title}</strong>
+                <span className={i.when === 'vence hoy' ? 'bell-today' : 'muted'}>{i.when}</span>
+              </span>
+              <span className="bell-money">{i.money}</span>
+            </li>
+          ))}</ul>
         )}
-        <a href="#/recordatorios" onClick={() => dialog.current?.close()}>Ver recordatorios</a>
-        <form method="dialog"><button type="submit">Cerrar</button></form>
+        {/* UX: dos acciones del mismo ancho, al alcance del pulgar. */}
+        <form method="dialog" className="bell-actions">
+          <button type="submit" className="secondary">Cerrar</button>
+          <a className="button" href="#/recordatorios" onClick={() => dialog.current?.close()}>Ver recordatorios</a>
+        </form>
       </dialog>
     </>
   )
