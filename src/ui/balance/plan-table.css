@@ -1,0 +1,8 @@
+/* UX-06jm-T01: tablas de "¿Puedo comprar esto?". Sin padding las columnas quedaban pegadas y los textos se partían. */
+.plan-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.plan-table caption { text-align: left; padding-bottom: 4px; }
+.plan-table th, .plan-table td { padding: 6px 0 6px 12px; border-top: 1px solid var(--color-border); white-space: nowrap; }
+.plan-table th:first-child, .plan-table td:first-child { padding-left: 0; }
+/* Montos, fechas y veredicto a la derecha: se comparan de un vistazo y no quedan pegados a la columna anterior. */
+.plan-table :is(th, td) + :is(th, td) { text-align: right; }
+.plan-table th { font-weight: 600; color: var(--color-text-secondary); }

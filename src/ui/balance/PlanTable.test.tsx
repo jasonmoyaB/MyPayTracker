@@ -9,15 +9,17 @@ describe('TC-03jm AC-1: tabla de cuota por plazo', () => {
     scheduleCrc: {}, now: new Date('2026-11-10T12:00:00-06:00') })
   const html = renderToStaticMarkup(<PlanTable rows={rows} />)
   it('tabla accesible con caption y encabezados', () => {
-    expect(html).toContain('<caption>Cuota por plazo</caption>')
-    for (const th of ['Plazo', 'Cuota al mes', 'Primer pago', 'Recomendación']) expect(html).toContain(`<th scope="col">${th}</th>`)
+    expect(html).toContain('<caption>Cuota por plazo (tasa cero)</caption>')
+    // UX-06jm AC-1/AC-2: textos cortos y clase que da separación y nowrap en el móvil.
+    expect(html).toContain('<table class="plan-table amount">')
+    for (const th of ['Plazo', 'Cuota al mes', 'Primer pago', '¿Alcanza?']) expect(html).toContain(`<th scope="col">${th}</th>`)
   })
   it('una fila por plazo con su cuota y veredicto', () => {
     expect(html.match(/<tr>/g)).toHaveLength(6)
     expect(html).toContain(formatMoney(6_666_668, 'CRC'))
-    expect(html).toMatch(/Tasa cero 3 meses.*Ajustado/)
-    expect(html).toMatch(/Tasa cero 12 meses.*16.*Sí/)
-    expect(html).toMatch(/Un solo pago.*No/)
+    expect(html).toMatch(/<td>3 meses<\/td>.*Ajustado/)
+    expect(html).toMatch(/<td>12 meses<\/td>.*16.*Sí/)
+    expect(html).toMatch(/<td>Un pago<\/td>.*No/)
   })
 })
 
@@ -28,7 +30,7 @@ describe('SIM-01jm: tabla de libre por mes', () => {
     { dueAt: '2026-12-20T06:00:00.000Z', cuotasCents: 1_000_000, freeCents: null },
   ]} />)
   it('tabla accesible con caption y encabezados', () => {
-    expect(html).toContain('<caption>Lo que te queda libre cada mes</caption>') // sin gasto promedio, sin nota
+    expect(html).toContain('<table class="plan-table amount"><caption>Lo que te queda libre cada mes</caption>') // sin gasto promedio, sin nota
     for (const th of ['Mes', 'Cuotas', 'Libre']) expect(html).toContain(`<th scope="col">${th}</th>`)
   })
   it('AC-2: el negativo va en rojo; AC-3: sin salario, "—"', () => {
