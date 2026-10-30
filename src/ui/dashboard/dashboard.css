@@ -66,12 +66,17 @@
   position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
   background: var(--color-danger); color: #fff; font-size: 12px; line-height: 20px; font-weight: 600;
 }
-/* Modal de la campana: monto entero a la derecha y dos acciones iguales abajo. */
-.bell-title:focus { outline: none; box-shadow: none; }
-.bell-today { color: var(--color-danger); font-weight: 600; }
+/* Modal de la campana: monto entero a la derecha y acciones compactas abajo a la derecha. */
 .bell-money { flex-shrink: 0; white-space: nowrap; font-weight: 600; }
-.bell-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
-.dashboard-dialog .bell-actions .button {
-  display: grid; place-items: center; min-height: 44px; padding: 8px 16px; border-radius: 8px; text-align: center;
-  background: var(--color-primary); color: var(--color-on-primary); text-decoration: none;
+.bell-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 0; }
+.bell-actions button, .dashboard-dialog .bell-actions .button {
+  display: inline-grid; place-items: center; min-height: 40px; padding: 6px 14px; border-radius: 8px; font-size: 14px;
+}
+.dashboard-dialog .bell-actions .button { background: var(--color-primary); color: var(--color-on-primary); text-decoration: none; }
+/* En móvil sale bajo el encabezado (main 24px + header 68px), a la derecha, no como hoja abajo: el aviso queda junto a lo que lo abrió. */
+@media (max-width: 600px) {
+  .dashboard-dialog.bell-dialog {
+    margin: calc(100px + env(safe-area-inset-top)) 12px auto auto; width: min(360px, calc(100vw - 24px));
+    padding: 16px; border-radius: 12px;
+  }
 }

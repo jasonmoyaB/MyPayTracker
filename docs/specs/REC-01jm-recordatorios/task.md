@@ -28,3 +28,5 @@ spec.md + plan.md de esta carpeta. Depende de PWA-01jm y TC-01jm–TC-06jm. Regl
   - Evidencia: rojo "sin columna Al mes"; verde 365/365; typecheck, test y build OK; en localhost el modal muestra la cuota de cada producto.
 - [x] REC-01jm-T12 Modal de la campana responsive: nombre + "vence…" (rojo si es hoy), monto entero a la derecha, Cerrar y Ver recordatorios del mismo ancho, sin anillo de foco al abrir [src/ui/reminders/NotificationBell.tsx, src/ui/dashboard/dashboard.css]
   - Evidencia: componente real a 390px con CSS real; foco inicial en el título; NotificationBell.test.tsx actualizado; 373/373, build OK.
+- [x] REC-01jm-T13 Campana en móvil: desplegable bajo el encabezado a la derecha (no hoja abajo) y botones compactos (40px) a la derecha [src/ui/dashboard/dashboard.css, NotificationBell.tsx]
+  - Evidencia: app de producción en iframe 390px con el CSS nuevo inyectado; dialog arriba en 100px (header termina en 94); 373/373, build OK.

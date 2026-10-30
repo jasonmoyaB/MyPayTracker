@@ -39,7 +39,7 @@ export function NotificationBell({ transactions, now = new Date(), initial }: Pr
         <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={BELL_ICON} /></svg>
         {items.length > 0 && <span className="bell-count" aria-hidden="true">{items.length}</span>}
       </button>
-      <dialog ref={dialog} aria-label="Notificaciones" className="dashboard-dialog"
+      <dialog ref={dialog} aria-label="Notificaciones" className="dashboard-dialog bell-dialog"
         onClick={e => { if (e.target === e.currentTarget && outsideRect(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY)) e.currentTarget.close() }}>
         {/* tabIndex -1: showModal enfoca el título y no el link (no sale el anillo de foco al abrir con el dedo). */}
         <h3 tabIndex={-1} className="bell-title" style={{ margin: 0 }}>Notificaciones</h3>
@@ -54,7 +54,7 @@ export function NotificationBell({ transactions, now = new Date(), initial }: Pr
             </li>
           ))}</ul>
         )}
-        {/* UX: dos acciones del mismo ancho, al alcance del pulgar. */}
+        {/* Acciones compactas a la derecha; la principal al final. */}
         <form method="dialog" className="bell-actions">
           <button type="submit" className="secondary">Cerrar</button>
           <a className="button" href="#/recordatorios" onClick={() => dialog.current?.close()}>Ver recordatorios</a>
