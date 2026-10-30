@@ -20,6 +20,8 @@ describe('TC-03jm AC-1: tabla de cuota por plazo', () => {
     expect(html).toMatch(/<td>3 meses<\/td>.*Ajustado/)
     expect(html).toMatch(/<td>12 meses<\/td>.*16.*Sí/)
     expect(html).toMatch(/<td>Un pago<\/td>.*No/)
+    // UX-06jm-T02: el color va en una etiqueta dentro de la celda, no en la celda entera.
+    expect(html).toContain('<td><span class="status-success">Sí</span></td>')
   })
 })
 

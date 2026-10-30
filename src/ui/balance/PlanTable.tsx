@@ -22,7 +22,7 @@ export function PlanTable({ rows }: { rows: Recommendation[] }) {
               <td>{shortPlan(r.months ?? 1)}</td>
               <td>{formatMoney(r.cuotaCents ?? 0, 'CRC')}</td>
               <td>{r.firstDueAt && formatDay(r.firstDueAt)}</td>
-              <td className={`status-${TONE[r.verdict]}`}>{VERDICT[r.verdict]}</td>
+              <td><span className={`status-${TONE[r.verdict]}`}>{VERDICT[r.verdict]}</span></td>
             </tr>
           ))}
         </tbody>

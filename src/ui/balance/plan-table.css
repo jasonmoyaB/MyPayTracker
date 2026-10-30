@@ -6,3 +6,6 @@
 /* Montos, fechas y veredicto a la derecha: se comparan de un vistazo y no quedan pegados a la columna anterior. */
 .plan-table :is(th, td) + :is(th, td) { text-align: right; }
 .plan-table th { font-weight: 600; color: var(--color-text-secondary); }
+/* UX-06jm-T02: el veredicto es una etiqueta chica centrada; en la celda pintaba toda la columna. */
+.plan-table th:nth-child(4), .plan-table td:nth-child(4) { text-align: center; }
+.plan-table td > [class^="status-"] { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 13px; }
