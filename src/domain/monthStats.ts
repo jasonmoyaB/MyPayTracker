@@ -1,7 +1,8 @@
-import type { PaymentMethod } from './credit'
-import { CR_OFFSET_MS } from './date'
-import { isCardPayment } from './reminder'
-import type { SummaryMovement } from './summary'
+// MCP-01jm-T01: con extensión; la Edge Function mcp importa este archivo desde Deno.
+import type { PaymentMethod } from './credit.ts'
+import { CR_OFFSET_MS } from './date.ts'
+import { isCardPayment } from './reminder.ts'
+import type { SummaryMovement } from './summary.ts'
 
 export type MonthMovement = SummaryMovement & { occurredAt: string; description: string; source: string }
 export type SpendMovement = MonthMovement & { paymentMethod: PaymentMethod }
@@ -14,6 +15,12 @@ export function costaRicaMonth(now: Date): { startMs: number; endMs: number } {
   const y = local.getUTCFullYear()
   const mo = local.getUTCMonth()
   return { startMs: Date.UTC(y, mo, 1) + CR_OFFSET_MS, endMs: Date.UTC(y, mo + 1, 1) + CR_OFFSET_MS }
+}
+
+// MCP-01jm-T01: día 15 a mediodía UTC cae en el mismo mes en CR (−06:00); se pasa como `now` a monthStats/topExpenses.
+export function parseMonth(month: string): Date | null {
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month)
+  return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 15, 12)) : null
 }
 
 function thisMonthCrc<T extends MonthMovement>(movements: T[], now: Date): T[] {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthStats, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
+import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthStats, parseMonth, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
 
 // 1 nov 2026 00:30 en Costa Rica = 06:30 UTC.
 const now = new Date('2026-11-01T06:30:00Z')
@@ -95,5 +95,20 @@ describe('SIM-01jm-T03: avgMonthlySpend', () => {
   })
   it('sin historial → 0', () => {
     expect(avgMonthlySpend([], at)).toBe(0)
+  })
+})
+
+describe('MCP-01jm-T01: parseMonth', () => {
+  it('"YYYY-MM" válido → fecha dentro de ese mes en hora CR', () => {
+    expect(costaRicaMonth(parseMonth('2026-11')!)).toEqual(costaRicaMonth(now))
+    expect(costaRicaMonth(parseMonth('2026-12')!).startMs).toBe(Date.parse('2026-12-01T00:00:00-06:00'))
+  })
+  it('borde CR: el mes cubre del día 1 a medianoche CR hasta el 1 del siguiente', () => {
+    const { startMs, endMs } = costaRicaMonth(parseMonth('2027-01')!)
+    expect(startMs).toBe(Date.parse('2027-01-01T00:00:00-06:00'))
+    expect(endMs).toBe(Date.parse('2027-02-01T00:00:00-06:00'))
+  })
+  it('mes inválido o texto basura → null', () => {
+    for (const bad of ['2026-13', '2026-00', '2026-1', 'noviembre', '', '2026-11-01']) expect(parseMonth(bad)).toBeNull()
   })
 })
