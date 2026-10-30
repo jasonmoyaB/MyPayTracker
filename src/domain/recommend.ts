@@ -1,4 +1,4 @@
-import { dueBy, installmentDues, nextPayDay } from './credit'
+import { dueBy, installmentDues, nextPayDay } from './credit.ts'
 
 // TC-02jm-T03: plazos de tasa cero de BAC Costa Rica (18–36 meses son de Panamá); 1 = tarjeta en un pago.
 export const PLANS = ['cash', 1, 3, 6, 10, 12] as const

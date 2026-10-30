@@ -34,3 +34,14 @@ export function summarizeFromAccount(
   const since = Date.parse(asOf)
   return summarize(accountCents, movements.filter((m) => Date.parse(m.occurredAt) > since))
 }
+
+// BAL-01jm: con saldo de cuenta parte de ahí (el salario ya está dentro). Sin él: salario + movimientos.
+// TC-01jm: recibe `settled` de splitCredit (las compras con tarjeta cuentan desde su día de pago).
+// MCP-02jm-T01: vive en domain para que el Resumen y el conector MCP armen el saldo igual.
+export function summaryFor(
+  { account, salaryCents }: { account: { cents: number; asOf: string } | null; salaryCents: number | null },
+  movements: (SummaryMovement & { occurredAt: string })[],
+): Summary | null {
+  if (account) return summarizeFromAccount(account.cents, account.asOf, movements)
+  return salaryCents === null ? null : summarize(salaryCents, movements)
+}

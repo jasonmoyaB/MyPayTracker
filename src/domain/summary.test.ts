@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { summarize, summarizeFromAccount } from './summary'
+import { summarize, summarizeFromAccount, summaryFor } from './summary'
 
 describe('AC-2: summarize', () => {
   it('saldo CRC = salario + ingresos CRC − gastos CRC; USD aparte', () => {
@@ -38,5 +38,20 @@ describe('BAL-01jm: summarizeFromAccount', () => {
   it('compara instantes, no texto: misma hora en otra zona no cuenta como posterior', () => {
     const txs = [at('2026-10-28T21:00:00Z', 5_000, 'out')] // = 15:00 en Costa Rica
     expect(summarizeFromAccount(100, '2026-10-28T15:00:00-06:00', txs).balanceCrcCents).toBe(100)
+  })
+})
+
+describe('MCP-02jm-T01: summaryFor', () => {
+  const txs = [
+    { amountCents: 5_000, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-01T00:00:00Z' },
+    { amountCents: 2_000, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-10T00:00:00Z' },
+  ]
+  it('con saldo de cuenta parte de ahí y solo resta lo posterior', () => {
+    const account = { cents: 100_000, asOf: '2026-10-05T00:00:00Z' }
+    expect(summaryFor({ account, salaryCents: 1 }, txs)?.balanceCrcCents).toBe(98_000)
+  })
+  it('sin cuenta usa salario + movimientos; sin ninguno, null', () => {
+    expect(summaryFor({ account: null, salaryCents: 100_000 }, txs)?.balanceCrcCents).toBe(93_000)
+    expect(summaryFor({ account: null, salaryCents: null }, txs)).toBeNull()
   })
 })
