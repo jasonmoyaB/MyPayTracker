@@ -38,10 +38,13 @@ export function summarizeFromAccount(
 // BAL-01jm: con saldo de cuenta parte de ahí (el salario ya está dentro). Sin él: salario + movimientos.
 // TC-01jm: recibe `settled` de splitCredit (las compras con tarjeta cuentan desde su día de pago).
 // MCP-02jm-T01: vive en domain para que el Resumen y el conector MCP armen el saldo igual.
+// MOV-03jm-T01: un gasto SINPE sale de la cuenta del BAC, cuyo saldo ya lo trae: se registra para llevar el gasto,
+// pero restarlo otra vez lo contaría doble. Los gastos del mes (monthStats) sí lo cuentan.
 export function summaryFor(
   { account, salaryCents }: { account: { cents: number; asOf: string } | null; salaryCents: number | null },
-  movements: (SummaryMovement & { occurredAt: string })[],
+  all: (SummaryMovement & { occurredAt: string; paymentMethod?: string })[],
 ): Summary | null {
+  const movements = all.filter((m) => !(m.direction === 'out' && m.paymentMethod === 'sinpe'))
   if (account) return summarizeFromAccount(account.cents, account.asOf, movements)
   return salaryCents === null ? null : summarize(salaryCents, movements)
 }
