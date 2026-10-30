@@ -80,11 +80,12 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
           <tbody>{p.dues.map(d => <tr key={d.dueAt}><td>{formatDay(d.dueAt)}</td><td>{money(d.cents)}</td></tr>)}</tbody>
         </table>
         {/* type="button": no envía el form, así que no cierra el dialog antes de confirmar. */}
-        <form method="dialog" style={{ display: 'flex', gap: 8 }}>
-          <button type="submit">Cerrar</button>
+        {/* UX-07jm-T01: mismo ancho; borrar a la izquierda (lejos del pulgar) y editar, la principal, a la derecha. */}
+        <form method="dialog" className="dialog-actions">
+          {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar</button>}
+          <button type="submit" className="secondary">Cerrar</button>
           {/* TC-08jm-T02: el formulario es solo CRC, así que solo se editan deudas en colones. */}
-          {id && p.currency === 'CRC' && <button type="button" onClick={() => setEditing(!editing)}>Editar</button>}
-          {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar deuda</button>}
+          {id && p.currency === 'CRC' && <button type="button" onClick={() => setEditing(!editing)}>{editing ? 'Cancelar' : 'Editar'}</button>}
         </form>
         {editing && id && <DebtForm edit={{ ...p, id }} onSaved={() => { setEditing(false); dialog.current?.close(); onSaved() }} />}
       </dialog>
