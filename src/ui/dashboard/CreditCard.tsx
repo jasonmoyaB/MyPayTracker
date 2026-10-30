@@ -77,8 +77,11 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
           <thead><tr><th scope="col">Fecha</th><th scope="col">Cuota</th></tr></thead>
           <tbody>{p.dues.map(d => <tr key={d.dueAt}><td>{formatDay(d.dueAt)}</td><td>{money(d.cents)}</td></tr>)}</tbody>
         </table>
-        {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar deuda</button>}
-        <form method="dialog"><button type="submit">Cerrar</button></form>
+        {/* type="button": no envía el form, así que no cierra el dialog antes de confirmar. */}
+        <form method="dialog" style={{ display: 'flex', gap: 8 }}>
+          <button type="submit">Cerrar</button>
+          {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar deuda</button>}
+        </form>
       </dialog>
     </li>
   )

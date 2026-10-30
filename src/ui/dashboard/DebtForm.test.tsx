@@ -81,7 +81,7 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
     expect(html).toMatch(/<dialog[^>]*>.*<button type="button"[^>]*>Eliminar deuda<\/button>/)
     for (const day of ['20 nov', '20 dic', '20 ene']) expect(html).toMatch(new RegExp(`<td>${day}</td>`))
     expect(html).toContain('<th scope="col">Cuota</th>')
-    expect(html).toMatch(/<form method="dialog"><button[^>]*>Cerrar<\/button><\/form>/)
+    expect(html).toMatch(/<form[^>]*method="dialog"><button type="submit">Cerrar<\/button><button type="button"[^>]*>Eliminar deuda<\/button><\/form>/)
   })
 })
 
