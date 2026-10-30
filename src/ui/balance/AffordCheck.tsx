@@ -3,7 +3,7 @@ import { parseAmountToCents } from '../../domain/amount'
 import { comparePlans, PLANS, recommend, type Plan, type Recommendation } from '../../domain/recommend'
 import { planLabel } from '../transactions/TransactionForm'
 import { affordText } from './affordText'
-import { PlanTable } from './PlanTable'
+import { MonthTable, PlanTable } from './PlanTable'
 
 type Props = { balanceCents: number; salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date }
 
@@ -48,6 +48,7 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
         <button type="submit">Calcular</button>
       </div>
       <div role="status">{result && <ResultMessage result={result} />}</div>
+      {result && result !== 'invalid' && <MonthTable rows={result.monthly} />}
       {rows.length > 0 && <PlanTable rows={rows} />}
     </form>
   )

@@ -28,3 +28,28 @@ export function PlanTable({ rows }: { rows: Recommendation[] }) {
     </div>
   )
 }
+
+// SIM-01jm-T02: mes a mes con la compra nueva; sin salario los meses siguientes no tienen libre ("—").
+export function MonthTable({ rows }: { rows: Recommendation['monthly'] }) {
+  if (rows.length === 0) return null
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table className="amount" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <caption>Lo que te queda libre cada mes</caption>
+        <thead>
+          <tr><th scope="col">Mes</th><th scope="col">Cuotas</th><th scope="col">Libre</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((m) => (
+            <tr key={m.dueAt}>
+              <td>{formatDay(m.dueAt)}</td>
+              <td>{formatMoney(m.cuotasCents, 'CRC')}</td>
+              {m.freeCents === null ? <td>—</td>
+                : <td className={m.freeCents < 0 ? 'status-danger' : undefined}>{formatMoney(m.freeCents, 'CRC')}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
