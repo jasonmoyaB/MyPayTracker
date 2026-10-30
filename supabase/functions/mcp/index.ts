@@ -1,7 +1,7 @@
 // MCP-01jm-T03: conector MCP (Streamable HTTP sin estado). Solo I/O; el protocolo vive en tools.ts.
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { numericToCents } from '../../../src/domain/money.ts'
-import { handleRpc, type Ledger, type Query } from './tools.ts'
+import { handleRpc, type Ledger, type Query, type SaveSettings } from './tools.ts'
 
 function env(name: string): string {
   const value = Deno.env.get(name)
@@ -82,6 +82,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    // MCP-03jm-T01: como upsertSettings en la app; user_id sale del token (nunca del asistente) y RLS lo vuelve a exigir.
+    const userId = auth.user.id
+    const save: SaveSettings = async (fields) => {
+      const { error } = await db.from('settings').upsert({ user_id: userId, ...fields, updated_at: new Date().toISOString() })
+      if (error) throw error
+    }
+
     let msg
     try {
       msg = await req.json()
@@ -92,7 +99,7 @@ Deno.serve(async (req) => {
     if (typeof msg !== 'object' || msg === null || Array.isArray(msg)) {
       return Response.json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Petición inválida' } }, { status: 400 })
     }
-    const res = await handleRpc(msg, query, ledger)
+    const res = await handleRpc(msg, query, ledger, save)
     return res ? Response.json(res) : new Response(null, { status: 202 })
   } catch (e) {
     // El detalle (puede traer datos internos de PostgREST) solo va al log.

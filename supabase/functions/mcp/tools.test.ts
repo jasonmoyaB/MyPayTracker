@@ -9,8 +9,8 @@ import { handleRpc } from './tools.ts'
 const mov = (occurredAt: string, amountCents: number, over: Partial<SpendMovement> = {}): SpendMovement => ({
   occurredAt, amountCents, direction: 'out', description: 'Super', currency: 'CRC', source: 'manual', paymentMethod: 'cash', ...over,
 })
-const call = (name: string, args: unknown, query = vi.fn().mockResolvedValue([]), ledger = vi.fn()) =>
-  handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, query, ledger)
+const call = (name: string, args: unknown, query = vi.fn().mockResolvedValue([]), ledger = vi.fn(), save = vi.fn()) =>
+  handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, query, ledger, save)
 const payload = (res: unknown) => JSON.parse((res as { result: { content: { text: string }[] } }).result.content[0].text)
 
 afterEach(() => vi.useRealTimers())
@@ -28,10 +28,13 @@ describe('MCP-01jm-T02: protocolo', () => {
     expect(await handleRpc({ jsonrpc: '2.0', id: 'a', method: 'ping' }, vi.fn())).toEqual({ jsonrpc: '2.0', id: 'a', result: {} })
     expect(await handleRpc({ jsonrpc: '2.0', method: 'notifications/initialized' }, vi.fn())).toBeNull()
   })
-  it('tools/list trae las 3 herramientas, todas de solo lectura', async () => {
+  it('tools/list: 3 de solo lectura y 2 de escritura que reemplazan un valor (AC-5 MCP-03jm)', async () => {
     const res = await handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, vi.fn()) as { result: { tools: { name: string; annotations: unknown }[] } }
-    expect(res.result.tools.map((t) => t.name)).toEqual(['resumen_mes', 'movimientos', 'puedo_comprar'])
-    for (const t of res.result.tools) expect(t.annotations).toEqual({ readOnlyHint: true })
+    const byName = Object.fromEntries(res.result.tools.map((t) => [t.name, t.annotations]))
+    expect(Object.keys(byName)).toEqual(['resumen_mes', 'movimientos', 'puedo_comprar', 'cambiar_salario', 'cambiar_saldo'])
+    for (const name of ['resumen_mes', 'movimientos', 'puedo_comprar']) expect(byName[name]).toEqual({ readOnlyHint: true })
+    expect(byName.cambiar_salario).toEqual({ readOnlyHint: false, destructiveHint: true, idempotentHint: true })
+    expect(byName.cambiar_saldo).toEqual({ readOnlyHint: false, destructiveHint: true, idempotentHint: false })
   })
   it('método o herramienta desconocidos → error JSON-RPC', async () => {
     expect(await handleRpc({ jsonrpc: '2.0', id: 1, method: 'resources/list' }, vi.fn())).toMatchObject({ error: { code: -32601 } })
@@ -138,5 +141,41 @@ describe('MCP-02jm-T02: puedo_comprar', () => {
     const res = await call('puedo_comprar', { precio: '80000', plazo: '3' }, vi.fn(), l) as { result: { isError: boolean; content: { text: string }[] } }
     expect(res.result.isError).toBe(true)
     expect(res.result.content[0].text).toMatch(/Cuenta/)
+  })
+})
+
+describe('MCP-03jm-T01: cambiar_salario y cambiar_saldo', () => {
+  const save = () => vi.fn().mockResolvedValue(undefined)
+
+  it('AC-1: guarda el salario en numeric y lo confirma', async () => {
+    const s = save()
+    const res = payload(await call('cambiar_salario', { monto: '300000' }, vi.fn(), vi.fn(), s))
+    expect(s).toHaveBeenCalledWith({ salary: '300000.00' })
+    expect(res).toEqual({ guardado: 'salario', moneda: 'CRC', monto: '300000.00' })
+  })
+  it('AC-2: guarda el saldo con la fecha de ahora (corte de movimientos)', async () => {
+    vi.useFakeTimers({ now: new Date('2026-10-30T18:00:00Z') })
+    const s = save()
+    const res = payload(await call('cambiar_saldo', { monto: 250000.5 }, vi.fn(), vi.fn(), s))
+    expect(s).toHaveBeenCalledWith({ account_balance: '250000.50', account_balance_at: '2026-10-30T18:00:00.000Z' })
+    expect(res).toMatchObject({ guardado: 'saldo', moneda: 'CRC', monto: '250000.50', desde: '2026-10-30T12:00' })
+  })
+  it('AC-3: monto inválido, cero, negativo o enorme → isError sin escribir', async () => {
+    const s = save()
+    for (const name of ['cambiar_salario', 'cambiar_saldo']) {
+      for (const monto of [undefined, '0', '-5', '300 mil', 'abc', '10000000000', 1e20]) {
+        expect(await call(name, { monto }, vi.fn(), vi.fn(), s)).toMatchObject({ result: { isError: true } })
+      }
+    }
+    expect(s).not.toHaveBeenCalled()
+  })
+  it('AC-4: fallo al guardar → isError genérico, detalle solo al log', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const s = vi.fn().mockRejectedValue(new Error('new row violates row-level security'))
+    const res = await call('cambiar_salario', { monto: '300000' }, vi.fn(), vi.fn(), s)
+    expect(res).toMatchObject({ result: { isError: true } })
+    expect(JSON.stringify(res)).not.toContain('row-level')
+    expect(log).toHaveBeenCalled()
+    log.mockRestore()
   })
 })

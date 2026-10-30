@@ -30,3 +30,10 @@ describe('MCP-01jm-T03: el conector lee como el usuario', () => {
     expect(finalCatch).not.toMatch(/\.message/)
   })
 })
+
+describe('MCP-03jm-T01: escritura como el usuario del token', () => {
+  it('el user_id del upsert sale de auth.user.id, no de los argumentos', () => {
+    expect(source).toMatch(/const userId = auth\.user\.id/)
+    expect(source).toMatch(/upsert\(\{ user_id: userId, \.\.\.fields/)
+  })
+})
