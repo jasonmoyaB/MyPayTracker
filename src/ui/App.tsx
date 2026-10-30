@@ -8,6 +8,7 @@ import { toUiError } from './sessionExpiry'
 import { useToast } from './toast/ToastProvider'
 import { AccountView } from './account/AccountView'
 import { AppShell } from './AppShell'
+import { ConsentView } from './auth/ConsentView'
 import { LoginView } from './auth/LoginView'
 import { OptionsView } from './options/OptionsView'
 import { NotificationBell } from './reminders/NotificationBell'
@@ -25,6 +26,9 @@ export function App() {
 
   if (session === undefined) return <main><p className="muted">Cargando…</p></main>
   if (!session) return <LoginView />
+  // MCP-01jm-T05: el login no cambia la URL, así que tras entrar se sigue con el consentimiento.
+  const authorizationId = new URLSearchParams(location.search).get('authorization_id')
+  if (authorizationId) return <ConsentView authorizationId={authorizationId} />
   return <Dashboard session={session} />
 }
 
