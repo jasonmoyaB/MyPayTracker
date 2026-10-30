@@ -6,7 +6,8 @@ import type { SummaryMovement } from './summary.ts'
 const CUT_DAY = 6
 const DUE_DAY = 20
 
-export type PaymentMethod = 'cash' | 'credit'
+// MOV-02jm-T01: 'sinpe' se trata como 'cash' (todo lo que no es 'credit' se paga en su fecha).
+export type PaymentMethod = 'cash' | 'credit' | 'sinpe'
 // TC-02jm: `installments` = plazo de tasa cero (1 = un pago); opcional para no tocar a quien no lo usa.
 export type CreditMovement = SummaryMovement & { paymentMethod: PaymentMethod; occurredAt: string; installments?: number }
 

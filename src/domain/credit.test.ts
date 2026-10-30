@@ -3,7 +3,7 @@ import { creditDueAt, dueBy, dueOn, installmentDues, nextCutAt, nextPayDay, ongo
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
-const m = (occurredAt: string, amountCents: number, paymentMethod: 'cash' | 'credit' = 'credit',
+const m = (occurredAt: string, amountCents: number, paymentMethod: CreditMovement['paymentMethod'] = 'credit',
   direction: 'in' | 'out' = 'out', currency: 'CRC' | 'USD' = 'CRC'): CreditMovement =>
   ({ occurredAt, amountCents, paymentMethod, direction, currency })
 
@@ -159,5 +159,15 @@ describe('REC-01jm AC-4: dueOn = cuotas que vencen ese 20, por moneda', () => {
       m('2026-10-02T12:00:00-06:00', 5_000_00),
       m('2026-10-20T12:00:00-06:00', 9_00, 'cash'),
     ], nov20)).toEqual({ crcCents: 30_666_70, usdCents: 15_00 })
+  })
+})
+
+describe('MOV-02jm-T01 AC-3: SINPE se liquida como efectivo', () => {
+  it('un gasto SINPE baja el saldo en su fecha y no queda como deuda', () => {
+    const sinpe = m('2026-10-10T12:00:00-06:00', 500_000, 'sinpe')
+    const { settled, pending } = splitCredit([sinpe], new Date('2026-10-11T12:00:00-06:00'))
+    expect(settled).toEqual([sinpe])
+    expect(pending.crcCents).toBe(0)
+    expect(pendingPurchases([{ ...sinpe, description: 'Pulpería' }], new Date('2026-10-11T12:00:00-06:00'))).toEqual([])
   })
 })
