@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { addManualTransaction, listTransactions } from './transactions'
+import { addManualTransaction, deleteTransaction, listTransactions } from './transactions'
 
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
@@ -8,8 +8,10 @@ const db = vi.hoisted(() => {
   const order = vi.fn(async () => ({ data: [row], error: null }))
   const select = vi.fn(() => ({ order }))
   const insert = vi.fn(async () => ({ error: null }))
-  const from = vi.fn(() => ({ select, insert }))
-  return { select, insert, from }
+  const eq = vi.fn(async () => ({ error: null }))
+  const remove = vi.fn(() => ({ eq }))
+  const from = vi.fn(() => ({ select, insert, delete: remove }))
+  return { select, insert, eq, from }
 })
 vi.mock('./supabase', () => ({ supabase: { from: db.from } }))
 
@@ -58,5 +60,13 @@ describe('TC-04jm-T01: lo que queda de un plazo cabe en 1–12 cuotas', () => {
     const sql9 = readFileSync(new URL('../../supabase/migrations/0009_installments_restantes.sql', import.meta.url), 'utf8').toLowerCase()
     expect(sql9).toMatch(/drop constraint transactions_installments_check/)
     expect(sql9).toMatch(/add constraint transactions_installments_check check \(installments between 1 and 12\)/)
+  })
+})
+
+describe('TC-07jm-T02: borrar una deuda', () => {
+  it('AC-3: borra solo la fila de ese id (RLS limita al dueño)', async () => {
+    await deleteTransaction('abc')
+    expect(db.from).toHaveBeenCalledWith('transactions')
+    expect(db.eq).toHaveBeenCalledWith('id', 'abc')
   })
 })

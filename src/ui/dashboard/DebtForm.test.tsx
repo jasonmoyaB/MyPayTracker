@@ -5,7 +5,7 @@ import { CreditCard, outsideRect } from './CreditCard'
 import { pendingPurchases } from '../../domain/credit'
 import { checkDebt } from './DebtForm'
 
-vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
+vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), deleteTransaction: vi.fn() }))
 
 const pending = { crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {} }
 
@@ -77,6 +77,8 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
     </ToastProvider>)
     expect(html).toMatch(/<button type="button" class="dashboard-row-button" aria-haspopup="dialog"/)
     expect(html).toMatch(/<dialog[^>]*>.*<h3[^>]*>anillo<\/h3>.*Falta ₡35.000,00/)
+    // TC-07jm-T02 (AC-3): el detalle permite borrar la deuda.
+    expect(html).toMatch(/<dialog[^>]*>.*<button type="button"[^>]*>Eliminar deuda<\/button>/)
     for (const day of ['20 nov', '20 dic', '20 ene']) expect(html).toMatch(new RegExp(`<td>${day}</td>`))
     expect(html).toContain('<th scope="col">Cuota</th>')
     expect(html).toMatch(/<form method="dialog"><button[^>]*>Cerrar<\/button><\/form>/)

@@ -56,3 +56,9 @@ export async function addManualTransaction(t: NewTransaction): Promise<void> {
   })
   if (error) throw error
 }
+
+// TC-07jm-T02: deuda agregada por error. RLS impide borrar filas de otro.
+export async function deleteTransaction(id: string): Promise<void> {
+  const { error } = await supabase.from('transactions').delete().eq('id', id)
+  if (error) throw error
+}

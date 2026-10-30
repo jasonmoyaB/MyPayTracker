@@ -1,6 +1,9 @@
 import { useId, useRef } from 'react'
 import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
+import { deleteTransaction } from '../../data/transactions'
 import { formatDay, formatMoney } from '../format'
+import { saveWithToast } from '../toast/saveWithToast'
+import { useToast } from '../toast/ToastProvider'
 import { DebtForm } from './DebtForm'
 
 type Pending = { crcCents: number; usdCents: number; dueAt: string | null; scheduleCrc: Record<string, number> }
@@ -30,7 +33,7 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
       <LimitLine limitCents={limitCents} hasDebt={pending.crcCents > 0} />
       <SalaryLine scheduleCrc={pending.scheduleCrc} salaryCents={salaryCents} />
       {purchases.length > 0 && <ul className="dashboard-list" aria-label="Productos en deuda">
-        {purchases.map((p, i) => <PurchaseRow key={i} purchase={p} />)}
+        {purchases.map((p, i) => <PurchaseRow key={p.id ?? i} purchase={p} onSaved={onSaved} />)}
       </ul>}
       <DebtForm onSaved={onSaved} />
     </section>
@@ -43,8 +46,17 @@ type Rect = { left: number; right: number; top: number; bottom: number }
 export const outsideRect = (r: Rect, x: number, y: number) => x < r.left || x > r.right || y < r.top || y > r.bottom
 
 // TC-06jm-T01: <dialog> nativo; Esc, foco atrapado y vuelta del foco al botón los da el navegador.
-function PurchaseRow({ purchase: p }: { purchase: Purchase }) {
+function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: () => void }) {
+  const { id } = p
   const dialog = useRef<HTMLDialogElement>(null)
+  const toast = useToast()
+  // TC-07jm-T02: confirm() nativo basta para una deuda agregada por error; borra solo esta compra.
+  async function remove(id: string) {
+    if (!confirm(`¿Eliminar la deuda "${p.description}"? No se puede deshacer.`)) return
+    if (await saveWithToast(() => deleteTransaction(id), toast, 'Deuda eliminada')) return
+    dialog.current?.close()
+    onSaved()
+  }
   const titleId = useId()
   const money = (cents: number) => formatMoney(cents, p.currency)
   return (
@@ -65,6 +77,7 @@ function PurchaseRow({ purchase: p }: { purchase: Purchase }) {
           <thead><tr><th scope="col">Fecha</th><th scope="col">Cuota</th></tr></thead>
           <tbody>{p.dues.map(d => <tr key={d.dueAt}><td>{formatDay(d.dueAt)}</td><td>{money(d.cents)}</td></tr>)}</tbody>
         </table>
+        {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar deuda</button>}
         <form method="dialog"><button type="submit">Cerrar</button></form>
       </dialog>
     </li>
