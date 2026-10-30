@@ -78,12 +78,14 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
         ? <p className="muted" style={{ margin: 0 }}>Aún no tienes recordatorios.</p>
         : <ul className="dashboard-list" aria-label="Pagos mensuales">
           {reminders.map((r) => (
-            <li key={r.id}>
+            <li key={r.id} className="reminder-row">
               {/* REC-01jm-T09: los recordatorios de tarjeta abren el modal con toda la deuda. */}
-              {isCardPayment(r.description)
-                ? <CardDebtDialog transactions={transactions} now={now}><ReminderText r={r} now={now} /></CardDebtDialog>
-                : <ReminderText r={r} now={now} />}
-              <span style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <span className="reminder-main">
+                {isCardPayment(r.description)
+                  ? <CardDebtDialog transactions={transactions} now={now}><ReminderText r={r} now={now} /></CardDebtDialog>
+                  : <ReminderText r={r} now={now} />}
+              </span>
+              <span className="reminder-actions">
                 <button type="button" className="secondary" disabled={deleting}
                   onClick={() => void run(() => markReminderPaid(r.id, nextDueOn(r.day, now, r.paidOn)), 'Marcado como pagado')}
                   aria-label={`Marcar ${r.description} como pagado`}>Pagado</button>

@@ -54,6 +54,12 @@
   .dashboard-dialog th, .dashboard-dialog td { padding: 6px 0; }
 }
 
+/* REC-02jm-T04: con "Pagado" y "Borrar" el texto quedaba de una palabra por línea en móvil.
+   Texto y monto ocupan la fila; si no caben 220px, los botones bajan a su propia línea. */
+.dashboard-list li.reminder-row { flex-wrap: wrap; }
+.reminder-main { flex: 1 1 220px; min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.reminder-actions { display: flex; gap: 8px; margin-left: auto; }
+
 /* REC-01jm-T10: campana del encabezado con la cantidad de pagos que vencen pronto. */
 .bell { position: relative; padding: 8px 10px; display: inline-grid; place-items: center; }
 .bell-count {
