@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../toast/ToastProvider'
 import { CreditCard, outsideRect } from './CreditCard'
+import { pendingPurchases } from '../../domain/credit'
 import { checkDebt } from './DebtForm'
 
 vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
@@ -33,12 +34,30 @@ describe('TC-04jm-T03: deuda que ya venía pagando', () => {
   })
 })
 
+describe('TC-07jm-T01: fecha de compra', () => {
+  const now = new Date('2026-10-29T12:00:00-06:00')
+  const base = { product: 'Tele', price: '120000', remaining: '', monthly: '' }
+  it('AC-1: 10 sep, ₡120 000 a 3 meses → guarda el precio desde esa fecha; quedan 20 nov y 20 dic', () => {
+    const checked = checkDebt({ ...base, date: '2026-09-10' }, 3, now)
+    expect(checked).toEqual({ priceCents: 120_000_00, remainingCents: 120_000_00, occurredAt: '2026-09-10T12:00:00-06:00' })
+    const [p] = pendingPurchases([{ id: '1', description: 'Tele', occurredAt: '2026-09-10T12:00:00-06:00', amountCents: 120_000_00,
+      currency: 'CRC', direction: 'out', paymentMethod: 'credit', installments: 3 }], now)
+    expect(p).toMatchObject({ id: '1', remainingCents: 80_000_00, count: 2, nextDueAt: '2026-11-20T06:00:00.000Z' })
+  })
+  it('AC-2: fecha futura, inválida o ya pagada → error', () => {
+    expect(checkDebt({ ...base, date: '2026-10-30' }, 3, now)).toHaveProperty('error')
+    expect(checkDebt({ ...base, date: 'ayer' }, 3, now)).toHaveProperty('error')
+    expect(checkDebt({ ...base, date: '2026-06-01' }, 3, now)).toHaveProperty('error')
+    expect(checkDebt({ ...base, date: '2026-10-29' }, 3, now)).not.toHaveProperty('error')
+  })
+})
+
 describe('TC-05jm-T03: productos en deuda y total del 20', () => {
   it('AC-1/AC-2: lista cada producto con lo que falta y el total del próximo 20', () => {
     const html = renderToStaticMarkup(<ToastProvider>
       <CreditCard pending={{ ...pending, crcCents: 65_000_00 }} limitCents={null} salaryCents={null} now={new Date('2026-10-29T12:00:00-06:00')}
         onSaved={() => {}} dueNextCents={15_000_00}
-        purchases={[{ description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z', dues: [] }]} />
+        purchases={[{ id: '1', description: 'Tele', currency: 'CRC', remainingCents: 60_000_00, count: 6, nextCents: 10_000_00, nextDueAt: '2026-11-20T06:00:00.000Z', dues: [] }]} />
     </ToastProvider>)
     expect(html).toMatch(/<dt>Pagas el 20 nov<\/dt><dd class="amount">₡15/)
     expect(html).toContain('Tele')
@@ -54,7 +73,7 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
     const html = renderToStaticMarkup(<ToastProvider>
       <CreditCard pending={{ ...pending, crcCents: 35_000_00 }} limitCents={null} salaryCents={null} now={new Date('2026-10-29T12:00:00-06:00')}
         onSaved={() => {}} dueNextCents={11_666_68}
-        purchases={[{ description: 'anillo', currency: 'CRC', remainingCents: 35_000_00, count: 3, nextCents: 11_666_68, nextDueAt: dues[0].dueAt, dues }]} />
+        purchases={[{ id: '1', description: 'anillo', currency: 'CRC', remainingCents: 35_000_00, count: 3, nextCents: 11_666_68, nextDueAt: dues[0].dueAt, dues }]} />
     </ToastProvider>)
     expect(html).toMatch(/<button type="button" class="dashboard-row-button" aria-haspopup="dialog"/)
     expect(html).toMatch(/<dialog[^>]*>.*<h3[^>]*>anillo<\/h3>.*Falta ₡35.000,00/)

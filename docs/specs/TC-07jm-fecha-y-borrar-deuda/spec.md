@@ -13,7 +13,7 @@ queda. Además, una deuda agregada por error no se puede quitar.
 - Centavos enteros; solo CRC; RLS intacto (la política de `transactions` ya cubre delete). Sin migración.
 - Solo se borra la compra elegida, por su id; nunca otras filas.
 ## Criterios de aceptación
-- AC-1: compra el 1 sep, ₡120 000 a 3 meses, hoy 29 oct → quedan 2 cuotas de ₡40 000 (20 nov y 20 dic).
+- AC-1: compra el 10 sep (después del corte), ₡120 000 a 3 meses, hoy 29 oct → la del 20 oct ya pasó y quedan 2 cuotas de ₡40 000 (20 nov y 20 dic).
 - AC-2: fecha futura, inválida o una deuda que ya quedó pagada con esa fecha → error y no se guarda.
 - AC-3: "Eliminar deuda" pide confirmar y borra solo esa compra; cancelar no borra nada.
 ## Supuestos
