@@ -72,3 +72,11 @@ describe('SIM-01jm: libre por mes', () => {
     expect(recommend({ ...base, plan: 'cash', now: afterCut }).monthly).toEqual([])
   })
 })
+
+describe('SIM-01jm-T03: libre resta el gasto promedio', () => {
+  it('los meses del salario restan cuotas y gasto; el próximo 20 no (ya está en el saldo)', () => {
+    const r = recommend({ ...base, priceCents: 3_000_000, plan: 3, spendCents: 9_000_000, now: afterCut })
+    expect(r.monthly.map((m) => m.freeCents)).toEqual([5_000_000, 5_000_000, 5_000_000])
+    expect(recommend({ ...base, plan: 1, spendCents: 9_000_000, now: beforeCut }).monthly[0].freeCents).toBe(-5_000_000)
+  })
+})

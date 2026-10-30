@@ -30,12 +30,15 @@ export function PlanTable({ rows }: { rows: Recommendation[] }) {
 }
 
 // SIM-01jm-T02: mes a mes con la compra nueva; sin salario los meses siguientes no tienen libre ("—").
-export function MonthTable({ rows }: { rows: Recommendation['monthly'] }) {
+export function MonthTable({ rows, spendCents = 0 }: { rows: Recommendation['monthly']; spendCents?: number }) {
   if (rows.length === 0) return null
   return (
     <div style={{ overflowX: 'auto' }}>
       <table className="amount" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-        <caption>Lo que te queda libre cada mes</caption>
+        <caption>
+          Lo que te queda libre cada mes
+          {spendCents > 0 && <span className="muted"> (ya resta {formatMoney(spendCents, 'CRC')} de gastos promedio)</span>}
+        </caption>
         <thead>
           <tr><th scope="col">Mes</th><th scope="col">Cuotas</th><th scope="col">Libre</th></tr>
         </thead>

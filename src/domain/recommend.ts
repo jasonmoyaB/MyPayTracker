@@ -23,10 +23,11 @@ export type Recommendation = {
 export type Input = {
   priceCents: number; plan: Plan; balanceCents: number; extraCents: number
   salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date
+  spendCents?: number // SIM-01jm-T03: gasto promedio del mes (sin tarjeta); solo resta en la tabla mes a mes
 }
 
 // Lo que vence hasta el próximo 20 sale del saldo de hoy (+ plata extra); lo posterior, del salario de cada mes.
-export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCents, scheduleCrc, now }: Input): Recommendation {
+export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCents, scheduleCrc, now, spendCents = 0 }: Input): Recommendation {
   const payDay = nextPayDay(now)
   const available = balanceCents + extraCents - dueBy(scheduleCrc, payDay)
   if (plan === 'cash') {
@@ -42,7 +43,7 @@ export function recommend({ priceCents, plan, balanceCents, extraCents, salaryCe
   const shareOfSalary = salaryCents ? worstMonthCents / salaryCents : null
   // Misma regla que el veredicto: el próximo 20 sale del saldo (leftCents); los siguientes, del salario.
   const monthly = dues.map(({ dueAt }) => ({ dueAt, cuotasCents: schedule[dueAt],
-    freeCents: dueAt <= payDay ? leftCents : salaryCents === null ? null : salaryCents - schedule[dueAt] }))
+    freeCents: dueAt <= payDay ? leftCents : salaryCents === null ? null : salaryCents - schedule[dueAt] - spendCents }))
   const result = { leftCents, months: plan, cuotaCents: dues[0].cents, firstDueAt: dues[0].dueAt, worstMonthCents, shareOfSalary, monthly }
   if (leftCents < 0) return { ...result, verdict: 'no', reason: 'pago' }
   if (salaryCents !== null && worstMonthCents > salaryCents) return { ...result, verdict: 'no', reason: 'salario' }

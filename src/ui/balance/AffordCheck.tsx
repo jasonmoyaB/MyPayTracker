@@ -5,12 +5,12 @@ import { planLabel } from '../transactions/TransactionForm'
 import { affordText } from './affordText'
 import { MonthTable, PlanTable } from './PlanTable'
 
-type Props = { balanceCents: number; salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date }
+type Props = { balanceCents: number; salaryCents: number | null; scheduleCrc: Record<string, number>; now: Date; spendCents?: number }
 
 const optionLabel = (p: Plan) => (p === 'cash' ? 'Efectivo o débito' : p === 1 ? 'Tarjeta, un solo pago' : planLabel(p))
 
 // TC-02jm-T05: recomienda según la forma de pago: el próximo 20 sale del saldo (+ extra); las cuotas, del salario.
-export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Props) {
+export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now, spendCents = 0 }: Props) {
   const [price, setPrice] = useState('')
   const [plan, setPlan] = useState<Plan>('cash')
   const [extra, setExtra] = useState('')
@@ -22,7 +22,7 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
     const priceCents = parseAmountToCents(price)
     const extraCents = extra.trim() === '' ? 0 : parseAmountToCents(extra)
     if (priceCents === null || extraCents === null) { setRows([]); return setResult('invalid') }
-    const input = { priceCents, balanceCents, extraCents, salaryCents, scheduleCrc, now }
+    const input = { priceCents, balanceCents, extraCents, salaryCents, scheduleCrc, now, spendCents }
     setResult(recommend({ ...input, plan }))
     setRows(comparePlans(input))
   }
@@ -48,7 +48,7 @@ export function AffordCheck({ balanceCents, salaryCents, scheduleCrc, now }: Pro
         <button type="submit">Calcular</button>
       </div>
       <div role="status">{result && <ResultMessage result={result} />}</div>
-      {result && result !== 'invalid' && <MonthTable rows={result.monthly} />}
+      {result && result !== 'invalid' && <MonthTable rows={result.monthly} spendCents={spendCents} />}
       {rows.length > 0 && <PlanTable rows={rows} />}
     </form>
   )

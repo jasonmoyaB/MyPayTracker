@@ -6,7 +6,8 @@ El dev quiere ver, mes a mes, cuánto le queda libre si compra a cuotas, para de
 - Al calcular con tarjeta (un pago o tasa cero), debajo del veredicto sale una tabla con una fila por cada
   cuota de la compra nueva: mes (fecha del 20), cuotas que paga ese mes (las que ya tenía + la nueva) y lo que le queda libre.
 - Libre del próximo 20 = saldo de hoy + plata extra − todo lo que vence hasta ese 20 (el mismo `leftCents` de hoy).
-- Libre de los meses siguientes = salario − todas las cuotas que vencen ese 20.
+- Libre de los meses siguientes = salario − todas las cuotas que vencen ese 20 − gasto promedio del mes (T03),
+  y la tabla dice cuánto gasto promedio restó.
 - Un mes con libre negativo se marca en rojo.
 - Sin salario registrado, los meses siguientes muestran "—" y el aviso actual de registrar el salario.
 - Con "Efectivo o débito" no hay tabla (no hay cuotas).
@@ -21,7 +22,8 @@ El dev quiere ver, mes a mes, cuánto le queda libre si compra a cuotas, para de
 - AC-4: con efectivo o precio inválido no se muestra la tabla.
 ## Supuestos
 - Plazos: los mismos de BAC (1, 3, 6, 10, 12); no se abre un plazo libre (0009 permite 1–12, pero BAC no ofrece todos).
-- "Libre" no resta gastos variables (comida, etc.): la app no tiene gastos recurrentes; solo salario − cuotas de tarjeta.
+- Gasto promedio (T03) = gastos de débito CRC de los 3 meses completos anteriores, ÷ meses con movimientos; sin compras
+  con tarjeta (ya son cuotas) ni pagos de tarjeta (`isCardPayment`), para no restar dos veces. No cambia el veredicto.
 - Recordatorios (0010) no se restan: no son deuda registrada y podrían duplicar un gasto.
 - USD no entra (cuotas en USD van aparte; nunca se suman a CRC).
 - El salario se asume recibido antes de cada 20, igual que hoy en `recommend`.

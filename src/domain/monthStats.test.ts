@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { costaRicaMonth, lastEmailMovement, monthStats, topExpenses, type MonthMovement } from './monthStats'
+import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthStats, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
 
 // 1 nov 2026 00:30 en Costa Rica = 06:30 UTC.
 const now = new Date('2026-11-01T06:30:00Z')
@@ -69,5 +69,31 @@ describe('AC-6: lastEmailMovement', () => {
   })
   it('sin movimientos de correo: null', () => {
     expect(lastEmailMovement([m('2026-11-01T00:10:00-06:00', 1, 'out')])).toBeNull()
+  })
+})
+
+describe('SIM-01jm-T03: avgMonthlySpend', () => {
+  const at = new Date('2026-11-10T12:00:00-06:00') // promedia ago, sep y oct
+  const g = (occurredAt: string, amountCents: number, over: Partial<SpendMovement> = {}): SpendMovement =>
+    ({ ...m(occurredAt, amountCents, 'out'), paymentMethod: 'cash', ...over })
+  it('promedia los gastos de débito CRC de los meses completos con movimientos', () => {
+    expect(avgMonthlySpend([
+      g('2026-09-05T10:00:00-06:00', 6_000_000),
+      g('2026-10-01T00:00:00-06:00', 4_000_000), // el 1 oct a medianoche CR ya es octubre
+      g('2026-10-20T10:00:00-06:00', 2_000_000, { direction: 'in' }), // ingreso: no cuenta, pero el mes sí
+    ], at)).toBe(5_000_000)
+  })
+  it('sin compras con tarjeta (ya van en las cuotas), pagos de tarjeta, USD, ni el mes en curso', () => {
+    expect(avgMonthlySpend([
+      g('2026-10-05T10:00:00-06:00', 3_000_000),
+      g('2026-10-06T10:00:00-06:00', 9_000_000, { paymentMethod: 'credit' }),
+      g('2026-10-07T10:00:00-06:00', 9_000_000, { description: 'PAGO TARJETA VISA' }),
+      g('2026-10-08T10:00:00-06:00', 9_000_000, { currency: 'USD' }),
+      g('2026-11-02T10:00:00-06:00', 9_000_000),
+      g('2026-07-31T10:00:00-06:00', 9_000_000), // antes de los 3 meses
+    ], at)).toBe(3_000_000)
+  })
+  it('sin historial → 0', () => {
+    expect(avgMonthlySpend([], at)).toBe(0)
   })
 })

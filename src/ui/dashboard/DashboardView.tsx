@@ -1,7 +1,7 @@
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
 import { dueBy, nextPayDay, pendingPurchases, splitCredit } from '../../domain/credit'
-import { lastEmailMovement, monthStats, topExpenses } from '../../domain/monthStats'
+import { avgMonthlySpend, lastEmailMovement, monthStats, topExpenses } from '../../domain/monthStats'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard, summaryFor } from './BalanceCard'
 import { CreditCard } from './CreditCard'
@@ -28,7 +28,8 @@ export function DashboardView({ settings, transactions, now = new Date(), reload
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
       {summary && (
         <section className="card">
-          <AffordCheck balanceCents={summary.balanceCrcCents} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now} />
+          <AffordCheck balanceCents={summary.balanceCrcCents} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now}
+            spendCents={avgMonthlySpend(transactions, now)} />
         </section>
       )}
     </div>

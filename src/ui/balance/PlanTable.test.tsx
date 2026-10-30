@@ -28,13 +28,18 @@ describe('SIM-01jm: tabla de libre por mes', () => {
     { dueAt: '2026-12-20T06:00:00.000Z', cuotasCents: 1_000_000, freeCents: null },
   ]} />)
   it('tabla accesible con caption y encabezados', () => {
-    expect(html).toContain('<caption>Lo que te queda libre cada mes</caption>')
+    expect(html).toContain('<caption>Lo que te queda libre cada mes</caption>') // sin gasto promedio, sin nota
     for (const th of ['Mes', 'Cuotas', 'Libre']) expect(html).toContain(`<th scope="col">${th}</th>`)
   })
   it('AC-2: el negativo va en rojo; AC-3: sin salario, "—"', () => {
     expect(html).toContain(`<td class="status-danger">${formatMoney(-5_000_000, 'CRC')}</td>`)
     expect(html).toContain(`<td>${formatMoney(14_000_000, 'CRC')}</td>`)
     expect(html).toContain('<td>—</td>')
+  })
+  it('SIM-01jm-T03: con gasto promedio, la nota lo dice', () => {
+    const rows = [{ dueAt: '2026-11-20T06:00:00.000Z', cuotasCents: 1_000_000, freeCents: 5_000_000 }]
+    expect(renderToStaticMarkup(<MonthTable rows={rows} spendCents={9_000_000} />))
+      .toContain(`ya resta ${formatMoney(9_000_000, 'CRC')} de gastos promedio`)
   })
   it('AC-4: sin meses no hay tabla', () => {
     expect(renderToStaticMarkup(<MonthTable rows={[]} />)).toBe('')
