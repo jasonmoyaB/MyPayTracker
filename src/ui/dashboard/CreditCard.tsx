@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
 import { deleteTransaction } from '../../data/transactions'
-import { formatDay, formatMoney } from '../format'
+import { formatDay, formatDayYear, formatMoney } from '../format'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
 import { DebtForm } from './DebtForm'
@@ -73,6 +73,7 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
         onClose={() => setEditing(false)}
         onClick={e => { if (e.target === e.currentTarget && outsideRect(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY)) e.currentTarget.close() }}>
         <h3 id={titleId} style={{ margin: 0 }}>{p.description}</h3>
+        <p className="muted" style={{ margin: 0 }}>Comprado el {formatDayYear(p.occurredAt)}</p>
         <p style={{ margin: 0 }}>Falta {money(p.remainingCents)}</p>
         <table>
           <caption className="muted">Cuotas pendientes</caption>

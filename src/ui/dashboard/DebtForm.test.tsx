@@ -94,6 +94,8 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
     </ToastProvider>)
     expect(html).toMatch(/<button type="button" class="dashboard-row-button" aria-haspopup="dialog"/)
     expect(html).toMatch(/<dialog[^>]*>.*<h3[^>]*>anillo<\/h3>.*Falta ₡35.000,00/)
+    // TC-09jm-T01: el detalle dice cuándo se compró, con año.
+    expect(html).toMatch(/<h3[^>]*>anillo<\/h3><p class="muted"[^>]*>Comprado el 29 oct 2026<\/p>/)
     // TC-07jm-T02 (AC-3): el detalle permite borrar la deuda.
     expect(html).toMatch(/<dialog[^>]*>.*<button type="button"[^>]*>Eliminar<\/button>/)
     for (const day of ['20 nov', '20 dic', '20 ene']) expect(html).toMatch(new RegExp(`<td>${day}</td>`))

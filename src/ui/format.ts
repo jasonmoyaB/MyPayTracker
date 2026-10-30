@@ -18,3 +18,8 @@ export function formatSigned(cents: number, currency: Currency): string {
 export function formatDay(iso: string): string {
   return new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', timeZone: 'America/Costa_Rica' }).format(new Date(iso))
 }
+
+// TC-09jm-T01: fecha de compra con año ("10 sep 2026"): puede ser de otro año, a diferencia de los días de pago.
+export function formatDayYear(iso: string): string {
+  return new Intl.DateTimeFormat('es-CR', { dateStyle: 'medium', timeZone: 'America/Costa_Rica' }).format(new Date(iso))
+}
