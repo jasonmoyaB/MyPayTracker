@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../toast/ToastProvider'
 import { CreditCard, outsideRect } from './CreditCard'
 import { pendingPurchases } from '../../domain/credit'
-import { checkDebt } from './DebtForm'
+import { checkDebt, DebtForm } from './DebtForm'
 
-vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), deleteTransaction: vi.fn() }))
+vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), deleteTransaction: vi.fn(), updateTransaction: vi.fn() }))
 
 const pending = { crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {} }
 
@@ -52,6 +52,23 @@ describe('TC-07jm-T01: fecha de compra', () => {
   })
 })
 
+describe('TC-08jm-T02: editar una deuda', () => {
+  const edit = (months: number) => renderToStaticMarkup(<ToastProvider>
+    <DebtForm onSaved={() => {}} edit={{ id: '1', amountCents: 60_000_00, installments: months, occurredAt: '2026-10-29T12:00:00-06:00', description: 'Tele' }} />
+  </ToastProvider>)
+  it('AC-1: abre abierto con lo guardado: producto, precio, plazo y fecha', () => {
+    const html = edit(6)
+    expect(html).toMatch(/<details open=""><summary>Editar deuda<\/summary>/)
+    expect(html).toContain('value="Tele"')
+    expect(html).toContain('value="60000.00"')
+    expect(html).toMatch(/<option value="6" selected="">Tasa cero 6 meses<\/option>/)
+    expect(html).toContain('value="2026-10-29"')
+  })
+  it('cuotas que no son plazo de BAC (cuota mensual) se ofrecen igual', () => {
+    expect(edit(7)).toMatch(/<option value="7" selected="">Tasa cero 7 meses<\/option>/)
+  })
+})
+
 describe('TC-05jm-T03: productos en deuda y total del 20', () => {
   it('AC-1/AC-2: lista cada producto con lo que falta y el total del próximo 20', () => {
     const html = renderToStaticMarkup(<ToastProvider>
@@ -81,7 +98,7 @@ describe('TC-06jm-T01: modal con el calendario de cada producto', () => {
     expect(html).toMatch(/<dialog[^>]*>.*<button type="button"[^>]*>Eliminar deuda<\/button>/)
     for (const day of ['20 nov', '20 dic', '20 ene']) expect(html).toMatch(new RegExp(`<td>${day}</td>`))
     expect(html).toContain('<th scope="col">Cuota</th>')
-    expect(html).toMatch(/<form[^>]*method="dialog"><button type="submit">Cerrar<\/button><button type="button"[^>]*>Eliminar deuda<\/button><\/form>/)
+    expect(html).toMatch(/<form[^>]*method="dialog"><button type="submit">Cerrar<\/button><button type="button">Editar<\/button><button type="button"[^>]*>Eliminar deuda<\/button><\/form>/)
   })
 })
 

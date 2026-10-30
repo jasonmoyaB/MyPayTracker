@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useId, useRef, useState } from 'react'
 import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
 import { deleteTransaction } from '../../data/transactions'
 import { formatDay, formatMoney } from '../format'
@@ -50,6 +50,7 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
   const { id } = p
   const dialog = useRef<HTMLDialogElement>(null)
   const toast = useToast()
+  const [editing, setEditing] = useState(false)
   // TC-07jm-T02: confirm() nativo basta para una deuda agregada por error; borra solo esta compra.
   async function remove(id: string) {
     if (!confirm(`¿Eliminar la deuda "${p.description}"? No se puede deshacer.`)) return
@@ -69,6 +70,7 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
         <span className="amount">{money(p.remainingCents)}</span>
       </button>
       <dialog ref={dialog} aria-labelledby={titleId} className="dashboard-dialog"
+        onClose={() => setEditing(false)}
         onClick={e => { if (e.target === e.currentTarget && outsideRect(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY)) e.currentTarget.close() }}>
         <h3 id={titleId} style={{ margin: 0 }}>{p.description}</h3>
         <p style={{ margin: 0 }}>Falta {money(p.remainingCents)}</p>
@@ -80,8 +82,11 @@ function PurchaseRow({ purchase: p, onSaved }: { purchase: Purchase; onSaved: ()
         {/* type="button": no envía el form, así que no cierra el dialog antes de confirmar. */}
         <form method="dialog" style={{ display: 'flex', gap: 8 }}>
           <button type="submit">Cerrar</button>
+          {/* TC-08jm-T02: el formulario es solo CRC, así que solo se editan deudas en colones. */}
+          {id && p.currency === 'CRC' && <button type="button" onClick={() => setEditing(!editing)}>Editar</button>}
           {id && <button type="button" className="status-danger" onClick={() => remove(id)}>Eliminar deuda</button>}
         </form>
+        {editing && id && <DebtForm edit={{ ...p, id }} onSaved={() => { setEditing(false); dialog.current?.close(); onSaved() }} />}
       </dialog>
     </li>
   )

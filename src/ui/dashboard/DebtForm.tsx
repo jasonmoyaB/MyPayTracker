@@ -1,8 +1,9 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { addManualTransaction } from '../../data/transactions'
+import { useId, useRef, useState, type FormEvent } from 'react'
+import { addManualTransaction, updateTransaction } from '../../data/transactions'
 import { parseAmountToCents } from '../../domain/amount'
 import { installmentDues, ongoingPurchase } from '../../domain/credit'
 import { costaRicaDateTime } from '../../domain/date'
+import { centsToNumeric } from '../../domain/money'
 import { PLANS } from '../../domain/recommend'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
@@ -38,10 +39,16 @@ export function checkDebt({ product, price, remaining, monthly, date }: Fields, 
 }
 
 // TC-04jm-T03: la deuda que ya venía pagando se guarda como una compra con tarjeta más (ver ongoingPurchase).
-export function DebtForm({ onSaved }: { onSaved: () => void }) {
+// TC-08jm-T02: con `edit` corrige esa compra (mismas reglas) en vez de crear otra.
+type Edit = { id: string; amountCents: number; installments: number; occurredAt: string; description: string }
+export function DebtForm({ onSaved, edit }: { onSaved: () => void; edit?: Edit }) {
   const toast = useToast()
-  const [fields, setFields] = useState<Fields>(EMPTY)
-  const [months, setMonths] = useState(1)
+  const [fields, setFields] = useState<Fields>(edit
+    ? { ...EMPTY, product: edit.description, price: centsToNumeric(edit.amountCents), date: costaRicaDateTime(new Date(edit.occurredAt)).slice(0, 10) }
+    : EMPTY)
+  const [months, setMonths] = useState(edit?.installments ?? 1)
+  const ids = useId() // puede haber dos formularios en la página (agregar y editar)
+  const title = edit ? 'Editar deuda' : 'Agregar deuda que ya tenías'
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const pending = useRef(false)
@@ -58,35 +65,35 @@ export function DebtForm({ onSaved }: { onSaved: () => void }) {
     pending.current = true
     setSaving(true)
     // Si falla, el toast avisa y los campos se conservan.
-    const failed = await saveWithToast(() => addManualTransaction({ amountCents: checked.remainingCents, currency: 'CRC', direction: 'out',
-      description: fields.product.trim(), occurredAt, paymentMethod: 'credit', installments }), toast, 'Deuda guardada')
+    const debt = { amountCents: checked.remainingCents, description: fields.product.trim(), occurredAt, installments }
+    const failed = await saveWithToast(() => edit ? updateTransaction(edit.id, debt)
+      : addManualTransaction({ ...debt, currency: 'CRC', direction: 'out', paymentMethod: 'credit' }), toast, 'Deuda guardada')
     pending.current = false
     setSaving(false)
     if (failed) return
-    setFields(EMPTY)
-    setMonths(1)
+    if (!edit) { setFields(EMPTY); setMonths(1) }
     onSaved()
   }
   return (
-    <details>
-      <summary>Agregar deuda que ya tenías</summary>
-      <form onSubmit={submit} aria-label="Agregar deuda que ya tenías">
+    <details open={!!edit}>
+      <summary>{title}</summary>
+      <form onSubmit={submit} aria-label={title}>
         <fieldset disabled={saving} style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="debt-product">Producto</label>
-          <input id="debt-product" required value={fields.product} onChange={set('product')} />
-          <label htmlFor="debt-price">Precio (₡)</label>
-          <input id="debt-price" inputMode="decimal" required value={fields.price} onChange={set('price')} />
-          <label htmlFor="debt-plan">Plazo</label>
-          <select id="debt-plan" value={months} onChange={e => setMonths(Number(e.target.value))}>
-            {PLANS.filter(p => p !== 'cash').map(n => <option key={n} value={n}>{planLabel(n)}</option>)}
+          <label htmlFor={`${ids}-product`}>Producto</label>
+          <input id={`${ids}-product`} required value={fields.product} onChange={set('product')} />
+          <label htmlFor={`${ids}-price`}>Precio (₡)</label>
+          <input id={`${ids}-price`} inputMode="decimal" required value={fields.price} onChange={set('price')} />
+          <label htmlFor={`${ids}-plan`}>Plazo</label>
+          <select id={`${ids}-plan`} value={months} onChange={e => setMonths(Number(e.target.value))}>
+            {[...new Set([...PLANS.filter(p => p !== 'cash'), edit?.installments ?? 1])].sort((a, b) => a - b).map(n => <option key={n} value={n}>{planLabel(n)}</option>)}
           </select>
-          <label htmlFor="debt-date">Fecha de compra (opcional: con ella se calcula lo que queda)</label>
-          <input id="debt-date" type="date" max={costaRicaDateTime(new Date()).slice(0, 10)} value={fields.date} onChange={set('date')} />
+          <label htmlFor={`${ids}-date`}>Fecha de compra (opcional: con ella se calcula lo que queda)</label>
+          <input id={`${ids}-date`} type="date" max={costaRicaDateTime(new Date()).slice(0, 10)} value={fields.date} onChange={set('date')} />
           {!fields.date && <>
-            <label htmlFor="debt-remaining">Te queda por pagar (₡, opcional: vacío = el precio)</label>
-            <input id="debt-remaining" inputMode="decimal" value={fields.remaining} onChange={set('remaining')} />
-            <label htmlFor="debt-monthly">Cuánto pagas por mes (₡, opcional)</label>
-            <input id="debt-monthly" inputMode="decimal" value={fields.monthly} onChange={set('monthly')} />
+            <label htmlFor={`${ids}-remaining`}>Te queda por pagar (₡, opcional: vacío = el precio)</label>
+            <input id={`${ids}-remaining`} inputMode="decimal" value={fields.remaining} onChange={set('remaining')} />
+            <label htmlFor={`${ids}-monthly`}>Cuánto pagas por mes (₡, opcional)</label>
+            <input id={`${ids}-monthly`} inputMode="decimal" value={fields.monthly} onChange={set('monthly')} />
           </>}
           {error && <p role="alert" className="status-danger">{error}</p>}
           <button type="submit">{saving ? 'Guardando…' : 'Guardar deuda'}</button>
