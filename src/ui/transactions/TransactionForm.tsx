@@ -1,5 +1,5 @@
 import { PLANS } from '../../domain/recommend'
-import { useTransactionForm, type TransactionFormState } from './useTransactionForm'
+import { effectivePaymentMethod, useTransactionForm, type TransactionFormState } from './useTransactionForm'
 
 type Props = { onSaved: () => void; onCancel: () => void }
 
@@ -54,14 +54,16 @@ function DetailFields({ state: s }: { state: TransactionFormState }) {
 type PaymentState = Pick<TransactionFormState, 'direction' | 'paymentMethod' | 'setPaymentMethod' | 'installments' | 'setInstallments'>
 
 // TC-01jm-T04: la tarjeta solo difiere gastos; en ingresos ni se ofrece.
+// MOV-02jm-T02: ingresos también eligen forma de pago (efectivo/débito o SINPE).
 export function PaymentField({ state: s }: { state: PaymentState }) {
-  if (s.direction !== 'out') return null
+  const method = effectivePaymentMethod(s.direction, s.paymentMethod)
   return <>
-    <label htmlFor="transaction-payment">Método de pago</label>
-    <select id="transaction-payment" value={s.paymentMethod} onChange={e => s.setPaymentMethod(e.target.value as typeof s.paymentMethod)}>
-      <option value="cash">Efectivo o débito</option><option value="credit">Tarjeta de crédito</option>
+    <label htmlFor="transaction-payment">Forma de pago</label>
+    <select id="transaction-payment" value={method} onChange={e => s.setPaymentMethod(e.target.value as typeof s.paymentMethod)}>
+      <option value="cash">Efectivo o débito</option><option value="sinpe">SINPE</option>
+      {s.direction === 'out' && <option value="credit">Tarjeta de crédito</option>}
     </select>
-    {s.paymentMethod === 'credit' && <>
+    {method === 'credit' && <>
       <label htmlFor="transaction-installments">Plazo</label>
       <select id="transaction-installments" value={s.installments} onChange={e => s.setInstallments(Number(e.target.value))}>
         {PLANS.filter(p => p !== 'cash').map(n => <option key={n} value={n}>{planLabel(n)}</option>)}

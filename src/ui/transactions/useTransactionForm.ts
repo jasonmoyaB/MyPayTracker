@@ -5,11 +5,18 @@ import { costaRicaDateTime, costaRicaIso } from '../../domain/date'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
 
+type Method = NewTransaction['paymentMethod']
+
+// TC-01jm-T04 / MOV-02jm-T02: solo los gastos van con tarjeta (la BD también lo exige); SINPE vale en ambos.
+// Compartida con PaymentField para que el select muestre lo mismo que se guarda.
+export const effectivePaymentMethod = (direction: NewTransaction['direction'], method: Method): Method =>
+  direction === 'in' && method === 'credit' ? 'cash' : method
+
 function useFields() {
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<NewTransaction['currency']>('CRC')
   const [direction, setDirection] = useState<NewTransaction['direction']>('out')
-  const [paymentMethod, setPaymentMethod] = useState<NewTransaction['paymentMethod']>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<Method>('cash')
   const [installments, setInstallments] = useState(1)
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(() => costaRicaDateTime(new Date()))
@@ -20,8 +27,7 @@ export function useTransactionForm(onSaved: () => void) {
   const fields = useFields()
   const toast = useToast()
   const { amount, currency, direction, description, date } = fields
-  // TC-01jm-T04: solo los gastos pueden ser con tarjeta (la BD también lo exige).
-  const paymentMethod = direction === 'out' ? fields.paymentMethod : 'cash'
+  const paymentMethod = effectivePaymentMethod(direction, fields.paymentMethod)
   // TC-02jm-T04: el plazo solo aplica a tarjeta (la BD también lo exige).
   const installments = paymentMethod === 'credit' ? fields.installments : 1
   const [amountError, setAmountError] = useState('')

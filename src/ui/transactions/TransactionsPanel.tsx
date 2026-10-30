@@ -76,5 +76,7 @@ function originLabel(t: Transaction): string {
   const due = formatDay(creditDueAt(t.occurredAt))
   if (t.paymentMethod === 'credit' && t.installments > 1) return `Tarjeta · ${planLabel(t.installments).toLowerCase()} · primera cuota el ${due}`
   if (t.paymentMethod === 'credit') return `Tarjeta · se paga el ${due}`
-  return t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'
+  const origin = t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'
+  // MOV-02jm-T02: SINPE se paga como efectivo; solo se distingue en la etiqueta.
+  return t.paymentMethod === 'sinpe' ? `SINPE · ${origin}` : origin
 }

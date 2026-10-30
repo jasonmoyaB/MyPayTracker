@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { TransactionsPanel } from './TransactionsPanel'
 import { PaymentField } from './TransactionForm'
+import { effectivePaymentMethod } from './useTransactionForm'
 import { formatDate, formatDay, formatMoney } from '../format'
 import type { Transaction } from '../../data/transactions'
 import type { MovementFilter } from '../../domain/movementFilter'
@@ -60,12 +61,26 @@ describe('MOV-01jm: la lista aplica el filtro', () => {
 describe('TC-01jm AC-4: método de pago', () => {
   const field = (direction: 'in' | 'out') => renderToStaticMarkup(
     <PaymentField state={{ direction, paymentMethod: 'credit', setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
-  it('en gastos se elige efectivo/débito o tarjeta', () => {
+  it('MOV-02jm AC-2: en gastos se elige efectivo/débito, SINPE o tarjeta', () => {
     const html = field('out')
-    for (const text of ['Método de pago', 'Efectivo o débito', 'Tarjeta de crédito']) expect(html).toContain(text)
+    for (const text of ['Forma de pago', 'Efectivo o débito', 'value="sinpe">SINPE', 'Tarjeta de crédito']) expect(html).toContain(text)
   })
-  it('en ingresos no se muestra', () => {
-    expect(field('in')).toBe('')
+  it('MOV-02jm AC-2: en ingresos se elige efectivo/débito o SINPE, nunca tarjeta', () => {
+    const html = field('in')
+    for (const text of ['Forma de pago', 'value="cash" selected="">Efectivo o débito', 'value="sinpe">SINPE']) expect(html).toContain(text)
+    expect(html).not.toContain('Tarjeta de crédito')
+    expect(html).not.toContain('Plazo')
+  })
+  it('MOV-02jm AC-2: un ingreso con tarjeta se guarda en efectivo; SINPE se respeta', () => {
+    expect(effectivePaymentMethod('in', 'credit')).toBe('cash')
+    expect(effectivePaymentMethod('in', 'sinpe')).toBe('sinpe')
+    expect(effectivePaymentMethod('out', 'sinpe')).toBe('sinpe')
+    expect(effectivePaymentMethod('out', 'credit')).toBe('credit')
+  })
+  it('MOV-02jm AC-4: la fila SINPE dice de dónde vino', () => {
+    const html = render([{ ...transaction, paymentMethod: 'sinpe' }, { ...income, paymentMethod: 'sinpe' }])
+    expect(html).toContain('SINPE · Manual')
+    expect(html).toContain('SINPE · Correo BAC')
   })
   it('la fila de tarjeta muestra el día de pago en lugar de "Manual"', () => {
     const html = render([{ ...transaction, paymentMethod: 'credit', occurredAt: '2026-10-28T13:45:00-06:00' }])
