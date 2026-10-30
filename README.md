@@ -70,7 +70,7 @@ Solo el cron puede llamarla: tiene que mandar un header `x-cron-secret` que coin
 
 Secrets de la función: `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`.
 
-> El rango de fechas está fijo en octubre 2026 (`DATE_RANGE` en `index.ts`). Hay que actualizarlo para traer correos más nuevos.
+> El rango de fechas (`DATE_RANGE` en `index.ts`) es `after:2026/10/01` sin fecha de fin (CRON-02jm); lo anterior ya está en el saldo de cuenta.
 
 ## Flujo de trabajo
 

@@ -9,3 +9,4 @@ spec.md + plan.md de esta carpeta.
 - [x] CRON-02jm-T03 Prueba + recarga cada 60 s visible y al volver a la pestaña [src/ui/App.tsx] (AC-4, AC-5)
 - [x] CRON-02jm-T04 Deploy función, `db push` (dry-run antes), deploy Vercel; verificar respuesta del sync (AC-6) (depende de T01–T03)
   - función, `0005` y Vercel desplegados; `net._http_response` → 200 (verificado por el usuario)
+- [x] CRON-02jm-T05 Quitar la nota vieja "DATE_RANGE fijo en octubre" de README y CLAUDE.md (el rango ya no tiene fin desde T01)

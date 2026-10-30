@@ -35,7 +35,6 @@ Usa pnpm (no npm ni yarn) y no agregues dependencias si unas líneas bastan.
 - Código, comentarios, UI y commits en español.
 - Commits: `tipo(ámbito): TICKET-Tnn descripción`, p. ej. `feat(domain): MAIL-01jm-T01 parser de compras BAC`. Un commit por tarea.
 - Los comentarios explican el porqué, no el qué. Cuando aplique, cita la tarea (`// MAIL-01jm-T05: ...`).
-- Pendiente conocido: `DATE_RANGE` en `sync-bac-emails/index.ts` está fijo en octubre de 2026.
 
 ```markdown
 ## Flujo de trabajo obligatorio
