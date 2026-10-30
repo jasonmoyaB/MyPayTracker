@@ -11,12 +11,14 @@ const DAY_MS = 86_400_000
 export type ReminderPhase = 'hoy' | 'pronto'
 
 // Próxima fecha CR 'YYYY-MM-DD' (hoy incluido); 29–31 caen en el último día de los meses cortos.
-export function nextDueOn(day: number, now: Date): string {
+// REC-02jm-T01: `paidOn` (vencimiento ya pagado) salta ese ciclo; así lista, campana y push dejan de avisarlo.
+export function nextDueOn(day: number, now: Date, paidOn?: string | null): string {
   const [y, m, d] = costaRicaDateTime(now).slice(0, 10).split('-').map(Number)
   // Date.UTC(y, mes + 1, 0) = último día del mes; también pasa dic → ene.
   const clipped = (k: number) => new Date(Date.UTC(y, m - 1 + k, Math.min(day, new Date(Date.UTC(y, m + k, 0)).getUTCDate())))
-  const due = clipped(0).getUTCDate() >= d ? clipped(0) : clipped(1)
-  return due.toISOString().slice(0, 10)
+  const due = (clipped(0).getUTCDate() >= d ? clipped(0) : clipped(1)).toISOString().slice(0, 10)
+  // Mediodía UTC del día siguiente = 06:00 CR de ese día (a medianoche UTC aún sería el día del pago en CR).
+  return paidOn && paidOn >= due ? nextDueOn(day, new Date(Date.parse(`${due}T12:00:00Z`) + DAY_MS), paidOn) : due
 }
 
 // 'hoy' el día, 'pronto' 3 días antes; null fuera de eso o antes de las 8:00 CR.

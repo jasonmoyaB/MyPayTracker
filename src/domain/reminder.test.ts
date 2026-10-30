@@ -69,3 +69,17 @@ describe('REC-01jm-T10: dueSoon (campana)', () => {
   })
 })
 
+
+describe('REC-02jm: nextDueOn salta el vencimiento ya pagado', () => {
+  const now = cr('2026-10-29T12:00:00')
+  it('AC-1: sin pagar → 1 nov', () => {
+    expect(nextDueOn(1, now, null)).toBe('2026-11-01')
+  })
+  it('AC-2: pagado el 1 nov → 1 dic', () => {
+    expect(nextDueOn(1, now, '2026-11-01')).toBe('2026-12-01')
+  })
+  it('AC-3: un pago viejo no cuenta; día 31 pagado en nov → 31 dic', () => {
+    expect(nextDueOn(1, cr('2026-11-28T09:00:00'), '2026-11-01')).toBe('2026-12-01')
+    expect(nextDueOn(31, cr('2026-11-02T08:00:00'), '2026-11-30')).toBe('2026-12-31')
+  })
+})
