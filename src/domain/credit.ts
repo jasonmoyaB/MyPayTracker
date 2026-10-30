@@ -96,12 +96,12 @@ export function ongoingPurchase(priceCents: number, months: number, remainingCen
 }
 
 // TC-05jm-T01: lo que falta de cada compra con tarjeta; mismo criterio que splitCredit (vencida = pagada).
-// TC-07jm-T01: pasa el id para poder borrar la compra desde su detalle.
+// TC-07jm-T01 / TC-08jm-T01: pasa id, monto, cuotas y fecha para borrar o editar la compra desde su detalle.
 export function pendingPurchases<T extends CreditMovement & { description: string; id?: string }>(movements: T[], now: Date) {
   return movements.flatMap((m) => {
     if (m.paymentMethod !== 'credit') return []
     const left = installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).filter((d) => Date.parse(d.dueAt) > now.getTime())
     if (left.length === 0) return []
-    return [{ id: m.id, description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents, nextDueAt: left[0].dueAt, dues: left }]
+    return [{ id: m.id, amountCents: m.amountCents, installments: m.installments ?? 1, occurredAt: m.occurredAt, description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents, nextDueAt: left[0].dueAt, dues: left }]
   })
 }

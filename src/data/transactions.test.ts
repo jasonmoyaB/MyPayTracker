@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { addManualTransaction, deleteTransaction, listTransactions } from './transactions'
+import { addManualTransaction, deleteTransaction, listTransactions, updateTransaction } from './transactions'
 
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
@@ -10,8 +10,9 @@ const db = vi.hoisted(() => {
   const insert = vi.fn(async () => ({ error: null }))
   const eq = vi.fn(async () => ({ error: null }))
   const remove = vi.fn(() => ({ eq }))
-  const from = vi.fn(() => ({ select, insert, delete: remove }))
-  return { select, insert, eq, from }
+  const update = vi.fn(() => ({ eq }))
+  const from = vi.fn(() => ({ select, insert, update, delete: remove }))
+  return { select, insert, update, eq, from }
 })
 vi.mock('./supabase', () => ({ supabase: { from: db.from } }))
 
@@ -67,6 +68,14 @@ describe('TC-07jm-T02: borrar una deuda', () => {
   it('AC-3: borra solo la fila de ese id (RLS limita al dueño)', async () => {
     await deleteTransaction('abc')
     expect(db.from).toHaveBeenCalledWith('transactions')
+    expect(db.eq).toHaveBeenCalledWith('id', 'abc')
+  })
+})
+
+describe('TC-08jm-T01: editar una deuda', () => {
+  it('AC-2: actualiza solo esa fila con precio, cuotas y fecha; no toca moneda ni método', async () => {
+    await updateTransaction('abc', { amountCents: 120_000_00, description: 'Tele', occurredAt: '2026-09-10T12:00:00-06:00', installments: 3 })
+    expect(db.update).toHaveBeenCalledWith({ amount: '120000.00', description: 'Tele', occurred_at: '2026-09-10T12:00:00-06:00', installments: 3 })
     expect(db.eq).toHaveBeenCalledWith('id', 'abc')
   })
 })

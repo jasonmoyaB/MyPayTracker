@@ -62,3 +62,14 @@ export async function deleteTransaction(id: string): Promise<void> {
   const { error } = await supabase.from('transactions').delete().eq('id', id)
   if (error) throw error
 }
+
+// TC-08jm-T01: corrige una deuda; moneda, dirección y método no cambian. RLS impide editar filas de otro.
+export async function updateTransaction(id: string, t: Pick<Transaction, 'amountCents' | 'description' | 'occurredAt' | 'installments'>): Promise<void> {
+  const { error } = await supabase.from('transactions').update({
+    amount: centsToNumeric(t.amountCents),
+    description: t.description,
+    occurred_at: t.occurredAt,
+    installments: t.installments,
+  }).eq('id', id)
+  if (error) throw error
+}
