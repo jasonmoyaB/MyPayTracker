@@ -4,12 +4,13 @@ import { supabase } from './supabase'
 export type AccountBalance = { cents: number; asOf: string }
 
 // null = el usuario todavía no lo registró.
-export type Settings = { salaryCents: number | null; account: AccountBalance | null }
+// TC-10jm-T03: cardPaidThrough = el 20 hasta el que pagó la tarjeta; opcional para no tocar a quien no lo usa.
+export type Settings = { salaryCents: number | null; account: AccountBalance | null; cardPaidThrough?: string | null }
 
 export async function getSettings(): Promise<Settings> {
   const { data, error } = await supabase
     .from('settings')
-    .select('salary, account_balance, account_balance_at')
+    .select('salary, account_balance, account_balance_at, card_paid_through')
     .maybeSingle()
   if (error) throw error
   return {
@@ -17,6 +18,7 @@ export async function getSettings(): Promise<Settings> {
     account: data?.account_balance_at
       ? { cents: numericToCents(data.account_balance), asOf: data.account_balance_at }
       : null,
+    cardPaidThrough: data?.card_paid_through ?? null,
   }
 }
 
@@ -36,4 +38,9 @@ export function saveSalaryCents(salaryCents: number): Promise<void> {
 // La fecha es "ahora": los movimientos posteriores se suman sobre este saldo.
 export function saveAccountBalanceCents(cents: number): Promise<void> {
   return upsertSettings({ account_balance: centsToNumeric(cents), account_balance_at: new Date().toISOString() })
+}
+
+// TC-10jm-T03: marca pagado el ciclo que vence en `dueAt` (un 20) y todos los anteriores.
+export function saveCardPaidThrough(dueAt: string): Promise<void> {
+  return upsertSettings({ card_paid_through: dueAt })
 }
