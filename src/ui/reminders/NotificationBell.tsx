@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { listReminders, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { costaRicaDateTime } from '../../domain/date'
-import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
+import { dueBy, nextPayDay, paidUntil, splitCredit } from '../../domain/credit'
 import { dueSoon, nextDueOn } from '../../domain/reminder'
 import { BELL_ICON } from '../AppShell'
 import { outsideRect } from '../dashboard/CreditCard'
@@ -16,12 +16,13 @@ export function bellItems(reminders: Reminder[], transactions: Transaction[], no
     return when ? [{ key: r.id, title: r.description, when, money: formatMoney(r.amountCents, r.currency) }] : []
   })
   const payDay = nextPayDay(now)
-  // TC-10jm-T05: el mismo "Pagas" del Resumen (con lo atrasado sin marcar). USD: sus cuotas hasta ese 20.
-  const paidThrough = paidUntil(cardPaidThrough, now)
-  const crcCents = dueBy(splitCredit(transactions, paidThrough).pending.scheduleCrc, payDay)
-  const usdCents = pendingPurchases(transactions, paidThrough).flatMap((p) => (p.currency === 'USD' ? p.dues : []))
-    .reduce((sum, d) => (d.dueAt <= payDay ? sum + d.cents : sum), 0)
-  const when = dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
+  // TC-10jm-T05: el mismo "Pagas" del Resumen (con lo atrasado sin marcar), CRC y USD hasta ese 20.
+  const { pending } = splitCredit(transactions, paidUntil(cardPaidThrough, now))
+  const crcCents = dueBy(pending.scheduleCrc, payDay)
+  const usdCents = dueBy(pending.scheduleUsd, payDay)
+  // TC-10jm-T07: una cuota vencida sin marcar avisa siempre, no solo 3 días antes del próximo 20.
+  const overdue = pending.dueAt !== null && Date.parse(pending.dueAt) < now.getTime()
+  const when = overdue ? 'atrasado' : dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
   const money = [crcCents > 0 && formatMoney(crcCents, 'CRC'), usdCents > 0 && formatMoney(usdCents, 'USD')].filter(Boolean)
   if (when && money.length > 0) items.push({ key: 'tarjeta', title: 'Tarjeta de crédito', when, money: money.join(' y ') })
   return items
@@ -52,7 +53,7 @@ export function NotificationBell({ transactions, cardPaidThrough, now = new Date
             <li key={i.key}>
               <span className="dashboard-text">
                 <strong>{i.title}</strong>
-                <span className={i.when === 'vence hoy' ? 'bell-today' : 'muted'}>{i.when}</span>
+                <span className={i.when === 'vence hoy' || i.when === 'atrasado' ? 'bell-today' : 'muted'}>{i.when}</span>
               </span>
               <span className="bell-money">{i.money}</span>
             </li>

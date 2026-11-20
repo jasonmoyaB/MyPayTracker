@@ -40,12 +40,12 @@ describe('TC-01jm AC-2/AC-3: splitCredit con summarize', () => {
     const { settled, pending } = splitCredit([salary, purchase, usd], new Date('2026-10-28T12:00:00-06:00'))
     expect(summarize(0, settled).balanceCrcCents).toBe(15_000_000)
     expect(pending).toEqual({ crcCents: 20_000_000, usdCents: 5_000, dueAt: creditDueAt(purchase.occurredAt),
-      scheduleCrc: { [creditDueAt(purchase.occurredAt)]: 20_000_000 } })
+      scheduleCrc: { [creditDueAt(purchase.occurredAt)]: 20_000_000 }, scheduleUsd: { [creditDueAt(usd.occurredAt)]: 5_000 } })
   })
   it('desde el 20: ya no es deuda, entra como gasto con fecha de pago', () => {
     const { settled, pending } = splitCredit([salary, purchase], new Date('2026-11-20T00:00:00-06:00'))
     expect(summarize(0, settled).balanceCrcCents).toBe(-5_000_000)
-    expect(pending).toEqual({ crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {} })
+    expect(pending).toEqual({ crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {}, scheduleUsd: {} })
     expect(at(settled[1].occurredAt)).toBe(at('2026-11-20T00:00:00-06:00'))
   })
 })

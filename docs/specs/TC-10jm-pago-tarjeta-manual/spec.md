@@ -4,7 +4,7 @@ Hoy cada cuota se da por pagada sola a las 00:00 del 20, aunque el dev no haya p
 ## Requisitos
 - Una cuota vencida y sin marcar sigue en la deuda total, en "Pagas el 20" y en lo que reserva "¿Puedo comprar esto?" (app y conector MCP).
 - Botón "Ya pagué" en el card de tarjeta (Resumen) y en la fila de la tarjeta en Recordatorios. Pide confirmación con fecha y monto y marca pagado el pago pendiente más antiguo (el 20 más temprano), CRC y USD de ese día.
-- Solo se marca el pago del próximo 20 o uno ya vencido, no meses futuros.
+- Solo se marca un pago cuyo corte (día 6) ya pasó: así una compra registrada después no queda pagada sin pagarla.
 - Recordatorios, campana y Resumen usan el mismo cálculo: la fila de la tarjeta muestra lo que pagas el próximo 20 (con lo atrasado) y la deuda total, las mismas cifras del Resumen.
 ## Restricciones
 - Una migración nueva (`0013`); RLS de `settings` sin cambios. Sin tablas nuevas.

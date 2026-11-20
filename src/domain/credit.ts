@@ -76,13 +76,14 @@ export function paidUntil(cardPaidThrough: string | null | undefined, now: Date)
 export function splitCredit<T extends CreditMovement>(movements: T[], paidThrough: Date) {
   const settled: T[] = []
   // TC-01jm-T06: dueAt = pago más temprano de lo pendiente. TC-02jm: scheduleCrc = CRC por fecha de pago.
-  const pending = { crcCents: 0, usdCents: 0, dueAt: null as string | null, scheduleCrc: {} as Record<string, number> }
+  // TC-10jm-T07: scheduleUsd igual para USD (nunca se mezcla con CRC).
+  const pending = { crcCents: 0, usdCents: 0, dueAt: null as string | null, scheduleCrc: {} as Record<string, number>, scheduleUsd: {} as Record<string, number> }
   for (const m of movements) {
     if (m.paymentMethod !== 'credit') { settled.push(m); continue }
     for (const { dueAt, cents } of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
       if (Date.parse(dueAt) <= paidThrough.getTime()) { settled.push({ ...m, amountCents: cents, occurredAt: dueAt }); continue }
       if (pending.dueAt === null || dueAt < pending.dueAt) pending.dueAt = dueAt
-      if (m.currency === 'USD') { pending.usdCents += cents; continue }
+      if (m.currency === 'USD') { pending.usdCents += cents; pending.scheduleUsd[dueAt] = (pending.scheduleUsd[dueAt] ?? 0) + cents; continue }
       pending.crcCents += cents
       pending.scheduleCrc[dueAt] = (pending.scheduleCrc[dueAt] ?? 0) + cents
     }

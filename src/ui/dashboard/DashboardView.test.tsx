@@ -127,11 +127,12 @@ describe('TC-10jm-T04: la deuda baja solo con "Ya pagué"', () => {
     expect(html).not.toContain('Pagas el')
     expect(html).not.toContain('Ya pagué')
   })
-  it('no ofrece marcar un 20 futuro', () => {
-    const html = render({ settings: { salaryCents: 5_000_00, account: null, cardPaidThrough: '2026-10-20T06:00:00.000Z' }, transactions: credit,
-      now: new Date('2026-10-28T10:00:00-06:00') })
-    expect(html).toContain('>Ya pagué</button>')
-    const dec = [tx('2026-11-10T10:00:00-06:00', 10_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
-    expect(render({ transactions: dec, now: new Date('2026-11-15T10:00:00-06:00') })).not.toContain('Ya pagué')
+  // TC-10jm-T07: solo tras el corte (6 nov) del ciclo del 20 nov; antes aún pueden entrar compras a ese pago.
+  const at = (now: string) => render({ settings: { salaryCents: 5_000_00, account: null, cardPaidThrough: '2026-10-20T06:00:00.000Z' },
+    transactions: credit, now: new Date(now) })
+  it('T07: 2 nov (antes del corte) sin botón; 7 nov y 25 nov (atrasado) con botón', () => {
+    expect(at('2026-11-02T10:00:00-06:00')).not.toContain('Ya pagué')
+    expect(at('2026-11-07T10:00:00-06:00')).toContain('>Ya pagué</button>')
+    expect(at('2026-11-25T10:00:00-06:00')).toContain('>Ya pagué</button>')
   })
 })

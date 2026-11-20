@@ -114,7 +114,12 @@ describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen',
     expect(dash).toMatch(new RegExp(`<dt>Deuda total</dt><dd class="amount">${formatMoney(22_000_00, 'CRC')}</dd>`))
   })
   it('la campana avisa ese mismo "Pagas" (USD aparte)', () => {
-    expect(bellItems([], debt, today, paid)).toMatchObject([{ title: 'Tarjeta de crédito', when: 'vence en 2 días',
+    expect(bellItems([], debt, today, paid)).toMatchObject([{ title: 'Tarjeta de crédito', when: 'atrasado',
       money: `${formatMoney(15_000_00, 'CRC')} y ${formatMoney(15_00, 'USD')}` }])
+  })
+  it('T07: con una cuota atrasada avisa aunque falte para el próximo 20, con el mismo "Pagas"', () => {
+    expect(bellItems([], debt, new Date('2026-11-25T09:00:00-06:00'), paid)).toMatchObject([{ title: 'Tarjeta de crédito', when: 'atrasado',
+      money: `${formatMoney(15_000_00, 'CRC')} y ${formatMoney(15_00, 'USD')}` }])
+    expect(bellItems([], debt, new Date('2026-11-25T09:00:00-06:00'))).toEqual([])
   })
 })

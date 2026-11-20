@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { deleteReminder, listReminders, markReminderPaid, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
-import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
+import { dueBy, nextPayDay, paidUntil, splitCredit } from '../../domain/credit'
 import { isCardPayment, nextDueOn } from '../../domain/reminder'
 import { CardPaidButton } from '../dashboard/CreditCard'
 import { formatDay, formatMoney } from '../format'
@@ -91,7 +91,7 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
               </CardDebtDialog>
             </span>
             <span className="reminder-actions">
-              <CardPaidButton pending={card} purchases={pendingPurchases(transactions, paidThrough)} now={now} onSaved={onCardPaid} />
+              <CardPaidButton pending={card} now={now} onSaved={onCardPaid} />
             </span>
           </li>
         </ul>
