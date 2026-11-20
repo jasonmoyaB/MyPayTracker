@@ -45,7 +45,7 @@ export function dueBy(scheduleCrc: Record<string, number>, at: string): number {
   return Object.entries(scheduleCrc).reduce((sum, [dueAt, cents]) => (dueAt <= at ? sum + cents : sum), 0)
 }
 
-// REC-01jm-T02: lo que vence justo en `dueAt` (un 20), por moneda. No usa splitCredit: el mismo 20 ya las da por pagadas.
+// REC-01jm-T02: lo que vence justo en `dueAt` (un 20), por moneda. TC-10jm: solo lo usa el push del cron.
 export function dueOn(movements: CreditMovement[], dueAt: string) {
   const total = { crcCents: 0, usdCents: 0 }
   for (const m of movements) {
@@ -64,16 +64,23 @@ export function nextCutAt(now: Date): string {
   return crDay(now, CUT_DAY, CUT_DAY)
 }
 
+// TC-10jm-T02: una cuota solo se da por pagada hasta el 20 que el dueño marcó. Sin marca (usuario nuevo)
+// se corta por la fecha, como antes (AC-5).
+export function paidUntil(cardPaidThrough: string | null | undefined, now: Date): Date {
+  return cardPaidThrough ? new Date(cardPaidThrough) : now
+}
+
 // TC-01jm-T02: la compra con tarjeta es un gasto cuya fecha efectiva es su pago. Así el ancla de
 // saldo de cuenta (BAL-01jm) no la resta dos veces si es posterior al pago.
-export function splitCredit<T extends CreditMovement>(movements: T[], now: Date) {
+// TC-10jm-T02: `paidThrough` (de paidUntil) y no `now`: la cuota vencida sin marcar sigue en `pending`.
+export function splitCredit<T extends CreditMovement>(movements: T[], paidThrough: Date) {
   const settled: T[] = []
   // TC-01jm-T06: dueAt = pago más temprano de lo pendiente. TC-02jm: scheduleCrc = CRC por fecha de pago.
   const pending = { crcCents: 0, usdCents: 0, dueAt: null as string | null, scheduleCrc: {} as Record<string, number> }
   for (const m of movements) {
     if (m.paymentMethod !== 'credit') { settled.push(m); continue }
     for (const { dueAt, cents } of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
-      if (Date.parse(dueAt) <= now.getTime()) { settled.push({ ...m, amountCents: cents, occurredAt: dueAt }); continue }
+      if (Date.parse(dueAt) <= paidThrough.getTime()) { settled.push({ ...m, amountCents: cents, occurredAt: dueAt }); continue }
       if (pending.dueAt === null || dueAt < pending.dueAt) pending.dueAt = dueAt
       if (m.currency === 'USD') { pending.usdCents += cents; continue }
       pending.crcCents += cents
@@ -96,12 +103,12 @@ export function ongoingPurchase(priceCents: number, months: number, remainingCen
   return { installments, occurredAt }
 }
 
-// TC-05jm-T01: lo que falta de cada compra con tarjeta; mismo criterio que splitCredit (vencida = pagada).
+// TC-05jm-T01: lo que falta de cada compra con tarjeta; mismo criterio que splitCredit (TC-10jm: pagada = hasta `paidThrough`).
 // TC-07jm-T01 / TC-08jm-T01: pasa id, monto, cuotas y fecha para borrar o editar la compra desde su detalle.
-export function pendingPurchases<T extends CreditMovement & { description: string; id?: string }>(movements: T[], now: Date) {
+export function pendingPurchases<T extends CreditMovement & { description: string; id?: string }>(movements: T[], paidThrough: Date) {
   return movements.flatMap((m) => {
     if (m.paymentMethod !== 'credit') return []
-    const left = installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).filter((d) => Date.parse(d.dueAt) > now.getTime())
+    const left = installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).filter((d) => Date.parse(d.dueAt) > paidThrough.getTime())
     if (left.length === 0) return []
     return [{ id: m.id, amountCents: m.amountCents, installments: m.installments ?? 1, occurredAt: m.occurredAt, description: m.description, currency: m.currency, remainingCents: left.reduce((sum, d) => sum + d.cents, 0), count: left.length, nextCents: left[0].cents, nextDueAt: left[0].dueAt, dues: left }]
   })

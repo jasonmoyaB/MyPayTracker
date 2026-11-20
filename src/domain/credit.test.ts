@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creditDueAt, dueBy, dueOn, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, pendingPurchases, splitCredit, type CreditMovement } from './credit'
+import { creditDueAt, dueBy, dueOn, installmentDues, nextCutAt, nextPayDay, ongoingPurchase, paidUntil, pendingPurchases, splitCredit, type CreditMovement } from './credit'
 import { summarize, summarizeFromAccount } from './summary'
 
 const at = (iso: string) => Date.parse(iso)
@@ -169,5 +169,36 @@ describe('MOV-02jm-T01 AC-3: SINPE se liquida como efectivo', () => {
     expect(settled).toEqual([sinpe])
     expect(pending.crcCents).toBe(0)
     expect(pendingPurchases([{ ...sinpe, description: 'Pulpería' }], new Date('2026-10-11T12:00:00-06:00'))).toEqual([])
+  })
+})
+
+describe('TC-10jm-T02: la cuota vencida sigue en deuda hasta marcar el pago', () => {
+  const nov = m('2026-10-10T12:00:00-06:00', 10_000_00)
+  const dec = m('2026-11-01T12:00:00-06:00', 5_000_00)
+  const oct20 = '2026-10-20T06:00:00.000Z'
+  it('AC-1: 20 nov sin marcar → la cuota del 20 nov sigue en deuda y en "Pagas el 20"', () => {
+    const now = new Date('2026-11-20T10:00:00-06:00')
+    const { settled, pending } = splitCredit([nov], paidUntil(oct20, now))
+    expect(settled).toEqual([])
+    expect(pending.crcCents).toBe(10_000_00)
+    expect(dueBy(pending.scheduleCrc, nextPayDay(now))).toBe(10_000_00)
+    expect(pendingPurchases([{ ...nov, description: 'Tele' }], paidUntil(oct20, now))).toHaveLength(1)
+  })
+  it('AC-3: 25 nov sin marcar → "Pagas el 20 dic" suma la cuota atrasada de nov', () => {
+    const now = new Date('2026-11-25T10:00:00-06:00')
+    const { pending } = splitCredit([nov, dec], paidUntil(oct20, now))
+    expect(pending.dueAt).toBe('2026-11-20T06:00:00.000Z')
+    expect(dueBy(pending.scheduleCrc, nextPayDay(now))).toBe(15_000_00)
+  })
+  it('tras marcar el 20 nov, esa cuota pasa a gasto del 20 nov', () => {
+    const { settled, pending } = splitCredit([nov], paidUntil('2026-11-20T06:00:00.000Z', new Date('2026-11-25T10:00:00-06:00')))
+    expect(settled.map((s) => s.occurredAt)).toEqual(['2026-11-20T06:00:00.000Z'])
+    expect(pending.crcCents).toBe(0)
+  })
+  it('AC-5: sin marca guardada corta por la fecha, como antes', () => {
+    const now = new Date('2026-11-20T10:00:00-06:00')
+    expect(paidUntil(null, now)).toBe(now)
+    expect(paidUntil(undefined, now)).toBe(now)
+    expect(splitCredit([nov], paidUntil(null, now)).pending.crcCents).toBe(0)
   })
 })
