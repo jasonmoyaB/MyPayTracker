@@ -142,6 +142,16 @@ describe('MCP-02jm-T02: puedo_comprar', () => {
     expect(res.result.isError).toBe(true)
     expect(res.result.content[0].text).toMatch(/Cuenta/)
   })
+  it('TC-10jm-T06 AC-1: la cuota vencida sin marcar sigue reservada (como en el Resumen)', async () => {
+    vi.useFakeTimers({ now: new Date('2026-11-20T16:00:00Z') })
+    const tele = [{ ...mov('2026-10-10T15:00:00Z', 10_000_000, { paymentMethod: 'credit' }), installments: 1 }]
+    // Saldo anotado el 20 nov después de las 00:00: si la cuota se diera por pagada sola, "queda" subiría.
+    const s = { salaryCents: 0, account: { cents: 15_000_000, asOf: '2026-11-20T14:00:00Z' } }
+    const l = (cardPaidThrough: string) => vi.fn().mockResolvedValue({ settings: { ...s, cardPaidThrough }, transactions: tele })
+    const left = async (paid: string) => payload(await call('puedo_comprar', { precio: '10000', plazo: 'contado' }, vi.fn(), l(paid))).queda_hoy
+    expect(await left('2026-10-20T06:00:00Z')).toBe('40000.00')
+    expect(await left('2026-11-20T06:00:00Z')).toBe('140000.00')
+  })
 })
 
 describe('MCP-03jm-T01: cambiar_salario y cambiar_saldo', () => {
