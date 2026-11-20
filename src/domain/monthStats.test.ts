@@ -113,7 +113,7 @@ describe('MCP-01jm-T01: parseMonth', () => {
   })
 })
 describe('MOV-03jm-T01 AC-4: el gasto SINPE sigue contando en los gastos del mes', () => {
-  it('monthStats lo suma aunque no baje el saldo', () => {
+  it('monthStats lo suma', () => {
     const now = new Date('2026-10-30T12:00:00-06:00')
     const m = { amountCents: 3_500_00, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-30T10:05:00-06:00',
       description: 'SINPE', source: 'manual', paymentMethod: 'sinpe' as const }
