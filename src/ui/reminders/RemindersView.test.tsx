@@ -122,4 +122,9 @@ describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen',
       money: `${formatMoney(15_000_00, 'CRC')} y ${formatMoney(15_00, 'USD')}` }])
     expect(bellItems([], debt, new Date('2026-11-25T09:00:00-06:00'))).toEqual([])
   })
+  it('T08: el mismo 20 aún no es "atrasado"', () => {
+    const [card] = bellItems([], debt, new Date('2026-11-20T10:00:00-06:00'), paid)
+    expect(card.title).toBe('Tarjeta de crédito')
+    expect(card.when).not.toBe('atrasado')
+  })
 })

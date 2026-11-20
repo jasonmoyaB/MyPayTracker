@@ -21,7 +21,8 @@ export function bellItems(reminders: Reminder[], transactions: Transaction[], no
   const crcCents = dueBy(pending.scheduleCrc, payDay)
   const usdCents = dueBy(pending.scheduleUsd, payDay)
   // TC-10jm-T07: una cuota vencida sin marcar avisa siempre, no solo 3 días antes del próximo 20.
-  const overdue = pending.dueAt !== null && Date.parse(pending.dueAt) < now.getTime()
+  // TC-10jm-T08: contra el próximo 20 y no contra `now`: todo el día 20 (CR) aún está a tiempo.
+  const overdue = pending.dueAt !== null && pending.dueAt < payDay
   const when = overdue ? 'atrasado' : dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
   const money = [crcCents > 0 && formatMoney(crcCents, 'CRC'), usdCents > 0 && formatMoney(usdCents, 'USD')].filter(Boolean)
   if (when && money.length > 0) items.push({ key: 'tarjeta', title: 'Tarjeta de crédito', when, money: money.join(' y ') })
