@@ -56,12 +56,12 @@ describe('MCP-02jm-T01: summaryFor', () => {
   })
 })
 
-describe('MOV-03jm-T01: un gasto SINPE no baja el saldo (el BAC ya lo rebajó)', () => {
+describe('MOV-04jm-T01: un gasto SINPE baja el saldo (los SINPE de la app del BAC no mandan correo)', () => {
   const account = { cents: 58_930_00, asOf: '2026-10-30T10:00:00-06:00' }
   const sinpe = (direction: 'in' | 'out', paymentMethod: 'cash' | 'sinpe') =>
     ({ amountCents: 3_500_00, currency: 'CRC' as const, direction, occurredAt: '2026-10-30T10:05:00-06:00', paymentMethod })
   const saldo = (m: ReturnType<typeof sinpe>) => summaryFor({ account, salaryCents: null }, [m])?.balanceCrcCents
-  it('AC-1: gasto SINPE → el saldo queda en ₡58 930', () => expect(saldo(sinpe('out', 'sinpe'))).toBe(58_930_00))
+  it('AC-1: gasto SINPE → ₡55 430', () => expect(saldo(sinpe('out', 'sinpe'))).toBe(55_430_00))
   it('AC-2: gasto en efectivo → ₡55 430', () => expect(saldo(sinpe('out', 'cash'))).toBe(55_430_00))
   it('AC-3: ingreso SINPE → ₡62 430', () => expect(saldo(sinpe('in', 'sinpe'))).toBe(62_430_00))
 })

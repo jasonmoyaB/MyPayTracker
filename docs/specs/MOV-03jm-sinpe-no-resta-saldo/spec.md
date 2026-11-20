@@ -1,4 +1,5 @@
 # MOV-03jm — Un gasto SINPE no baja el saldo disponible
+> **Reemplazado por MOV-04jm:** un gasto SINPE vuelve a bajar el saldo.
 ## Objetivo
 El dev tenía ₡58 930 en el BAC, hizo un SINPE de ₡3 500 desde la app del BAC y luego lo registró en MyPayTracker.
 El BAC ya lo había rebajado (y ese es el saldo que el dev copia en Cuenta), así que la app lo restó dos veces
