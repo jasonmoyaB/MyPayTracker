@@ -61,7 +61,7 @@ function Dashboard({ session }: { session: Session }) {
     <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
       <h1>MyPayTracker</h1>
       {/* REC-01jm-T10: campana con lo que vence pronto. */}
-      <NotificationBell transactions={data?.transactions ?? []} />
+      <NotificationBell transactions={data?.transactions ?? []} cardPaidThrough={data?.settings.cardPaidThrough} />
     </header>
   )
   return (
@@ -97,7 +97,7 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   if (route === 'movimientos') return (
     <TransactionsPanel transactions={data.transactions} filter={filter} onFilterChange={onFilterChange} onTransactionSaved={reload} />
   )
-  if (route === 'recordatorios') return <RemindersView transactions={data.transactions} />
+  if (route === 'recordatorios') return <RemindersView transactions={data.transactions} cardPaidThrough={data.settings.cardPaidThrough} onCardPaid={reload} />
   if (route === 'cuenta') return <AccountView settings={data.settings} onSettingsSaved={reload} />
   if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
   return <DashboardView settings={data.settings} transactions={data.transactions} reload={reload} />

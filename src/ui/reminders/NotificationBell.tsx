@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { listReminders, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { costaRicaDateTime } from '../../domain/date'
-import { dueOn, nextPayDay } from '../../domain/credit'
+import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
 import { dueSoon, nextDueOn } from '../../domain/reminder'
 import { BELL_ICON } from '../AppShell'
 import { outsideRect } from '../dashboard/CreditCard'
@@ -10,28 +10,32 @@ import { formatMoney } from '../format'
 import '../dashboard/dashboard.css'
 
 // REC-01jm-T10: lo que vence en 0–3 días, de los recordatorios y de la tarjeta (CRC y USD aparte, nunca sumados).
-export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date) {
+export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date, cardPaidThrough?: string | null) {
   const items = reminders.flatMap((r) => {
     const when = dueSoon(nextDueOn(r.day, now, r.paidOn), now)
     return when ? [{ key: r.id, title: r.description, when, money: formatMoney(r.amountCents, r.currency) }] : []
   })
   const payDay = nextPayDay(now)
-  const card = dueOn(transactions, payDay)
+  // TC-10jm-T05: el mismo "Pagas" del Resumen (con lo atrasado sin marcar). USD: sus cuotas hasta ese 20.
+  const paidThrough = paidUntil(cardPaidThrough, now)
+  const crcCents = dueBy(splitCredit(transactions, paidThrough).pending.scheduleCrc, payDay)
+  const usdCents = pendingPurchases(transactions, paidThrough).flatMap((p) => (p.currency === 'USD' ? p.dues : []))
+    .reduce((sum, d) => (d.dueAt <= payDay ? sum + d.cents : sum), 0)
   const when = dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
-  const money = [card.crcCents > 0 && formatMoney(card.crcCents, 'CRC'), card.usdCents > 0 && formatMoney(card.usdCents, 'USD')].filter(Boolean)
+  const money = [crcCents > 0 && formatMoney(crcCents, 'CRC'), usdCents > 0 && formatMoney(usdCents, 'USD')].filter(Boolean)
   if (when && money.length > 0) items.push({ key: 'tarjeta', title: 'Tarjeta de crédito', when, money: money.join(' y ') })
   return items
 }
 
-type Props = { transactions: Transaction[]; now?: Date; initial?: Reminder[] }
+type Props = { transactions: Transaction[]; cardPaidThrough?: string | null; now?: Date; initial?: Reminder[] }
 
 // Se calcula al abrir la app; no guarda historial de pushes. `initial` solo existe para probar sin DOM.
-export function NotificationBell({ transactions, now = new Date(), initial }: Props) {
+export function NotificationBell({ transactions, cardPaidThrough, now = new Date(), initial }: Props) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [reminders, setReminders] = useState<Reminder[]>(initial ?? [])
   // ponytail: si falla (p. ej. falta 0010) la campana muestra solo la tarjeta; el error lo explica la pantalla Recordatorios.
   useEffect(() => { if (!initial) listReminders().then(setReminders, () => {}) }, [initial])
-  const items = bellItems(reminders, transactions, now)
+  const items = bellItems(reminders, transactions, now, cardPaidThrough)
   return (
     <>
       <button type="button" className="secondary bell" onClick={() => dialog.current?.showModal()} aria-haspopup="dialog"
