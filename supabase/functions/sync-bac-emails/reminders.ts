@@ -46,7 +46,8 @@ async function dueReminders(db: SupabaseClient, ownerId: string, now: Date): Pro
   })
 }
 
-// Lo que vence ese 20 (dueOn): el mismo 20 splitCredit ya lo da por pagado.
+// Lo que vence ese 20 (dueOn). TC-10jm-T07: a propósito no lee card_paid_through (supuesto de la spec):
+// puede avisar un 20 ya pagado por adelantado; se corrige si molesta.
 async function dueCard(db: SupabaseClient, ownerId: string, now: Date): Promise<Due[]> {
   const payDay = nextPayDay(now)
   const phase = reminderPhase(payDay.slice(0, 10), now) // 00:00 CR = 06:00Z: la fecha UTC es la de CR

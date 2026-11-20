@@ -4,14 +4,15 @@ import { pendingPurchases, splitCredit } from '../../domain/credit'
 import { outsideRect } from '../dashboard/CreditCard'
 import { formatDay, formatMoney } from '../format'
 
-type Props = { transactions: Transaction[]; now: Date; children: ReactNode }
+// TC-10jm-T05: `paidThrough` (paidUntil) y no `now`: lo vencido sin marcar sigue en la deuda.
+type Props = { transactions: Transaction[]; paidThrough: Date; children: ReactNode }
 
 // REC-01jm-T09: toda la deuda de la tarjeta en un <dialog> nativo, como el de cada producto (TC-06jm).
 // Mismos datos que el Resumen: splitCredit da el total y el pago de cada 20; pendingPurchases, lo que falta por producto.
-export function CardDebtDialog({ transactions, now, children }: Props) {
+export function CardDebtDialog({ transactions, paidThrough, children }: Props) {
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  const { pending } = splitCredit(transactions, now)
+  const { pending } = splitCredit(transactions, paidThrough)
   const months = Object.entries(pending.scheduleCrc).sort(([a], [b]) => a.localeCompare(b))
   return (
     <>
@@ -32,7 +33,7 @@ export function CardDebtDialog({ transactions, now, children }: Props) {
         <table>
           <caption className="muted">Por producto</caption>
           <thead><tr><th scope="col">Producto</th><th scope="col">Al mes</th><th scope="col">Falta</th></tr></thead>
-          <tbody>{pendingPurchases(transactions, now).map((p, i) => (
+          <tbody>{pendingPurchases(transactions, paidThrough).map((p, i) => (
             // REC-01jm-T11: "Al mes" = su próxima cuota (las siguientes son iguales o un céntimo menos).
             <tr key={i}><td>{p.description}</td><td>{formatMoney(p.nextCents, p.currency)}</td><td>{formatMoney(p.remainingCents, p.currency)}</td></tr>
           ))}</tbody>

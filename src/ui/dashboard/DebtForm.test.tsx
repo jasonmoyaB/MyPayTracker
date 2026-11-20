@@ -7,7 +7,7 @@ import { checkDebt, DebtForm } from './DebtForm'
 
 vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), deleteTransaction: vi.fn(), updateTransaction: vi.fn() }))
 
-const pending = { crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {} }
+const pending = { crcCents: 0, usdCents: 0, dueAt: null, scheduleCrc: {}, scheduleUsd: {} }
 
 describe('TC-04jm-T03: deuda que ya venía pagando', () => {
   it('el card ofrece el formulario plegable con los plazos', () => {

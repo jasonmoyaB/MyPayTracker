@@ -2,7 +2,7 @@
 import { costaRicaDateTime, costaRicaIso } from '../../../src/domain/date.ts'
 import { centsToNumeric } from '../../../src/domain/money.ts'
 import { parseAmountToCents } from '../../../src/domain/amount.ts'
-import { splitCredit } from '../../../src/domain/credit.ts'
+import { paidUntil, splitCredit } from '../../../src/domain/credit.ts'
 import { avgMonthlySpend, costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
 import { PLANS, recommend, type Plan } from '../../../src/domain/recommend.ts'
 import { summaryFor } from '../../../src/domain/summary.ts'
@@ -12,7 +12,8 @@ import { summaryFor } from '../../../src/domain/summary.ts'
 export type Query = (desdeIso: string, hastaIso: string, opts?: { direction?: 'in' | 'out'; limit?: number }) => Promise<SpendMovement[]>
 // MCP-02jm-T02: todo lo que el Resumen usa para "¿Puedo comprar esto?" (ajustes + todos los movimientos).
 export type Ledger = () => Promise<{
-  settings: Parameters<typeof summaryFor>[0]
+  // TC-10jm-T06: cardPaidThrough como en la app (Settings), para cortar la deuda igual que el Resumen.
+  settings: Parameters<typeof summaryFor>[0] & { cardPaidThrough?: string | null }
   transactions: (SpendMovement & { installments: number })[]
 }>
 // MCP-03jm-T01: upsert de columnas de settings (ya en numeric) como el usuario del token.
@@ -136,7 +137,7 @@ async function puedoComprar(args: Record<string, unknown>, _query: Query, ledger
   const { settings, transactions } = await ledger()
   // Misma composición que DashboardView: saldo con lo ya cobrado de la tarjeta; lo pendiente va como calendario de cuotas.
   const now = new Date()
-  const { settled, pending } = splitCredit(transactions, now)
+  const { settled, pending } = splitCredit(transactions, paidUntil(settings.cardPaidThrough, now))
   const summary = summaryFor(settings, settled)
   if (!summary) return text('Registra tu saldo de cuenta o tu salario en Cuenta (en la app) para poder calcularlo.', true)
   const spendCents = avgMonthlySpend(transactions, now)

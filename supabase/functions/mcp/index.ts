@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // MCP-02jm-T02: igual que listTransactions + getSettings en la app (mismo techo de 1000 filas de PostgREST).
     const ledger: Ledger = async () => {
       const [settings, transactions] = await Promise.all([
-        db.from('settings').select('salary, account_balance, account_balance_at').maybeSingle(),
+        db.from('settings').select('salary, account_balance, account_balance_at, card_paid_through').maybeSingle(),
         db.from('transactions').select(`${COLUMNS}, installments`),
       ])
       if (settings.error) throw settings.error
@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
         settings: {
           salaryCents: s ? numericToCents(s.salary) : null,
           account: s?.account_balance_at ? { cents: numericToCents(s.account_balance), asOf: s.account_balance_at } : null,
+          cardPaidThrough: s?.card_paid_through ?? null,
         },
         transactions: transactions.data.map((r) => ({ ...toMovement(r), installments: r.installments })),
       }

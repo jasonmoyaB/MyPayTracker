@@ -4,7 +4,7 @@ import { DashboardBody } from './App'
 import { ToastProvider } from './toast/ToastProvider'
 
 vi.mock('../data/auth', () => ({ onSessionChange: vi.fn(), signOut: vi.fn(), changePassword: vi.fn(), endExpiredSession: vi.fn() }))
-vi.mock('../data/settings', () => ({ getSettings: vi.fn(), saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
+vi.mock('../data/settings', () => ({ getSettings: vi.fn(), saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn(), saveCardPaidThrough: vi.fn() }))
 vi.mock('../data/transactions', () => ({ listTransactions: vi.fn(), addManualTransaction: vi.fn() }))
 vi.mock('../data/reminders', () => ({ listReminders: vi.fn(), addReminder: vi.fn(), deleteReminder: vi.fn() }))
 

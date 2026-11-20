@@ -4,6 +4,8 @@ import type { Transaction } from '../../data/transactions'
 import { formatMoney } from '../format'
 import { ToastProvider } from '../toast/ToastProvider'
 import { checkReminder } from './ReminderForm'
+import { DashboardView } from '../dashboard/DashboardView'
+import { bellItems } from './NotificationBell'
 import { RemindersList, RemindersView } from './RemindersView'
 
 vi.mock('../../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn(), markReminderPaid: vi.fn() }))
@@ -22,8 +24,8 @@ describe('REC-01jm-T04: pantalla Recordatorios', () => {
   it('AC-4: arriba el pago de la tarjeta con lo que vence ese 20; USD aparte', () => {
     const html = render([credit('2026-10-10T12:00:00-06:00', 10_000_00), credit('2026-10-11T12:00:00-06:00', 20_666_70),
       credit('2026-10-12T12:00:00-06:00', 15_00, 'USD')])
-    expect(html).toMatch(/Tarjeta de crédito.*20 nov/)
-    expect(html).toContain(`${formatMoney(30_666_70, 'CRC')} y ${formatMoney(15_00, 'USD')}`)
+    expect(html).toContain(`Pagas <span class="amount">${formatMoney(30_666_70, 'CRC')}</span> el 20 nov`)
+    expect(html).toContain(`En dólares <span class="amount">${formatMoney(15_00, 'USD')}</span>`)
   })
   it('sin deuda que venza ese 20, no aparece la tarjeta', () => {
     expect(render()).not.toContain('Tarjeta de crédito')
@@ -92,3 +94,37 @@ describe('REC-01jm-T09: modal con toda la deuda de la tarjeta', () => {
   })
 })
 
+
+describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen', () => {
+  // Hoy 18 dic, pagado hasta el 20 oct: la cuota del 20 nov está atrasada y se suma al 20 dic.
+  const today = new Date('2026-12-18T09:00:00-06:00')
+  const paid = '2026-10-20T06:00:00.000Z'
+  const debt = [credit('2026-10-10T12:00:00-06:00', 10_000_00), credit('2026-11-01T12:00:00-06:00', 5_000_00),
+    credit('2026-12-10T12:00:00-06:00', 7_000_00), credit('2026-10-12T12:00:00-06:00', 15_00, 'USD')]
+  const pays = `Pagas <span class="amount">${formatMoney(15_000_00, 'CRC')}</span> el 20 dic`
+  it('la fila de la tarjeta dice "Pagas" y "Deuda total" igual que el Resumen, con "Ya pagué"', () => {
+    const list = renderToStaticMarkup(<ToastProvider><RemindersList reminders={[]} transactions={debt} reload={() => {}} now={today}
+      cardPaidThrough={paid} onCardPaid={() => {}} /></ToastProvider>)
+    const dash = renderToStaticMarkup(<ToastProvider><DashboardView settings={{ salaryCents: 0, account: null, cardPaidThrough: paid }}
+      transactions={debt} now={today} /></ToastProvider>)
+    expect(list).toContain(pays)
+    expect(list).toContain(`Deuda total <span class="amount">${formatMoney(22_000_00, 'CRC')}</span>`)
+    expect(list).toContain('>Ya pagué</button>')
+    expect(dash).toMatch(new RegExp(`<dt>Pagas el 20 dic</dt><dd class="amount">${formatMoney(15_000_00, 'CRC')}</dd>`))
+    expect(dash).toMatch(new RegExp(`<dt>Deuda total</dt><dd class="amount">${formatMoney(22_000_00, 'CRC')}</dd>`))
+  })
+  it('la campana avisa ese mismo "Pagas" (USD aparte)', () => {
+    expect(bellItems([], debt, today, paid)).toMatchObject([{ title: 'Tarjeta de crédito', when: 'atrasado',
+      money: `${formatMoney(15_000_00, 'CRC')} y ${formatMoney(15_00, 'USD')}` }])
+  })
+  it('T07: con una cuota atrasada avisa aunque falte para el próximo 20, con el mismo "Pagas"', () => {
+    expect(bellItems([], debt, new Date('2026-11-25T09:00:00-06:00'), paid)).toMatchObject([{ title: 'Tarjeta de crédito', when: 'atrasado',
+      money: `${formatMoney(15_000_00, 'CRC')} y ${formatMoney(15_00, 'USD')}` }])
+    expect(bellItems([], debt, new Date('2026-11-25T09:00:00-06:00'))).toEqual([])
+  })
+  it('T08: el mismo 20 aún no es "atrasado"', () => {
+    const [card] = bellItems([], debt, new Date('2026-11-20T10:00:00-06:00'), paid)
+    expect(card.title).toBe('Tarjeta de crédito')
+    expect(card.when).not.toBe('atrasado')
+  })
+})

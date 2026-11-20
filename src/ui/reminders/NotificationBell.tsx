@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { listReminders, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { costaRicaDateTime } from '../../domain/date'
-import { dueOn, nextPayDay } from '../../domain/credit'
+import { dueBy, nextPayDay, paidUntil, splitCredit } from '../../domain/credit'
 import { dueSoon, nextDueOn } from '../../domain/reminder'
 import { BELL_ICON } from '../AppShell'
 import { outsideRect } from '../dashboard/CreditCard'
@@ -10,28 +10,34 @@ import { formatMoney } from '../format'
 import '../dashboard/dashboard.css'
 
 // REC-01jm-T10: lo que vence en 0–3 días, de los recordatorios y de la tarjeta (CRC y USD aparte, nunca sumados).
-export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date) {
+export function bellItems(reminders: Reminder[], transactions: Transaction[], now: Date, cardPaidThrough?: string | null) {
   const items = reminders.flatMap((r) => {
     const when = dueSoon(nextDueOn(r.day, now, r.paidOn), now)
     return when ? [{ key: r.id, title: r.description, when, money: formatMoney(r.amountCents, r.currency) }] : []
   })
   const payDay = nextPayDay(now)
-  const card = dueOn(transactions, payDay)
-  const when = dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
-  const money = [card.crcCents > 0 && formatMoney(card.crcCents, 'CRC'), card.usdCents > 0 && formatMoney(card.usdCents, 'USD')].filter(Boolean)
+  // TC-10jm-T05: el mismo "Pagas" del Resumen (con lo atrasado sin marcar), CRC y USD hasta ese 20.
+  const { pending } = splitCredit(transactions, paidUntil(cardPaidThrough, now))
+  const crcCents = dueBy(pending.scheduleCrc, payDay)
+  const usdCents = dueBy(pending.scheduleUsd, payDay)
+  // TC-10jm-T07: una cuota vencida sin marcar avisa siempre, no solo 3 días antes del próximo 20.
+  // TC-10jm-T08: contra el próximo 20 y no contra `now`: todo el día 20 (CR) aún está a tiempo.
+  const overdue = pending.dueAt !== null && pending.dueAt < payDay
+  const when = overdue ? 'atrasado' : dueSoon(costaRicaDateTime(new Date(payDay)).slice(0, 10), now)
+  const money = [crcCents > 0 && formatMoney(crcCents, 'CRC'), usdCents > 0 && formatMoney(usdCents, 'USD')].filter(Boolean)
   if (when && money.length > 0) items.push({ key: 'tarjeta', title: 'Tarjeta de crédito', when, money: money.join(' y ') })
   return items
 }
 
-type Props = { transactions: Transaction[]; now?: Date; initial?: Reminder[] }
+type Props = { transactions: Transaction[]; cardPaidThrough?: string | null; now?: Date; initial?: Reminder[] }
 
 // Se calcula al abrir la app; no guarda historial de pushes. `initial` solo existe para probar sin DOM.
-export function NotificationBell({ transactions, now = new Date(), initial }: Props) {
+export function NotificationBell({ transactions, cardPaidThrough, now = new Date(), initial }: Props) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [reminders, setReminders] = useState<Reminder[]>(initial ?? [])
   // ponytail: si falla (p. ej. falta 0010) la campana muestra solo la tarjeta; el error lo explica la pantalla Recordatorios.
   useEffect(() => { if (!initial) listReminders().then(setReminders, () => {}) }, [initial])
-  const items = bellItems(reminders, transactions, now)
+  const items = bellItems(reminders, transactions, now, cardPaidThrough)
   return (
     <>
       <button type="button" className="secondary bell" onClick={() => dialog.current?.showModal()} aria-haspopup="dialog"
@@ -48,7 +54,7 @@ export function NotificationBell({ transactions, now = new Date(), initial }: Pr
             <li key={i.key}>
               <span className="dashboard-text">
                 <strong>{i.title}</strong>
-                <span className={i.when === 'vence hoy' ? 'bell-today' : 'muted'}>{i.when}</span>
+                <span className={i.when === 'vence hoy' || i.when === 'atrasado' ? 'bell-today' : 'muted'}>{i.when}</span>
               </span>
               <span className="bell-money">{i.money}</span>
             </li>
