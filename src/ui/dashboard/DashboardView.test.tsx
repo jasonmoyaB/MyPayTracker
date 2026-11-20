@@ -109,3 +109,29 @@ describe('TC-02jm: cuotas futuras contra el salario', () => {
       expect(html).toContain(text)
   })
 })
+
+describe('TC-10jm-T04: la deuda baja solo con "Ya pagué"', () => {
+  // Compra el 10 oct → vence el 20 nov. Hoy 20 nov; la marca va hasta el 20 oct.
+  const credit = [tx('2026-10-10T10:00:00-06:00', 10_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+  const nov20 = new Date('2026-11-20T10:00:00-06:00')
+  it('AC-1: sin marcar sigue en deuda y en "Pagas el 20 nov", y ofrece "Ya pagué"', () => {
+    const html = render({ settings: { salaryCents: 5_000_00, account: null, cardPaidThrough: '2026-10-20T06:00:00.000Z' }, transactions: credit, now: nov20 })
+    expect(html).toMatch(/<dt>Deuda total<\/dt><dd class="amount">[^<]*10/)
+    expect(html).toMatch(/<dt>Pagas el 20 nov<\/dt><dd class="amount">[^<]*10/)
+    expect(html).toContain(`Al pagar te faltarían ${formatMoney(5_000_00, 'CRC')}`)
+    expect(html).toContain('>Ya pagué</button>')
+  })
+  it('AC-2: marcado el 20 nov pasa a gasto y sale de la deuda', () => {
+    const html = render({ settings: { salaryCents: 15_000_00, account: null, cardPaidThrough: '2026-11-20T06:00:00.000Z' }, transactions: credit, now: nov20 })
+    expect(html).toContain(formatMoney(5_000_00, 'CRC'))
+    expect(html).not.toContain('Pagas el')
+    expect(html).not.toContain('Ya pagué')
+  })
+  it('no ofrece marcar un 20 futuro', () => {
+    const html = render({ settings: { salaryCents: 5_000_00, account: null, cardPaidThrough: '2026-10-20T06:00:00.000Z' }, transactions: credit,
+      now: new Date('2026-10-28T10:00:00-06:00') })
+    expect(html).toContain('>Ya pagué</button>')
+    const dec = [tx('2026-11-10T10:00:00-06:00', 10_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+    expect(render({ transactions: dec, now: new Date('2026-11-15T10:00:00-06:00') })).not.toContain('Ya pagué')
+  })
+})

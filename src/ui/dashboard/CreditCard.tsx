@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { nextCutAt, nextPayDay, type pendingPurchases } from '../../domain/credit'
+import { saveCardPaidThrough } from '../../data/settings'
 import { deleteTransaction } from '../../data/transactions'
 import { formatDay, formatDayYear, formatMoney } from '../format'
 import { saveWithToast } from '../toast/saveWithToast'
@@ -29,6 +30,7 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
         {/* TC-05jm-T03: lo que vence el próximo 20, solo CRC. */}
         {pending.crcCents > 0 && <div><dt>Pagas el {formatDay(nextPayDay(now))}</dt><dd className="amount">{formatMoney(dueNextCents, 'CRC')}</dd></div>}
       </dl>
+      <CardPaidButton pending={pending} purchases={purchases} now={now} onSaved={onSaved} />
       {pending.usdCents > 0 && <p className="muted amount" style={{ margin: 0 }}>Deuda en dólares: {formatMoney(pending.usdCents, 'USD')}</p>}
       <LimitLine limitCents={limitCents} hasDebt={pending.crcCents > 0} />
       <SalaryLine scheduleCrc={pending.scheduleCrc} salaryCents={salaryCents} />
@@ -38,6 +40,23 @@ export function CreditCard({ pending, limitCents, salaryCents, now, onSaved, due
       <DebtForm onSaved={onSaved} />
     </section>
   )
+}
+
+// TC-10jm-T04: marca pagado el 20 pendiente más temprano (CRC y USD de ese día), solo si es el próximo o ya venció.
+export function CardPaidButton({ pending, purchases, now, onSaved }: { pending: Pending; purchases: Purchase[]; now: Date; onSaved: () => void }) {
+  const toast = useToast()
+  const { dueAt } = pending
+  if (dueAt === null || dueAt > nextPayDay(now)) return null
+  async function pay(dueAt: string) {
+    const due = { CRC: 0, USD: 0 }
+    for (const p of purchases) for (const d of p.dues) if (d.dueAt === dueAt) due[p.currency] += d.cents
+    // CRC y USD nunca se suman.
+    const amount = (['CRC', 'USD'] as const).filter(c => due[c] > 0).map(c => formatMoney(due[c], c)).join(' y ')
+    if (!confirm(`¿Ya pagaste la tarjeta del ${formatDay(dueAt)} (${amount})? No se puede deshacer.`)) return
+    if (await saveWithToast(() => saveCardPaidThrough(dueAt), toast, 'Pago de la tarjeta registrado')) return
+    onSaved()
+  }
+  return <button type="button" onClick={() => void pay(dueAt)}>Ya pagué</button>
 }
 
 // TC-06jm-T02: el fondo oscuro es parte del <dialog>, así que el clic se compara contra su recuadro.
