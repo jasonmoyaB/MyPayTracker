@@ -10,4 +10,5 @@ spec.md + plan.md de esta carpeta.
   - Evidencia: rojo 6 casos nuevos (auth.test.ts 4, supabase.test.ts 2: storage, signedInAt, borrado sb-*); verde 65 en src/data; typecheck/test OK (464 tests).
 - [x] AUTH-02jm-T03 Prueba + `watchSessionLimit` (actividad, intervalo, `visibilitychange`, una sola llamada) [src/ui/sessionLimit.ts, src/ui/sessionLimit.test.ts] (AC-3, AC-4, AC-5) (depende de T01)
   - Evidencia: rojo "Cannot find module ./sessionLimit"; verde 5 casos en src/ui/sessionLimit.test.ts (incluye sesión ya vencida al montar); typecheck/test OK (469 tests).
-- [ ] AUTH-02jm-T04 Montar en `App`: bloquear con `setSession(null)`, `endExpiredSession`, toast por motivo [src/ui/App.tsx] (AC-3–AC-7) (depende de T02, T03)
+- [x] AUTH-02jm-T04 Montar en `App`: bloquear con `setSession(null)`, `endExpiredSession`, toast por motivo [src/ui/App.tsx] (AC-3–AC-7) (depende de T02, T03)
+  - Evidencia: sin prueba de montaje (no hay DOM ni testing-library; la lógica la cubre T03); mensajes por motivo en `EXPIRED_MESSAGE`; typecheck/test/build OK (469 tests).
