@@ -13,4 +13,12 @@ export const configError: string | null = url && publishableKey
 // y sin refresco ni sesión persistida no hace requests a ellos.
 export const supabase = configError
   ? createClient('http://localhost', 'sin-configurar', { auth: { autoRefreshToken: false, persistSession: false } })
-  : createClient(url, publishableKey)
+  // AUTH-02jm-T02: sessionStorage se borra al cerrar la ventana o pestaña y sobrevive a recargas (AC-1).
+  : createClient(url, publishableKey, { auth: { storage: globalThis.sessionStorage } })
+
+export function clearAuthKeys(storage: Storage): void {
+  for (const key of Object.keys(storage)) if (key.startsWith('sb-')) storage.removeItem(key)
+}
+
+// AUTH-02jm-T02: la sesión de antes vivía en localStorage y seguiría abriendo la app sin contraseña (AC-2).
+try { clearAuthKeys(localStorage) } catch { /* sin localStorage (node) no hay sesión vieja */ }
