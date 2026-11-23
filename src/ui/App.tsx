@@ -3,10 +3,9 @@ import { endExpiredSession, onSessionChange, signOut, type Session } from '../da
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
 import { initialFilter, type MovementFilter } from '../domain/movementFilter'
-import type { ExpiryReason } from '../domain/sessionLimit'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
-import { watchSessionLimit } from './sessionLimit'
+import { EXPIRED_MESSAGE, watchSessionLimit } from './sessionLimit'
 import { useToast } from './toast/ToastProvider'
 import { AccountView } from './account/AccountView'
 import { AppShell } from './AppShell'
@@ -20,11 +19,6 @@ import { useRoute, type Route } from './route'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
 type Data = { settings: Settings; transactions: Transaction[] }
-
-const EXPIRED_MESSAGE: Record<ExpiryReason, string> = {
-  inactividad: 'Tu sesión se cerró por inactividad',
-  maximo: 'Tu sesión expiró, vuelve a iniciar sesión',
-}
 
 export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).

@@ -2,6 +2,11 @@ import { sessionExpiry, type ExpiryReason } from '../domain/sessionLimit'
 
 const CHECK_MS = 15_000
 
+export const EXPIRED_MESSAGE: Record<ExpiryReason, string> = {
+  inactividad: 'Tu sesión se cerró por inactividad',
+  maximo: 'Tu sesión expiró, vuelve a iniciar sesión',
+}
+
 type ActivityTarget = {
   addEventListener(type: string, listener: () => void): void
   removeEventListener(type: string, listener: () => void): void

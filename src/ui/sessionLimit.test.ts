@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { INACTIVITY_MS, MAX_SESSION_MS } from '../domain/sessionLimit'
-import { watchSessionLimit } from './sessionLimit'
+import { EXPIRED_MESSAGE, watchSessionLimit } from './sessionLimit'
 
 function fakeDocument() {
   const listeners = new Map<string, () => void>()
@@ -52,6 +52,12 @@ describe('AUTH-02jm AC-3/AC-4/AC-5: vigilancia del límite de sesión', () => {
     const onExpire = vi.fn()
     watchSessionLimit(-MAX_SESSION_MS - 1, onExpire, fakeDocument())
     expect(onExpire).toHaveBeenCalledWith('maximo')
+  })
+  it('AC-3/AC-4: aviso por motivo', () => {
+    expect(EXPIRED_MESSAGE).toEqual({
+      inactividad: 'Tu sesión se cerró por inactividad',
+      maximo: 'Tu sesión expiró, vuelve a iniciar sesión',
+    })
   })
   it('la limpieza quita listeners e intervalo', () => {
     const onExpire = vi.fn()

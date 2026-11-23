@@ -14,4 +14,5 @@ spec.md + plan.md de esta carpeta.
   - Evidencia: sin prueba de montaje (no hay DOM ni testing-library; la lógica la cubre T03); mensajes por motivo en `EXPIRED_MESSAGE`; typecheck/test/build OK (469 tests).
 
 ## Correcciones de revisión
-- [ ] AUTH-02jm-T05 Probar los textos de aviso por motivo (AC-3, AC-4) sin montar React; quitar el `.catch` redundante de `toUiError`; comentario `ponytail:` del reloj del dispositivo en el máximo [src/ui/App.tsx o src/ui/sessionLimit.ts, src/ui/sessionExpiry.ts]
+- [x] AUTH-02jm-T05 Probar los textos de aviso por motivo (AC-3, AC-4) sin montar React; quitar el `.catch` redundante de `toUiError`; comentario `ponytail:` del reloj del dispositivo en el máximo [src/ui/App.tsx o src/ui/sessionLimit.ts, src/ui/sessionExpiry.ts]
+  - Evidencia: `EXPIRED_MESSAGE` en src/ui/sessionLimit.ts con caso de textos literales; quitado `.catch` y su test (el no-rechazo lo prueba auth.test.ts); `ponytail:` en src/domain/sessionLimit.ts; typecheck/test OK (469 tests).
