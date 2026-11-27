@@ -26,7 +26,9 @@ export async function notifyBudgets(db: SupabaseClient, ownerId: string, now: Da
       const alert = budgetAlert(s)
       const marker = alert?.kind === 'exceeded' ? 'exceeded_month' : 'warned_month'
       const row = rows.find((b) => b.category === s.category)
-      return alert && row?.[marker] !== month ? [{ category: s.category, marker, alert }] : []
+      // PRES-01jm-T06: si ya se avisó el 100 % este mes, un 80 % posterior (p. ej. tras un reverso) llegaría fuera de orden.
+      const done = row?.[marker] === month || (marker === 'warned_month' && row?.exceeded_month === month)
+      return alert && !done ? [{ category: s.category, marker, alert }] : []
     })
     if (due.length === 0) return
     const send = await sender()

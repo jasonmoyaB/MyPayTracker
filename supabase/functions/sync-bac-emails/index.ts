@@ -65,6 +65,8 @@ Deno.serve(async (req) => {
     if (!authorized) return Response.json({ error: 'No autorizado' }, { status: 401 })
     // REC-01jm-T05: antes de Gmail para que un fallo de Google no los bloquee; nunca lanza (captura sus errores).
     await notifyReminders(db, env('OWNER_USER_ID'), new Date())
+    // PRES-01jm-T06: también antes de Gmail; los movimientos de esta corrida cuentan en la siguiente (5 min).
+    await notifyBudgets(db, env('OWNER_USER_ID'), new Date())
 
     const token = await accessToken()
     const ids = await listMessageIds(token)
@@ -110,8 +112,6 @@ Deno.serve(async (req) => {
       .select('direction, amount, currency, description')
     if (error) throw error
     await notifyNewMovements(db, env('OWNER_USER_ID'), data)
-    // PRES-01jm-T05: con los movimientos nuevos ya guardados; nunca lanza (captura sus errores).
-    await notifyBudgets(db, env('OWNER_USER_ID'), new Date())
 
     return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {

@@ -60,3 +60,14 @@ describe('PRES-01jm-T05: push del presupuesto, uno por categoría y mes', () => 
     await expect(notifyBudgets(broken, 'owner', new Date(), sender)).resolves.toBeUndefined()
   })
 })
+
+describe('PRES-01jm-T06: tras el 100 % no se avisa el 80 % del mismo mes', () => {
+  it('gasto que baja al 85 % con exceeded_month en el mes actual no pide aviso', async () => {
+    const s = state([gasto('68000.00')])
+    s.budgets[0].exceeded_month = '2026-11'
+    const sender = vi.fn(async () => null)
+    await notifyBudgets(fakeDb(s).db, 'owner', cr('2026-11-27T09:00:00'), sender)
+    expect(sender).not.toHaveBeenCalled()
+    expect(s.budgets[0].warned_month).toBeNull()
+  })
+})
