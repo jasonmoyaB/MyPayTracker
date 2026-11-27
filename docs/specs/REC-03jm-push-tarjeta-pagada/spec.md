@@ -17,3 +17,4 @@ me avisa igual, y si tengo una cuota atrasada no la incluye. La campana y el Res
 ## Supuestos
 - `dueOn` queda sin uso en el cron; se borra si nadie más lo usa.
 - La Edge Function toma el cambio al redesplegarla (no se despliega aquí).
+- Sin marca el push corta justo antes de ese 20 (no en `now` como el Resumen) para que el mismo 20 avise (AC-3).

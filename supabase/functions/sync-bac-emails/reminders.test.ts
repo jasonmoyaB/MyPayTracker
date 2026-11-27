@@ -134,6 +134,36 @@ describe('REC-01jm AC-4: aviso del pago de la tarjeta el 17 y el 20', () => {
   })
 })
 
+describe('REC-03jm-T01: el push de la tarjeta respeta "Ya pagué"', () => {
+  const credit = (occurred_at: string, amount: string) =>
+    ({ user_id: 'owner', payment_method: 'credit', occurred_at, amount, currency: 'CRC', installments: 1 })
+  const settings = (card_paid_through: string | null) => [{ user_id: 'owner', card_notified_on: null, card_paid_through }]
+  const card = (crc: number, phase: 'pronto' | 'hoy') => reminderNotification({ description: 'Tarjeta de crédito', phase,
+    amounts: [{ cents: crc, currency: 'CRC' }, { cents: 0, currency: 'USD' }] })
+  async function run(s: State, local: string) {
+    const { db, eqs } = fakeDb(s)
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyReminders(db, 'owner', cr(local), async () => send)
+    return { pushes: sent(send), eqs }
+  }
+  it('AC-1: 20 dic ya marcado como pagado → 17 dic no hay push', async () => {
+    const s = state({ reminders: [], settings: settings('2026-12-20T06:00:00.000Z'), transactions: [credit('2026-11-10T12:00:00-06:00', '10000.00')] })
+    const { pushes, eqs } = await run(s, '2026-12-17T09:00:00')
+    expect(pushes).toEqual([])
+    expect(eqs).toContainEqual(['settings', 'user_id', 'owner'])
+  })
+  it('AC-2: cuota del 20 nov sin pagar + ₡5 000 el 20 dic → 20 dic push con ₡15 000', async () => {
+    const s = state({ reminders: [], settings: settings('2026-10-20T06:00:00.000Z'),
+      transactions: [credit('2026-10-10T12:00:00-06:00', '10000.00'), credit('2026-11-10T12:00:00-06:00', '5000.00')] })
+    expect((await run(s, '2026-12-20T09:00:00')).pushes).toEqual([card(15_000_00, 'hoy')])
+  })
+  it('AC-3: sin card_paid_through, cuota ₡10 000 el 20 dic → 20 dic push con ₡10 000', async () => {
+    const s = state({ reminders: [], settings: settings(null),
+      transactions: [credit('2026-10-10T12:00:00-06:00', '7000.00'), credit('2026-11-10T12:00:00-06:00', '10000.00')] })
+    expect((await run(s, '2026-12-20T09:00:00')).pushes).toEqual([card(10_000_00, 'hoy')])
+  })
+})
+
 describe('REC-01jm AC-5: los recordatorios no dependen de Gmail', () => {
   // Importar index.ts arrancaría Deno.serve: se revisa el orden en el código fuente.
   const source = readFileSync(new URL('./index.ts', import.meta.url), 'utf8')

@@ -45,20 +45,6 @@ export function dueBy(scheduleCrc: Record<string, number>, at: string): number {
   return Object.entries(scheduleCrc).reduce((sum, [dueAt, cents]) => (dueAt <= at ? sum + cents : sum), 0)
 }
 
-// REC-01jm-T02: lo que vence justo en `dueAt` (un 20), por moneda. TC-10jm: solo lo usa el push del cron.
-export function dueOn(movements: CreditMovement[], dueAt: string) {
-  const total = { crcCents: 0, usdCents: 0 }
-  for (const m of movements) {
-    if (m.paymentMethod !== 'credit') continue
-    for (const d of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
-      if (d.dueAt !== dueAt) continue
-      if (m.currency === 'USD') total.usdCents += d.cents
-      else total.crcCents += d.cents
-    }
-  }
-  return total
-}
-
 // El día de corte aún cuenta como "próximo" mientras sea ese día en CR.
 export function nextCutAt(now: Date): string {
   return crDay(now, CUT_DAY, CUT_DAY)
