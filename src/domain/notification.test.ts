@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { movementNotification } from './notification'
+import { movementNotification, unreadNotification } from './notification'
 
 const money = (cents: number, currency: 'CRC' | 'USD') =>
   new Intl.NumberFormat('es-CR', { style: 'currency', currency }).format(cents / 100)
@@ -20,5 +20,16 @@ describe('PWA-01jm AC-5: notificación de un movimiento', () => {
   it('sin descripción muestra solo el monto', () => {
     expect(movementNotification({ direction: 'out', amountCents: 100, currency: 'CRC', description: '  ' }).body)
       .toBe(money(100, 'CRC'))
+  })
+})
+
+describe('MAIL-02jm-T02: aviso de correo ilegible', () => {
+  it('con la fecha CR del correo', () => {
+    // 28 nov 03:00 UTC = 27 nov 21:00 en Costa Rica.
+    expect(unreadNotification('2026-11-28T03:00:00Z')).toEqual({ title: 'Correo del BAC sin leer',
+      body: 'No pude leer un correo del BAC del 27 nov: regístralo a mano', url: '/#/movimientos' })
+  })
+  it('sin fecha, sin "del"', () => {
+    expect(unreadNotification(null).body).toBe('No pude leer un correo del BAC: regístralo a mano')
   })
 })

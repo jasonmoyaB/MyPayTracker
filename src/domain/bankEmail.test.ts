@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { gmailBodyText, htmlToText, parseBacPurchase, parseBacSinpe, parseBankEmail } from './bankEmail'
+import { gmailBodyText, htmlToText, looksLikeMovement, parseBacPurchase, parseBacSinpe, parseBankEmail } from './bankEmail'
 import compraCrc from './__fixtures__/bac-compra-crc.txt?raw'
 import compraUsd from './__fixtures__/bac-compra-usd.txt?raw'
 import sinpeOk from './__fixtures__/bac-sinpe-acreditado.txt?raw'
 import sinpeRechazado from './__fixtures__/bac-sinpe-rechazado.txt?raw'
 import compraHtml from './__fixtures__/bac-compra-html.html?raw'
+import compraNueva from './__fixtures__/bac-compra-formato-nuevo.txt?raw'
 
 describe('AC-1: compra BAC', () => {
   it('compra en colones → gasto en centavos con hora de Costa Rica', () => {
@@ -98,5 +99,21 @@ describe('AC-4: gmailBodyText', () => {
   })
   it('sin cuerpo → cadena vacía', () => {
     expect(gmailBodyText({ mimeType: 'multipart/mixed', parts: [] })).toBe('')
+  })
+})
+
+describe('MAIL-02jm-T02: looksLikeMovement', () => {
+  it('AC-1: formato que el parser no conoce pero trae "Monto: CRC 12,500.00" → parece movimiento', () => {
+    expect(parseBankEmail('notificacionbac@baccredomatic.cr', compraNueva)).toBeNull()
+    expect(looksLikeMovement(compraNueva)).toBe(true)
+  })
+  it('AC-3: SINPE rechazado (fixture real anonimizado) → no', () => {
+    expect(looksLikeMovement(sinpeRechazado)).toBe(false)
+  })
+  it('AC-4: aviso sin monto → no', () => {
+    expect(looksLikeMovement('Hola TITULAR DE PRUEBA: su estado de cuenta ya está disponible en Banca en Línea.')).toBe(false)
+  })
+  it('los que el parser sí lee también parecen movimiento (USD, ₡ y "Colones")', () => {
+    for (const text of [compraCrc, compraUsd, sinpeOk, 'Cargo de ₡5.000,00', 'Pago por $ 12.50']) expect(looksLikeMovement(text)).toBe(true)
   })
 })

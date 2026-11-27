@@ -16,3 +16,10 @@ export function movementNotification({ direction, amountCents, currency, descrip
   const short = text.length > MAX_DESCRIPTION ? `${text.slice(0, MAX_DESCRIPTION - 1)}…` : text
   return { title: direction === 'in' ? 'Ingreso' : 'Gasto', body: short ? `${amount} · ${short}` : amount }
 }
+
+// MAIL-02jm-T02: correo del BAC con monto que el parser no leyó. `receivedAt` = fecha del correo (null si no la trae).
+export function unreadNotification(receivedAt: string | null) {
+  const day = receivedAt && new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', timeZone: 'America/Costa_Rica' })
+    .format(new Date(receivedAt))
+  return { title: 'Correo del BAC sin leer', body: `No pude leer un correo del BAC${day ? ` del ${day}` : ''}: regístralo a mano`, url: '/#/movimientos' }
+}
