@@ -19,3 +19,5 @@ Quiero juntar plata para algo ("₡500 000 para diciembre") y saber cuánto apar
 ## Supuestos
 - Lo ahorrado se actualiza a mano y no baja "Puedes gastar" (es plata que ya separé fuera de la cuenta).
 - Meses restantes cuentan el mes en curso y el de la fecha límite.
+- `deadline` se guarda como el día 1 del mes límite (check en la BD); nombre de 1 a 80 caracteres.
+- No hay Supabase local: la migración 0020 se prueba como texto (como 0017) y no se aplica en esta entrega.
