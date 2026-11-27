@@ -146,3 +146,17 @@ describe('USD-01jm-T03: equivalente en colones de los USD', () => {
     expect(render()).not.toContain('≈')
   })
 })
+
+describe('PRES-01jm-T04: tarjeta Presupuestos', () => {
+  it('AC-5: sin presupuestos no se muestra', () => {
+    expect(render()).not.toContain('Presupuestos')
+  })
+  it('muestra gastado / tope, barra y porcentaje en texto', () => {
+    // Ningún gasto de noviembre del fixture tiene palabras conocidas: los ₡36 500 caen en Otros.
+    const html = render({ budgets: [{ category: 'Otros', limitCents: 50_000_00 }] })
+    expect(html).toContain('Presupuestos')
+    expect(html).toContain(`${formatMoney(36_500_00, 'CRC')} de ${formatMoney(50_000_00, 'CRC')}`)
+    expect(html).toMatch(/<progress[^>]*max="100"[^>]*value="73"|<progress[^>]*value="73"[^>]*max="100"/)
+    expect(html).toContain('73 %')
+  })
+})

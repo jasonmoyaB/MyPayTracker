@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
+import { listBudgets } from '../data/budgets'
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
+import type { Budget } from '../domain/budget'
 import { initialFilter, type MovementFilter } from '../domain/movementFilter'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
@@ -17,7 +19,7 @@ import { DashboardView } from './dashboard/DashboardView'
 import { useRoute, type Route } from './route'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-type Data = { settings: Settings; transactions: Transaction[] }
+type Data = { settings: Settings; transactions: Transaction[]; budgets?: Budget[] }
 
 export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).
@@ -42,8 +44,9 @@ function Dashboard({ session }: { session: Session }) {
 
   const load = useCallback(async () => {
     try {
-      const [settings, transactions] = await Promise.all([getSettings(), listTransactions()])
-      setData({ settings, transactions })
+      // PRES-01jm-T04 ponytail: si 0017 aún no está aplicada, sin presupuestos en vez de tumbar toda la app.
+      const [settings, transactions, budgets] = await Promise.all([getSettings(), listTransactions(), listBudgets().catch(() => [])])
+      setData({ settings, transactions, budgets })
       setError(null)
     } catch (e) {
       const failure = toUiError(e)
@@ -99,6 +102,6 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   )
   if (route === 'recordatorios') return <RemindersView transactions={data.transactions} cardPaidThrough={data.settings.cardPaidThrough} onCardPaid={reload} />
   if (route === 'cuenta') return <AccountView settings={data.settings} transactions={data.transactions} onSettingsSaved={reload} />
-  if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
-  return <DashboardView settings={data.settings} transactions={data.transactions} reload={reload} />
+  if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} budgets={data.budgets} onBudgetsSaved={reload} />
+  return <DashboardView settings={data.settings} transactions={data.transactions} budgets={data.budgets} reload={reload} />
 }

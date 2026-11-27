@@ -1,19 +1,21 @@
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
+import { budgetStatus, type Budget } from '../../domain/budget'
 import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
 import { avgMonthlySpend, lastEmailMovement, monthlyCharges, monthStats, topExpenses } from '../../domain/monthStats'
 import { summaryFor } from '../../domain/summary'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard } from './BalanceCard'
+import { BudgetCard } from './BudgetCard'
 import { CreditCard } from './CreditCard'
 import { MonthCards } from './MonthCards'
 import { RecentMovements } from './RecentMovements'
 import { TopExpenses } from './TopExpenses'
 import './dashboard.css'
 
-type Props = { settings: Settings; transactions: Transaction[]; now?: Date; reload?: () => void }
+type Props = { settings: Settings; transactions: Transaction[]; budgets?: Budget[]; now?: Date; reload?: () => void }
 
-export function DashboardView({ settings, transactions, now = new Date(), reload = () => {} }: Props) {
+export function DashboardView({ settings, transactions, budgets = [], now = new Date(), reload = () => {} }: Props) {
   // TC-10jm-T04: la cuota vencida sigue en deuda hasta que el dev marca "Ya pagué".
   const paidThrough = paidUntil(settings.cardPaidThrough, now)
   const { settled, pending } = splitCredit(transactions, paidThrough)
@@ -30,6 +32,7 @@ export function DashboardView({ settings, transactions, now = new Date(), reload
         dueNextCents={dueNextCents} purchases={pendingPurchases(transactions, paidThrough)} />
       <MonthCards stats={monthStats(charges, now)} />
       <TopExpenses items={topExpenses(charges, now)} />
+      <BudgetCard status={budgetStatus(budgets, transactions, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
       {summary && (
         <section className="card">
