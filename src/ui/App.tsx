@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { onSessionChange, signOut, type Session } from '../data/auth'
+import { endExpiredSession, onSessionChange, signOut, type Session } from '../data/auth'
 import { listBudgets } from '../data/budgets'
 import { listReminders, type Reminder } from '../data/reminders'
 import { listGoals } from '../data/savings'
@@ -10,6 +10,7 @@ import type { SavingsGoal } from '../domain/savings'
 import { initialFilter, type MovementFilter } from '../domain/movementFilter'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
+import { EXPIRED_MESSAGE, watchSessionLimit } from './sessionLimit'
 import { useToast } from './toast/ToastProvider'
 import { AccountView } from './account/AccountView'
 import { AppShell } from './AppShell'
@@ -28,6 +29,14 @@ export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   useEffect(() => onSessionChange(setSession), [])
+  const toast = useToast()
+  const signedInAt = session?.signedInAt
+  // AUTH-02jm-T04: se bloquea la pantalla antes de cerrar en Supabase para no depender de la red (AC-6).
+  useEffect(() => signedInAt === undefined ? undefined : watchSessionLimit(signedInAt, (reason) => {
+    setSession(null)
+    void endExpiredSession()
+    toast.error(EXPIRED_MESSAGE[reason])
+  }), [signedInAt, toast])
 
   if (session === undefined) return <main><p className="muted">Cargando…</p></main>
   if (!session) return <LoginView />

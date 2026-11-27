@@ -1,9 +1,12 @@
-import { supabase } from './supabase'
+import { clearAuthKeys, supabase } from './supabase'
 
-export type Session = { userId: string; email: string }
+export type Session = { userId: string; email: string; signedInAt: number }
 
-const toSession = (s: { user: { id: string; email?: string } } | null): Session | null =>
-  s ? { userId: s.user.id, email: s.user.email ?? '' } : null
+type AuthUser = { id: string; email?: string; last_sign_in_at?: string }
+
+// AUTH-02jm-T02: el máximo se cuenta desde el inicio de sesión; refrescar el token no lo cambia.
+const toSession = (s: { user: AuthUser } | null): Session | null =>
+  s ? { userId: s.user.id, email: s.user.email ?? '', signedInAt: Date.parse(s.user.last_sign_in_at ?? '') || Date.now() } : null
 
 export async function signIn(email: string, password: string): Promise<void> {
   const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -26,7 +29,9 @@ export async function signOut(): Promise<void> {
 
 // Sesión vencida: el servidor ya no la acepta, así que se borra solo la local (no depende de la red).
 export async function endExpiredSession(): Promise<void> {
-  await supabase.auth.signOut({ scope: 'local' })
+  const { error } = await supabase.auth.signOut({ scope: 'local' }).catch((e: unknown) => ({ error: e }))
+  // AUTH-02jm-T02: sin red signOut falla y deja la sesión guardada; se borra a mano (AC-6).
+  if (error) try { clearAuthKeys(sessionStorage) } catch { /* sin sessionStorage no hay sesión guardada */ }
 }
 
 // Llama `cb` con la sesión actual y en cada cambio. Devuelve la función para desuscribirse.
