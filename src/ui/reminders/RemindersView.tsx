@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { deleteReminder, listReminders, markReminderPaid, type Reminder } from '../../data/reminders'
+import { deleteReminder, listReminders, markReminderPaid, setReminderReserve, type Reminder } from '../../data/reminders'
 import type { Transaction } from '../../data/transactions'
 import { dueBy, nextPayDay, paidUntil, splitCredit } from '../../domain/credit'
 import { isCardPayment, nextDueOn } from '../../domain/reminder'
@@ -32,7 +32,8 @@ export function RemindersView({ transactions, cardPaidThrough, onCardPaid = () =
     }
   }, [toast])
   useEffect(() => { void load() }, [load])
-  const reload = () => void load()
+  // FIJ-01jm-T03: App también recarga, porque el Resumen resta los recordatorios apartados.
+  const reload = () => { void load(); onCardPaid() }
   return (
     <section className="card" aria-labelledby="reminders-title" style={{ display: 'grid', gap: 12 }}>
       <h2 id="reminders-title" tabIndex={-1} style={{ margin: 0 }}>Recordatorios</h2>
@@ -108,6 +109,9 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
                   : <ReminderText r={r} now={now} />}
               </span>
               <span className="reminder-actions">
+                {!isCardPayment(r.description) && <input type="checkbox" checked={r.reserve ?? false} disabled={deleting}
+                  aria-label={`Apartar ${r.description} del saldo`} title="Apartar del saldo"
+                  onChange={() => void run(() => setReminderReserve(r.id, !r.reserve), r.reserve ? 'Ya no se aparta' : 'Apartado del saldo')} />}
                 <button type="button" className="secondary" disabled={deleting}
                   onClick={() => void run(() => markReminderPaid(r.id, nextDueOn(r.day, now, r.paidOn)), 'Marcado como pagado')}
                   aria-label={`Marcar ${r.description} como pagado`}>Pagado</button>

@@ -21,3 +21,5 @@ pago. Me dice que puedo gastar plata que ya está comprometida.
 ## Supuestos
 - Horizonte = fin del mes en curso; lo del mes siguiente sale del salario de ese mes.
 - Un recordatorio vencido y sin pagar de este mes sigue apartado hasta marcarlo pagado.
+- FIJ-01jm-T03: App carga los recordatorios junto al resto (Resumen y ¿Puedo comprar? usan la misma lista); Recordatorios
+  mantiene su propia carga (REC-01jm-T06) y al cambiar algo también recarga App. Requiere 0018 aplicada antes del frontend.

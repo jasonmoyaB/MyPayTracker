@@ -93,6 +93,11 @@ describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
     const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })
     expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')}`)
   })
+  it('FIJ-01jm-T03: un fijo apartado y sin pagar baja "Puedes gastar" y el saldo de ¿Puedo comprar?', () => {
+    const reminders = [{ id: 'r1', description: 'Alquiler', amountCents: 60_000_00, currency: 'CRC' as const, day: 28, reserve: true }]
+    const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit, reminders })
+    expect(html).toContain(`Puedes gastar ${formatMoney(40_000_00, 'CRC')}`)
+  })
 })
 
 describe('TC-02jm: cuotas futuras contra el salario', () => {
