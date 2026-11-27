@@ -1,9 +1,13 @@
 import { useRef, useState } from 'react'
-import type { Transaction } from '../../data/transactions'
+import { setTransactionCategory, type Transaction } from '../../data/transactions'
+import { categorize, type Category } from '../../domain/category'
 import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
 import { creditDueAt } from '../../domain/credit'
 import { monthlyCharges } from '../../domain/monthStats'
 import { formatDate, formatDay, formatMoney } from '../format'
+import { saveWithToast } from '../toast/saveWithToast'
+import { useToast } from '../toast/ToastProvider'
+import { CategorySelect } from './CategorySelect'
 import { FilterTotals } from './FilterTotals'
 import { MovementFilters } from './MovementFilters'
 import { planLabel, TransactionForm } from './TransactionForm'
@@ -30,16 +34,18 @@ export function TransactionsPanel({ transactions, filter, onFilterChange, onTran
       </div>
       {open && <TransactionForm onSaved={finish} onCancel={close} />}
       {transactions.length === 0 ? <p className="muted">Aun no hay movimientos</p> : (
-        <FilteredList transactions={transactions} filter={filter} onFilterChange={onFilterChange} />
+        <FilteredList transactions={transactions} filter={filter} onFilterChange={onFilterChange} onSaved={onTransactionSaved} />
       )}
     </section>
   )
 }
 
-type FilteredListProps = Pick<TransactionsPanelProps, 'transactions' | 'filter' | 'onFilterChange'>
+type FilteredListProps = Pick<TransactionsPanelProps, 'transactions' | 'filter' | 'onFilterChange'> & { onSaved: () => void }
 
-function FilteredList({ transactions, filter, onFilterChange }: FilteredListProps) {
+function FilteredList({ transactions, filter, onFilterChange, onSaved }: FilteredListProps) {
   const now = new Date()
+  // CAT-01jm-T04: el historial de categorías sale de todo lo cargado, no solo de lo filtrado.
+  const categoryOf = categorize(transactions)
   // ponytail: filtra en el navegador lo ya cargado (PostgREST da máx. 1000 filas); filtrar en servidor si crece.
   const shown = applyFilter(transactions, filter)
   return (
@@ -52,19 +58,30 @@ function FilteredList({ transactions, filter, onFilterChange }: FilteredListProp
           <p className="muted">No hay movimientos con estos filtros</p>
           <button type="button" className="secondary" onClick={() => onFilterChange(clearedFilter)}>Limpiar filtros</button>
         </div>
-      ) : <ul className="transactions-list">{shown.map(t => <TransactionRow key={t.id} transaction={t} />)}</ul>}
+      ) : <ul className="transactions-list">{shown.map(t => <TransactionRow key={t.id} transaction={t} category={categoryOf(t)} onSaved={onSaved} />)}</ul>}
     </>
   )
 }
 
-function TransactionRow({ transaction: t }: { transaction: Transaction }) {
+type RowProps = { transaction: Transaction; category: Category | null; onSaved: () => void }
+
+function TransactionRow({ transaction: t, category, onSaved }: RowProps) {
   const incoming = t.direction === 'in'
+  const toast = useToast()
+  const [saving, setSaving] = useState(false)
+  async function change(c: Category) {
+    setSaving(true)
+    const failed = await saveWithToast(() => setTransactionCategory(t.id, c), toast, 'Categoría guardada')
+    setSaving(false)
+    if (!failed) onSaved()
+  }
   return (
     <li className="transaction-row">
       <div className="transaction-description">
         <span>{t.description}</span>
         <span className="muted"><time dateTime={t.occurredAt}>{formatDate(t.occurredAt)}</time></span>
         <span className="muted">{originLabel(t)}</span>
+        {category && <CategorySelect value={category} onChange={(c) => void change(c)} disabled={saving} />}
       </div>
       <div className="transaction-amount">
         <span className="amount">{incoming ? '+' : '−'}{formatMoney(t.amountCents, t.currency)}</span>

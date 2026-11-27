@@ -1,13 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { CategorySelect } from './CategorySelect'
 import { TransactionsPanel } from './TransactionsPanel'
+import { ToastProvider } from '../toast/ToastProvider'
 import { FeeField, PaymentField } from './TransactionForm'
 import { effectivePaymentMethod } from './useTransactionForm'
 import { formatDate, formatDay, formatMoney } from '../format'
 import type { Transaction } from '../../data/transactions'
 import type { MovementFilter } from '../../domain/movementFilter'
 
-vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
+vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), setTransactionCategory: vi.fn() }))
 
 const transaction: Transaction = {
   id: '1', amountCents: 349050, currency: 'CRC', direction: 'out', source: 'manual',
@@ -16,7 +18,7 @@ const transaction: Transaction = {
 const income: Transaction = { ...transaction, id: '2', direction: 'in', source: 'email_regex', description: 'Salario' }
 const all: MovementFilter = { from: null, to: null, direction: 'all' }
 const render = (transactions: Transaction[], filter = all) => renderToStaticMarkup(
-  <TransactionsPanel transactions={transactions} filter={filter} onFilterChange={() => {}} onTransactionSaved={() => {}} />,
+  <ToastProvider><TransactionsPanel transactions={transactions} filter={filter} onFilterChange={() => {}} onTransactionSaved={() => {}} /></ToastProvider>,
 )
 
 describe('AC-5: lista de movimientos', () => {
@@ -140,5 +142,22 @@ describe('TC-12jm-T01 AC-4: la comisión solo aparece en compras con tarjeta a p
     const html = renderToStaticMarkup(<FeeField state={{ direction: 'out', paymentMethod: 'credit', installments: 12, fee: '-1', setFee: () => {}, feeError: 'mal' }} />)
     expect(html).toContain('aria-describedby="transaction-fee-error"')
     expect(html).toContain('id="transaction-fee-error"')
+  })
+})
+
+describe('CAT-01jm-T04: categoría en Movimientos', () => {
+  it('cada gasto muestra un selector con su categoría efectiva; los ingresos no', () => {
+    const html = render([{ ...transaction, description: 'AUTO MERCADO ESCAZU' }, income])
+    expect(html.match(/<select[^>]*aria-label="Categoría"/g)).toHaveLength(1)
+    expect(html).toContain('value="Súper" selected=""')
+  })
+  it('AC-5: la guardada (al recargar) es la que se muestra', () => {
+    expect(render([{ ...transaction, category: 'Salud' }])).toContain('value="Salud" selected=""')
+  })
+  it('AC-5: al cambiar avisa la categoría elegida', () => {
+    const onChange = vi.fn()
+    const select = CategorySelect({ value: 'Otros', onChange })
+    select.props.onChange({ target: { value: 'Comida' } })
+    expect(onChange).toHaveBeenCalledWith('Comida')
   })
 })
