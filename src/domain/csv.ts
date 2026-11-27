@@ -27,3 +27,6 @@ export function movementsCsv(rows: CsvMovement[], categoryOf: (m: CsvMovement) =
   ].map(csvField).join(','))
   return `﻿${[HEADERS.join(','), ...lines].join('\r\n')}`
 }
+
+// ANA-02jm-T03: nombre con la fecha de Costa Rica (no UTC), para que no salga con el día siguiente de noche.
+export const csvFileName = (now: Date) => `movimientos-${costaRicaDateTime(now).slice(0, 10)}.csv`

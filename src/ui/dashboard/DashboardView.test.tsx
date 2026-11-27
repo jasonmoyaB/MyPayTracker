@@ -187,7 +187,8 @@ describe('ANA-01jm-T02: tarjeta Contra el mes pasado', () => {
   })
   it('tabla por categoría con la diferencia con signo', () => {
     // Al 15 nov: Otros ₡36 500 este mes; el gasto del 20 oct queda fuera (después del 15).
-    const html = render().slice(render().indexOf('Contra el mes pasado'))
+    const full = render()
+    const html = full.slice(full.indexOf('Contra el mes pasado'))
     expect(html).toMatch(/<th scope="col">Diferencia<\/th>/)
     expect(html).toContain(`+${formatMoney(36_500_00, 'CRC')}`)
   })

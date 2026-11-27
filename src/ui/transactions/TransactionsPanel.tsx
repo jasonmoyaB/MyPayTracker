@@ -3,8 +3,7 @@ import { setTransactionCategory, type Transaction } from '../../data/transaction
 import { categorize, type Category } from '../../domain/category'
 import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
 import { creditDueAt } from '../../domain/credit'
-import { movementsCsv } from '../../domain/csv'
-import { costaRicaDateTime } from '../../domain/date'
+import { csvFileName, movementsCsv } from '../../domain/csv'
 import { monthlyCharges } from '../../domain/monthStats'
 import { formatDate, formatDay, formatMoney } from '../format'
 import { saveWithToast } from '../toast/saveWithToast'
@@ -106,11 +105,12 @@ function originLabel(t: Transaction): string {
 }
 
 // ANA-02jm-T02: descarga en el navegador, sin servidor; la URL se revoca al terminar para no dejar el Blob vivo.
+// ANA-02jm-T03: se revoca en el siguiente tick; revocar en el mismo tick del click puede cancelar la descarga (Safari/Firefox).
 function downloadCsv(csv: string, now: Date) {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
   const a = document.createElement('a')
   a.href = url
-  a.download = `movimientos-${costaRicaDateTime(now).slice(0, 10)}.csv`
+  a.download = csvFileName(now)
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
