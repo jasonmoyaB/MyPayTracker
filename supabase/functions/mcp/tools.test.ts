@@ -158,6 +158,14 @@ describe('MCP-02jm-T02: puedo_comprar', () => {
     expect(await left('2026-10-20T06:00:00Z')).toBe('40000.00')
     expect(await left('2026-11-20T06:00:00Z')).toBe('140000.00')
   })
+  it('FIJ-01jm-T04: resta los fijos apartados del mes sin pagar, como el Resumen', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const alquiler = { description: 'Alquiler', amountCents: 5_000_000, currency: 'CRC', day: 28, reserve: true, paidOn: null }
+    const l = (reminders: unknown[]) => vi.fn().mockResolvedValue({ settings, transactions, reminders })
+    const left = async (reminders: unknown[]) => Number(payload(await call('puedo_comprar', { precio: '10000', plazo: 'contado' }, vi.fn(), l(reminders))).queda_hoy)
+    expect(await left([]) - await left([alquiler])).toBe(50_000)
+    expect(await left([{ ...alquiler, paidOn: '2026-10-28' }])).toBe(await left([]))
+  })
 })
 
 describe('MCP-03jm-T01: cambiar_salario y cambiar_saldo', () => {

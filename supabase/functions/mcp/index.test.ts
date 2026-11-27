@@ -44,3 +44,9 @@ describe('ARQ-02jm-T03: ledger lee todos los movimientos', () => {
     expect(source).toMatch(/\.order\('occurred_at', \{ ascending: false \}\)\s*\.order\('id', \{ ascending: false \}\)\s*\.range\(from, to\)/)
   })
 })
+
+describe('FIJ-01jm-T04: ledger trae los recordatorios para apartar', () => {
+  it('lee reminders con reserve y paid_on (RLS filtra por el usuario del token)', () => {
+    expect(source).toMatch(/from\('reminders'\)\.select\('description, amount, currency, day, paid_on, reserve'\)/)
+  })
+})
