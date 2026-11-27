@@ -1,5 +1,18 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { deleteBudget, listBudgets, saveBudget } from './budgets'
+
+const db = vi.hoisted(() => {
+  const result = { error: null as unknown }
+  const order = vi.fn(async () => ({ data: [{ category: 'Súper', amount: '80000.00' }], error: result.error }))
+  const select = vi.fn(() => ({ order }))
+  const upsert = vi.fn(async () => result)
+  const eq = vi.fn(async () => result)
+  const del = vi.fn(() => ({ eq }))
+  const from = vi.fn(() => ({ select, upsert, delete: del }))
+  return { result, select, upsert, eq, del, from }
+})
+vi.mock('./supabase', () => ({ supabase: { from: db.from } }))
 
 // Sin Supabase local: se revisa la migración como texto (no se aplica en esta entrega).
 const sql = readFileSync(new URL('../../supabase/migrations/0017_budgets.sql', import.meta.url), 'utf8')
@@ -21,5 +34,27 @@ describe('PRES-01jm-T01: tabla budgets', () => {
     }
     expect(sql).toMatch(/revoke insert, update on public\.budgets from authenticated/)
     expect(sql).toMatch(/grant insert \(category, amount\), update \(category, amount\) on public\.budgets to authenticated/)
+  })
+})
+
+describe('PRES-01jm-T03: listar, guardar y quitar presupuestos (RLS filtra por dueño)', () => {
+  beforeEach(() => { vi.clearAllMocks(); db.result.error = null })
+  it('listBudgets mapea a centavos enteros', async () => {
+    expect(await listBudgets()).toEqual([{ category: 'Súper', limitCents: 80_000_00 }])
+    expect(db.from).toHaveBeenCalledWith('budgets')
+  })
+  it('saveBudget hace upsert por (user_id, category) sin user_id (lo pone la BD)', async () => {
+    await saveBudget('Súper', 80_000_00)
+    expect(db.upsert).toHaveBeenCalledWith({ category: 'Súper', amount: '80000.00' }, { onConflict: 'user_id,category' })
+  })
+  it('deleteBudget borra por categoría', async () => {
+    await deleteBudget('Súper')
+    expect(db.eq).toHaveBeenCalledWith('category', 'Súper')
+  })
+  it('propaga el error de Supabase', async () => {
+    db.result.error = { code: '42501' }
+    await expect(listBudgets()).rejects.toEqual({ code: '42501' })
+    await expect(saveBudget('Súper', 1)).rejects.toEqual({ code: '42501' })
+    await expect(deleteBudget('Súper')).rejects.toEqual({ code: '42501' })
   })
 })
