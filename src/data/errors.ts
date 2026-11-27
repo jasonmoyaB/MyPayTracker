@@ -37,3 +37,6 @@ export function toAppError(e: unknown): AppError {
   const kind = kindOf(e)
   return { kind, message: MESSAGES[kind] }
 }
+
+// PRES-01jm-T07 / META-01jm-T03: la migración aún no está aplicada (Postgres 42P01 o caché de PostgREST PGRST205).
+export const isMissingTable = (error: { code?: string } | null) => !!error && ['42P01', 'PGRST205'].includes(error.code ?? '')

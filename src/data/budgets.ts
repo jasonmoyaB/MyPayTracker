@@ -1,13 +1,14 @@
 import type { Budget } from '../domain/budget'
 import type { Category } from '../domain/category'
 import { centsToNumeric, numericToCents } from '../domain/money'
+import { isMissingTable } from './errors'
 import { supabase } from './supabase'
 
 // PRES-01jm-T03: topes mensuales en colones por categoría. RLS ya filtra por user_id.
 export async function listBudgets(): Promise<Budget[]> {
   const { data, error } = await supabase.from('budgets').select('category, amount').order('category')
   // PRES-01jm-T07: si 0017 aún no está aplicada, sin presupuestos en vez de tumbar la app; lo demás (sesión, red) se ve.
-  if (error && ['42P01', 'PGRST205'].includes(error.code)) return []
+  if (isMissingTable(error)) return []
   if (error) throw error
   return data.map((b) => ({ category: b.category, limitCents: numericToCents(b.amount) }))
 }
