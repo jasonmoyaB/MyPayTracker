@@ -71,7 +71,9 @@ Deno.serve(async (req) => {
       const [settings, reminders, transactions] = await Promise.all([
         db.from('settings').select('salary, account_balance, account_balance_at, card_paid_through').maybeSingle(),
         // FIJ-01jm-T04: los apartados restan en puedo_comprar como en el Resumen.
-        db.from('reminders').select('description, amount, currency, day, paid_on, reserve'),
+        // FIJ-01jm-T05: sin la 0018 aplicada (42703) se reintenta sin reserve, como listReminders en la app.
+        db.from('reminders').select('description, amount, currency, day, paid_on, reserve')
+          .then((r) => r.error?.code === '42703' ? db.from('reminders').select('description, amount, currency, day, paid_on') : r),
         allPages(async (from, to) => {
           const { data, error } = await db.from('transactions').select(`${COLUMNS}, installments`)
             .order('occurred_at', { ascending: false })
@@ -92,7 +94,7 @@ Deno.serve(async (req) => {
         },
         transactions: transactions.map((r) => ({ ...toMovement(r), installments: r.installments })),
         reminders: reminders.data.map((r) => ({ description: r.description, amountCents: numericToCents(r.amount), currency: r.currency,
-          day: r.day, paidOn: r.paid_on, reserve: r.reserve })),
+          day: r.day, paidOn: r.paid_on, reserve: r.reserve === true })),
       }
     }
 

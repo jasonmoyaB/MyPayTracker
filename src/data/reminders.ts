@@ -10,9 +10,13 @@ export type NewReminder = Omit<Reminder, 'id' | 'paidOn'>
 
 // RLS ya filtra por user_id; ordenados por día del mes.
 export async function listReminders(): Promise<Reminder[]> {
-  const { data, error } = await supabase.from('reminders').select('id, description, amount, currency, day, paid_on, reserve').order('day')
+  const withReserve = await supabase.from('reminders').select('id, description, amount, currency, day, paid_on, reserve').order('day')
+  // FIJ-01jm-T05: si el front sale antes que la 0018 (columna inexistente, 42703), la app no cae: sin apartados.
+  const { data, error } = withReserve.error?.code === '42703'
+    ? await supabase.from('reminders').select('id, description, amount, currency, day, paid_on').order('day')
+    : withReserve
   if (error) throw error
-  return data.map((r) => ({ id: r.id, description: r.description, amountCents: numericToCents(r.amount), currency: r.currency, day: r.day, paidOn: r.paid_on, reserve: r.reserve }))
+  return data.map((r) => ({ id: r.id, description: r.description, amountCents: numericToCents(r.amount), currency: r.currency, day: r.day, paidOn: r.paid_on, reserve: 'reserve' in r && r.reserve === true }))
 }
 
 // user_id lo pone la BD (default auth.uid()); RLS impide escribir filas de otro.
