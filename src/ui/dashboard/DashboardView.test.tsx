@@ -165,3 +165,18 @@ describe('PRES-01jm-T04: tarjeta Presupuestos', () => {
     expect(html).toContain('73 %')
   })
 })
+
+describe('PROY-01jm-T02: tarjeta Fin de mes', () => {
+  it('AC-3: negativo con signo menos, "Te faltarían" y desglose en texto', () => {
+    // Saldo 100 000 (salario) y una compra con tarjeta de 200 000 que vence el 20 nov sin pagar.
+    const credit = [tx('2026-10-25T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+    const html = render({ transactions: credit })
+    expect(html).toMatch(/<h2[^>]*>Fin de mes<\/h2>/)
+    expect(html).toContain('Te faltarían')
+    expect(html).toContain(`−${formatMoney(100_000_00, 'CRC')}`)
+    expect(html).toMatch(/Cuotas de tarjeta hasta fin de mes.*−₡200.000,00/)
+  })
+  it('AC-4: sin saldo ni salario no se muestra', () => {
+    expect(render({ transactions: [], settings: { salaryCents: null, account: null } })).not.toContain('Fin de mes')
+  })
+})

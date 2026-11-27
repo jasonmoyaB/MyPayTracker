@@ -4,13 +4,15 @@ import type { Transaction } from '../../data/transactions'
 import { budgetStatus, type Budget } from '../../domain/budget'
 import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
 import { reservedCents } from '../../domain/reminder'
-import { avgMonthlySpend, lastEmailMovement, monthlyCharges, monthStats, topExpenses } from '../../domain/monthStats'
+import { avgMonthlySpend, lastEmailMovement, monthlyCharges, monthStats, spentThisMonth, topExpenses } from '../../domain/monthStats'
+import { monthEndProjection } from '../../domain/projection'
 import { summaryFor } from '../../domain/summary'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard } from './BalanceCard'
 import { BudgetCard } from './BudgetCard'
 import { CreditCard } from './CreditCard'
 import { MonthCards } from './MonthCards'
+import { ProjectionCard } from './ProjectionCard'
 import { RecentMovements } from './RecentMovements'
 import { TopExpenses } from './TopExpenses'
 import './dashboard.css'
@@ -25,8 +27,10 @@ export function DashboardView({ settings, transactions, budgets = [], reminders 
   // TC-02jm-T05: hoy solo resta lo que vence el próximo 20; las cuotas posteriores salen del salario de ese mes.
   const dueNextCents = dueBy(pending.scheduleCrc, nextPayDay(now))
   // FIJ-01jm-T03: los fijos apartados del mes sin pagar ya están comprometidos; también para ¿Puedo comprar?.
-  const freeCents = summary && summary.balanceCrcCents - reservedCents(reminders, now)
+  const reserved = reservedCents(reminders, now)
+  const freeCents = summary && summary.balanceCrcCents - reserved
   const limitCents = freeCents === null ? null : freeCents - dueNextCents
+  const spendCents = avgMonthlySpend(transactions, now)
   // GAS-01jm-T02: "Este mes" y "Top gastos" cuentan la cuota que vence este mes, no la compra entera.
   const charges = monthlyCharges(transactions)
   return (
@@ -34,6 +38,9 @@ export function DashboardView({ settings, transactions, budgets = [], reminders 
       <BalanceCard summary={summary} usdRateCents={settings.usdRateCents} />
       <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} onSaved={reload}
         dueNextCents={dueNextCents} purchases={pendingPurchases(transactions, paidThrough)} />
+      {/* PROY-01jm-T02: sin saldo ni salario no hay de dónde proyectar. */}
+      {summary && <ProjectionCard p={monthEndProjection({ availableCents: summary.balanceCrcCents, scheduleCrc: pending.scheduleCrc,
+        reservedCents: reserved, typicalCents: spendCents, spentCents: spentThisMonth(transactions, now), now })} />}
       <MonthCards stats={monthStats(charges, now)} />
       <TopExpenses items={topExpenses(charges, now)} />
       <BudgetCard status={budgetStatus(budgets, transactions, now)} />
@@ -41,7 +48,7 @@ export function DashboardView({ settings, transactions, budgets = [], reminders 
       {summary && (
         <section className="card">
           <AffordCheck balanceCents={freeCents ?? 0} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now}
-            spendCents={avgMonthlySpend(transactions, now)} />
+            spendCents={spendCents} />
         </section>
       )}
     </div>
