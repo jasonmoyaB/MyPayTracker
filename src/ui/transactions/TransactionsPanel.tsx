@@ -80,5 +80,6 @@ function originLabel(t: Transaction): string {
   if (t.paymentMethod === 'credit') return `Tarjeta · se paga el ${due}`
   const origin = t.source.startsWith('email_') ? 'Correo BAC' : 'Manual'
   // MOV-02jm-T02: SINPE se paga como efectivo; solo se distingue en la etiqueta.
+  if (t.paymentMethod === 'card_payment') return `Pago de tarjeta · ${origin}` // TC-11jm-T03
   return t.paymentMethod === 'sinpe' ? `SINPE · ${origin}` : origin
 }

@@ -61,7 +61,7 @@ export function PaymentField({ state: s }: { state: PaymentState }) {
     <label htmlFor="transaction-payment">Forma de pago</label>
     <select id="transaction-payment" value={method} onChange={e => s.setPaymentMethod(e.target.value as typeof s.paymentMethod)}>
       <option value="cash">Efectivo o débito</option><option value="sinpe">SINPE</option>
-      {s.direction === 'out' && <option value="credit">Tarjeta de crédito</option>}
+      {s.direction === 'out' && <><option value="credit">Tarjeta de crédito</option><option value="card_payment">Pago de tarjeta</option></>}
     </select>
     {method === 'credit' && <>
       <label htmlFor="transaction-installments">Plazo</label>

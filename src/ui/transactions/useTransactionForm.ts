@@ -9,8 +9,9 @@ type Method = NewTransaction['paymentMethod']
 
 // TC-01jm-T04 / MOV-02jm-T02: solo los gastos van con tarjeta (la BD también lo exige); SINPE vale en ambos.
 // Compartida con PaymentField para que el select muestre lo mismo que se guarda.
+// TC-11jm-T03: el pago de tarjeta tampoco existe en ingresos (check de 0014).
 export const effectivePaymentMethod = (direction: NewTransaction['direction'], method: Method): Method =>
-  direction === 'in' && method === 'credit' ? 'cash' : method
+  direction === 'in' && (method === 'credit' || method === 'card_payment') ? 'cash' : method
 
 function useFields() {
   const [amount, setAmount] = useState('')

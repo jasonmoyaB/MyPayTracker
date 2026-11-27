@@ -107,3 +107,20 @@ describe('TC-02jm: plazo de tasa cero', () => {
     expect(html).toContain('Tarjeta · tasa cero 6 meses · primera cuota el 20 nov')
   })
 })
+
+describe('TC-11jm-T03: "Pago de tarjeta" como forma de pago', () => {
+  const field = (direction: 'in' | 'out', paymentMethod: Transaction['paymentMethod'] = 'cash') => renderToStaticMarkup(
+    <PaymentField state={{ direction, paymentMethod, setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
+  it('se ofrece solo en gastos y sin plazo', () => {
+    expect(field('out')).toContain('value="card_payment">Pago de tarjeta')
+    expect(field('in')).not.toContain('card_payment')
+    expect(field('out', 'card_payment')).not.toContain('Plazo')
+  })
+  it('AC-4: un ingreso nunca se guarda como pago de tarjeta', () => {
+    expect(effectivePaymentMethod('in', 'card_payment')).toBe('cash')
+    expect(effectivePaymentMethod('out', 'card_payment')).toBe('card_payment')
+  })
+  it('la fila muestra la etiqueta "Pago de tarjeta"', () => {
+    expect(render([{ ...transaction, paymentMethod: 'card_payment' }])).toContain('Pago de tarjeta · Manual')
+  })
+})
