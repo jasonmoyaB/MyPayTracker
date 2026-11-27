@@ -25,7 +25,7 @@ export function DashboardView({ settings, transactions, now = new Date(), reload
   const charges = monthlyCharges(transactions)
   return (
     <div className="dashboard">
-      <BalanceCard summary={summary} />
+      <BalanceCard summary={summary} usdRateCents={settings.usdRateCents} />
       <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} onSaved={reload}
         dueNextCents={dueNextCents} purchases={pendingPurchases(transactions, paidThrough)} />
       <MonthCards stats={monthStats(charges, now)} />

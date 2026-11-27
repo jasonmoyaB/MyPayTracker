@@ -4,7 +4,7 @@ import { formatMoney } from '../format'
 import { ToastProvider } from '../toast/ToastProvider'
 import { AccountView } from './AccountView'
 
-vi.mock('../../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
+vi.mock('../../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn(), saveUsdRateCents: vi.fn() }))
 vi.mock('../../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
 vi.mock('../../data/push', () => ({ saveSubscription: vi.fn(), deleteSubscription: vi.fn() }))
 
@@ -40,5 +40,12 @@ describe('BAL-02jm-T02: cuadre en Cuenta', () => {
   })
   it('AC-4: sin saldo ni salario no muestra la cifra de la app', () => {
     expect(render({ salaryCents: null, account: null })).not.toContain('La app calcula hoy')
+  })
+})
+
+describe('USD-01jm-T03: tipo de cambio en Cuenta', () => {
+  it('pide el tipo si no hay y lo muestra si está guardado', () => {
+    expect(render({ salaryCents: null, account: null })).toContain('registra cuántos colones vale un dólar')
+    expect(render({ salaryCents: null, account: null, usdRateCents: 505_32 })).toContain(`Tipo de cambio: ${formatMoney(505_32, 'CRC')}`)
   })
 })

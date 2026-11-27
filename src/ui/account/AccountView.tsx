@@ -1,4 +1,4 @@
-import { saveAccountBalanceCents, saveSalaryCents, type Settings } from '../../data/settings'
+import { saveAccountBalanceCents, saveSalaryCents, saveUsdRateCents, type Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
 import { availableNow, reconcileText } from '../../domain/summary'
 import { MoneySetting } from '../balance/MoneySetting'
@@ -36,6 +36,16 @@ export function AccountView({ settings, transactions, onSettingsSaved, now = new
           valueCents={settings.salaryCents}
           save={saveSalaryCents}
           successMessage="Salario actualizado"
+          onSaved={onSettingsSaved}
+        />
+        {/* USD-01jm-T03: MoneySetting ya rechaza 0, negativos y texto (AC-3); la BD también. */}
+        <MoneySetting
+          label="Tipo de cambio"
+          emptyHint="Opcional: registra cuántos colones vale un dólar para ver tus dólares en colones."
+          note="colones por dólar; solo informativo"
+          valueCents={settings.usdRateCents ?? null}
+          save={saveUsdRateCents}
+          successMessage="Tipo de cambio actualizado"
           onSaved={onSettingsSaved}
         />
       </section>

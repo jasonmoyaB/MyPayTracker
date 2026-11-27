@@ -8,7 +8,7 @@ import { ToastProvider } from './toast/ToastProvider'
 import { RemindersView } from './reminders/RemindersView'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-vi.mock('../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
+vi.mock('../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn(), saveUsdRateCents: vi.fn() }))
 vi.mock('../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
 vi.mock('../data/transactions', () => ({ addManualTransaction: vi.fn() }))
 vi.mock('../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn() }))

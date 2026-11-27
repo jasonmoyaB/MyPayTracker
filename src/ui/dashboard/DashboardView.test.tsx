@@ -136,3 +136,13 @@ describe('TC-10jm-T04: la deuda baja solo con "Ya pagué"', () => {
     expect(at('2026-11-25T10:00:00-06:00')).toContain('>Ya pagué</button>')
   })
 })
+
+describe('USD-01jm-T03: equivalente en colones de los USD', () => {
+  it('con tipo guardado muestra ≈ ₡ y el tipo, sin tocar el saldo', () => {
+    const html = render({ settings: { ...settings, usdRateCents: 505_32 } })
+    expect(html).toContain(`≈ +${formatMoney(0, 'CRC')} / −${formatMoney(10_106_40, 'CRC')} al tipo ${formatMoney(505_32, 'CRC')}`)
+  })
+  it('AC-4: sin tipo guardado no hay equivalente', () => {
+    expect(render()).not.toContain('≈')
+  })
+})
