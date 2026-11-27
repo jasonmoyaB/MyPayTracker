@@ -86,6 +86,17 @@ describe('MOV-02jm-T01: SINPE como forma de pago', () => {
   })
 })
 
+describe('TC-11jm-T01: "Pago de tarjeta" como forma de pago', () => {
+  const sql14 = () => readFileSync(new URL('../../supabase/migrations/0014_payment_method_card_payment.sql', import.meta.url), 'utf8').toLowerCase()
+  it('acepta card_payment además de cash, credit y sinpe', () => {
+    expect(sql14()).toMatch(/drop constraint transactions_payment_method_check/)
+    expect(sql14()).toMatch(/add constraint transactions_payment_method_check check \(payment_method in \('cash', 'credit', 'sinpe', 'card_payment'\)\)/)
+  })
+  it('AC-4: card_payment solo como gasto y en un pago', () => {
+    expect(sql14()).toMatch(/add constraint transactions_card_payment_gasto_un_pago check \(payment_method <> 'card_payment' or \(direction = 'out' and installments = 1\)\)/)
+  })
+})
+
 describe('TC-07jm-T02: borrar una deuda', () => {
   it('AC-3: borra solo la fila de ese id (RLS limita al dueño)', async () => {
     await deleteTransaction('abc')
