@@ -17,3 +17,6 @@ Red → green → refactor. Todo `domain/` con test previo; parsers probados con
 
 ## 6. Datos persistentes
 Postgres en Supabase: `settings(user_id, salary)` y `transactions(user_id, amount numeric(12,2), direction in|out, source email_regex|email_ai|manual, description, occurred_at, email_message_id unique)`. RLS en todas las tablas, cambios solo por migraciones, secretos en Supabase secrets.
+
+## 7. Tarjeta de crédito
+Corta el **6** y se paga el **20** (hora CR): compra hasta el 6 → pago el 20 de ese mes; después del 6 → el 20 del siguiente (27/11 → 20 dic; 6/12 → 20 dic; 7/12 → 20 ene). Tasa cero a N meses = N cuotas, una cada 20. Los gastos del mes cuentan la cuota que vence ese mes, no la compra entera (ver `docs/specs/GAS-01jm-gastos-por-cuota/`).

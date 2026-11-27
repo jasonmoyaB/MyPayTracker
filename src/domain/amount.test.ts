@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseAmountToCents } from './amount'
+import { parseAmountToCents, parseFeeToCents, purchaseCents } from './amount'
+import { installmentDues } from './credit'
 
 describe('parseAmountToCents: texto del usuario → centavos sin float', () => {
   it('acepta enteros, decimales y comas de miles', () => {
@@ -10,5 +11,25 @@ describe('parseAmountToCents: texto del usuario → centavos sin float', () => {
   })
   it('rechaza vacío, cero, negativos, letras y más de 2 decimales', () => {
     for (const bad of ['', '0', '-5', 'abc', '12.345', '1.2.3', '1,23']) expect(parseAmountToCents(bad)).toBeNull()
+  })
+})
+
+describe('TC-12jm-T01: comisión de la tasa cero', () => {
+  it('AC-1: ₡120 000 + comisión ₡6 000 a 12 meses → ₡126 000 y cuota ₡10 500', () => {
+    // TC-12jm-T02: la suma vive en domain; si se rompe, este test falla.
+    const { totalCents: total } = purchaseCents('120000', '6000', 12)
+    expect(total).toBe(126_000_00)
+    expect(installmentDues('2026-11-27T15:00:00-06:00', total!, 12).map((d) => d.cents)).toEqual(Array(12).fill(10_500_00))
+  })
+  it('AC-2: vacía (o 0) → sin comisión', () => {
+    for (const t of ['', '  ', '0', '0.00']) expect(parseFeeToCents(t)).toBe(0)
+  })
+  it('en un pago la comisión escrita no cuenta; inválidos dan total null', () => {
+    expect(purchaseCents('120000', '6000', 1)).toEqual({ priceCents: 120_000_00, feeCents: 0, totalCents: 120_000_00 })
+    expect(purchaseCents('120000', 'x', 12).totalCents).toBeNull()
+    expect(purchaseCents('', '6000', 12).totalCents).toBeNull()
+  })
+  it('AC-3: negativa o texto → inválida', () => {
+    for (const t of ['-6000', 'seis mil', '6000.123']) expect(parseFeeToCents(t)).toBeNull()
   })
 })

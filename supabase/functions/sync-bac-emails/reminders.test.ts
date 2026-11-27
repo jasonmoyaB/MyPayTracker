@@ -2,40 +2,11 @@ import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { reminderNotification } from '../../../src/domain/reminder.ts'
 import type { SendPush } from './push.ts'
+import { fakeDb } from './fakeDb.ts'
 import { notifyReminders } from './reminders.ts'
 
 type Row = Record<string, unknown>
 type State = { reminders: Row[]; settings: Row[]; transactions: Row[]; push_subscriptions: Row[] }
-
-// Fake del cliente service role con estado: el update solo "devuelve fila" si el marcador aún no es hoy,
-// como el filtro `or(... is null, ... neq hoy)` en Postgres. Así se prueba que dos corridas avisan una vez.
-function fakeDb(state: State) {
-  const or = vi.fn()
-  const eqs: unknown[][] = []
-  const from = vi.fn((table: keyof State) => {
-    const q = { op: 'select', patch: {} as Row, where: {} as Row }
-    const builder = {
-      select: () => builder,
-      eq: (col: string, val: unknown) => { eqs.push([table, col, val]); q.where[col] = val; return builder },
-      or: (filter: string) => { or(table, filter); return builder },
-      update: (patch: Row) => { q.op = 'update'; q.patch = patch; return builder },
-      delete: () => { q.op = 'delete'; return builder },
-      in: () => builder,
-      then: (resolve: (r: unknown) => void) => resolve(run()),
-    }
-    const matches = (r: Row) => Object.entries(q.where).every(([k, v]) => r[k] === v)
-    function run() {
-      if (q.op === 'delete') return { error: null }
-      if (q.op === 'select') return { data: state[table].filter(matches), error: null }
-      const [col, today] = Object.entries(q.patch)[0]
-      const claimed = state[table].filter((r) => matches(r) && r[col] !== today)
-      for (const r of claimed) r[col] = today
-      return { data: claimed, error: null }
-    }
-    return builder
-  })
-  return { db: { from } as never, or, eqs }
-}
 
 const cr = (local: string) => new Date(`${local}-06:00`)
 const sub = { id: 's1', user_id: 'owner', endpoint: 'https://e/1', p256dh: 'P', auth: 'A' }
@@ -113,6 +84,14 @@ describe('REC-01jm AC-4: aviso del pago de la tarjeta el 17 y el 20', () => {
     expect(eqs).toContainEqual(['transactions', 'payment_method', 'credit'])
     expect(s.settings[0].card_notified_on).toBe('2026-11-20')
   })
+  it('ARQ-02jm-T03: suma más de 1000 compras con tarjeta (pagina)', async () => {
+    const many = Array.from({ length: 1001 }, () => credit('2026-10-10T12:00:00-06:00', '1.00'))
+    const { db } = fakeDb(state({ reminders: [], transactions: many }))
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyReminders(db, 'owner', cr('2026-11-17T09:00:00'), async () => send)
+    expect(sent(send)[0]).toEqual(reminderNotification({ description: 'Tarjeta de crédito', phase: 'pronto',
+      amounts: [{ cents: 1001_00, currency: 'CRC' }, { cents: 0, currency: 'USD' }] }))
+  })
   it('sin cuotas ese 20 no avisa ni marca', async () => {
     const s = state({ reminders: [] })
     const { db } = fakeDb(s)
@@ -120,6 +99,36 @@ describe('REC-01jm AC-4: aviso del pago de la tarjeta el 17 y el 20', () => {
     await notifyReminders(db, 'owner', cr('2026-11-17T09:00:00'), async () => send)
     expect(send).not.toHaveBeenCalled()
     expect(s.settings[0].card_notified_on).toBeNull()
+  })
+})
+
+describe('REC-03jm-T01: el push de la tarjeta respeta "Ya pagué"', () => {
+  const credit = (occurred_at: string, amount: string) =>
+    ({ user_id: 'owner', payment_method: 'credit', occurred_at, amount, currency: 'CRC', installments: 1 })
+  const settings = (card_paid_through: string | null) => [{ user_id: 'owner', card_notified_on: null, card_paid_through }]
+  const card = (crc: number, phase: 'pronto' | 'hoy') => reminderNotification({ description: 'Tarjeta de crédito', phase,
+    amounts: [{ cents: crc, currency: 'CRC' }, { cents: 0, currency: 'USD' }] })
+  async function run(s: State, local: string) {
+    const { db, eqs } = fakeDb(s)
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyReminders(db, 'owner', cr(local), async () => send)
+    return { pushes: sent(send), eqs }
+  }
+  it('AC-1: 20 dic ya marcado como pagado → 17 dic no hay push', async () => {
+    const s = state({ reminders: [], settings: settings('2026-12-20T06:00:00.000Z'), transactions: [credit('2026-11-10T12:00:00-06:00', '10000.00')] })
+    const { pushes, eqs } = await run(s, '2026-12-17T09:00:00')
+    expect(pushes).toEqual([])
+    expect(eqs).toContainEqual(['settings', 'user_id', 'owner'])
+  })
+  it('AC-2: cuota del 20 nov sin pagar + ₡5 000 el 20 dic → 20 dic push con ₡15 000', async () => {
+    const s = state({ reminders: [], settings: settings('2026-10-20T06:00:00.000Z'),
+      transactions: [credit('2026-10-10T12:00:00-06:00', '10000.00'), credit('2026-11-10T12:00:00-06:00', '5000.00')] })
+    expect((await run(s, '2026-12-20T09:00:00')).pushes).toEqual([card(15_000_00, 'hoy')])
+  })
+  it('AC-3: sin card_paid_through, cuota ₡10 000 el 20 dic → 20 dic push con ₡10 000', async () => {
+    const s = state({ reminders: [], settings: settings(null),
+      transactions: [credit('2026-10-10T12:00:00-06:00', '7000.00'), credit('2026-11-10T12:00:00-06:00', '10000.00')] })
+    expect((await run(s, '2026-12-20T09:00:00')).pushes).toEqual([card(10_000_00, 'hoy')])
   })
 })
 

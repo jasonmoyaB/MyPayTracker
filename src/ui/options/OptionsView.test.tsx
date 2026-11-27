@@ -4,6 +4,7 @@ import { ToastProvider } from '../toast/ToastProvider'
 import { OptionsView } from './OptionsView'
 
 vi.mock('../../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
+vi.mock('../../data/budgets', () => ({ saveBudget: vi.fn(), deleteBudget: vi.fn() }))
 vi.mock('../../data/push', () => ({ saveSubscription: vi.fn(), deleteSubscription: vi.fn() }))
 
 afterEach(() => { vi.unstubAllGlobals() })

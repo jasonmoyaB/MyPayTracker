@@ -7,7 +7,8 @@ const CUT_DAY = 6
 const DUE_DAY = 20
 
 // MOV-02jm-T01: 'sinpe' se trata como 'cash' (todo lo que no es 'credit' se paga en su fecha).
-export type PaymentMethod = 'cash' | 'credit' | 'sinpe'
+// TC-11jm-T02: 'card_payment' = pago de la tarjeta marcado a mano; se liquida en su fecha pero no es gasto (monthStats).
+export type PaymentMethod = 'cash' | 'credit' | 'sinpe' | 'card_payment'
 // TC-02jm: `installments` = plazo de tasa cero (1 = un pago); opcional para no tocar a quien no lo usa.
 export type CreditMovement = SummaryMovement & { paymentMethod: PaymentMethod; occurredAt: string; installments?: number }
 
@@ -24,7 +25,7 @@ export function creditDueAt(occurredAt: string): string {
 }
 
 // TC-02jm-T02: cuota k el 20 del mes k después del primer pago; el resto de centavos va en la primera.
-// ponytail: cuotas iguales sin la comisión de BAC por plazo; agregarla si el dev la conoce.
+// TC-12jm-T01: la comisión de BAC por plazo ya viene sumada en `amountCents` (el formulario la agrega).
 export function installmentDues(occurredAt: string, amountCents: number, n: number): { dueAt: string; cents: number }[] {
   const first = new Date(creditDueAt(occurredAt))
   const base = Math.floor(amountCents / n)
@@ -43,20 +44,6 @@ export function nextPayDay(now: Date): string {
 // Lo que vence hasta `at` (incluida). Claves ISO UTC: comparar texto = comparar fechas.
 export function dueBy(scheduleCrc: Record<string, number>, at: string): number {
   return Object.entries(scheduleCrc).reduce((sum, [dueAt, cents]) => (dueAt <= at ? sum + cents : sum), 0)
-}
-
-// REC-01jm-T02: lo que vence justo en `dueAt` (un 20), por moneda. TC-10jm: solo lo usa el push del cron.
-export function dueOn(movements: CreditMovement[], dueAt: string) {
-  const total = { crcCents: 0, usdCents: 0 }
-  for (const m of movements) {
-    if (m.paymentMethod !== 'credit') continue
-    for (const d of installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1)) {
-      if (d.dueAt !== dueAt) continue
-      if (m.currency === 'USD') total.usdCents += d.cents
-      else total.crcCents += d.cents
-    }
-  }
-  return total
 }
 
 // El día de corte aún cuenta como "próximo" mientras sea ese día en CR.

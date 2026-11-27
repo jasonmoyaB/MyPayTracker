@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueSoon, isCardPayment, nextDueOn, reminderNotification, reminderPhase } from './reminder'
+import { dueSoon, isCardPayment, nextDueOn, reminderNotification, reminderPhase, reservedCents } from './reminder'
 
 const cr = (local: string) => new Date(`${local}-06:00`)
 const money = (cents: number, currency: 'CRC' | 'USD') =>
@@ -81,5 +81,32 @@ describe('REC-02jm: nextDueOn salta el vencimiento ya pagado', () => {
   it('AC-3: un pago viejo no cuenta; día 31 pagado en nov → 31 dic', () => {
     expect(nextDueOn(1, cr('2026-11-28T09:00:00'), '2026-11-01')).toBe('2026-12-01')
     expect(nextDueOn(31, cr('2026-11-02T08:00:00'), '2026-11-30')).toBe('2026-12-31')
+  })
+})
+
+describe('FIJ-01jm-T02: reservedCents aparta los fijos del mes sin pagar', () => {
+  const now = cr('2026-11-10T12:00:00')
+  const alquiler = { description: 'Alquiler', amountCents: 200_000_00, currency: 'CRC' as const, day: 28, reserve: true, paidOn: null }
+  it('AC-1: alquiler día 28 apartado y sin pagar → ₡200 000', () => {
+    expect(reservedCents([alquiler], now)).toBe(200_000_00)
+  })
+  it('AC-2: pagado el 28 nov → 0', () => {
+    expect(reservedCents([{ ...alquiler, paidOn: '2026-11-28' }], now)).toBe(0)
+  })
+  it('AC-3: internet día 5 pagado el 5 nov, hoy 10 → 0; sin pagar sigue apartado (supuesto 2)', () => {
+    const internet = { ...alquiler, description: 'Internet', amountCents: 25_000_00, day: 5 }
+    expect(reservedCents([{ ...internet, paidOn: '2026-11-05' }], now)).toBe(0)
+    expect(reservedCents([internet], now)).toBe(25_000_00)
+  })
+  it('AC-4: "Tarjeta BAC" apartado → 0', () => {
+    expect(reservedCents([{ ...alquiler, description: 'Tarjeta BAC' }], now)).toBe(0)
+  })
+  it('AC-5: sin "Apartar" → 0; USD no se suma a CRC; pago de octubre no cubre noviembre', () => {
+    expect(reservedCents([{ ...alquiler, reserve: false }], now)).toBe(0)
+    expect(reservedCents([{ ...alquiler, currency: 'USD' }], now)).toBe(0)
+    expect(reservedCents([{ ...alquiler, paidOn: '2026-10-28' }], now)).toBe(200_000_00)
+  })
+  it('día 31 en noviembre vence el 30: pagado el 30 → 0', () => {
+    expect(reservedCents([{ ...alquiler, day: 31, paidOn: '2026-11-30' }], now)).toBe(0)
   })
 })

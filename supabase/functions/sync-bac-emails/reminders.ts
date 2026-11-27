@@ -1,9 +1,10 @@
 // REC-01jm-T05: push de recordatorios y del pago de la tarjeta. Corre en cada pasada del cron (cada 5 min).
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.50.0'
 import type { Currency } from '../../../src/domain/bankEmail.ts'
-import { dueOn, nextPayDay } from '../../../src/domain/credit.ts'
+import { dueBy, nextPayDay, paidUntil, splitCredit } from '../../../src/domain/credit.ts'
 import { costaRicaDateTime } from '../../../src/domain/date.ts'
 import { numericToCents } from '../../../src/domain/money.ts'
+import { allPages } from '../../../src/domain/paging.ts'
 import { nextDueOn, reminderNotification, reminderPhase, type ReminderPhase } from '../../../src/domain/reminder.ts'
 import { pushToOwner, type SendPush, webPushSender } from './push.ts'
 
@@ -46,17 +47,26 @@ async function dueReminders(db: SupabaseClient, ownerId: string, now: Date): Pro
   })
 }
 
-// Lo que vence ese 20 (dueOn). TC-10jm-T07: a propósito no lee card_paid_through (supuesto de la spec):
-// puede avisar un 20 ya pagado por adelantado; se corrige si molesta.
+// REC-03jm-T01: el mismo "Pagas" que el Resumen: lo que vence hasta ese 20 sin marcar pagado (incluye lo atrasado).
 async function dueCard(db: SupabaseClient, ownerId: string, now: Date): Promise<Due[]> {
   const payDay = nextPayDay(now)
   const phase = reminderPhase(payDay.slice(0, 10), now) // 00:00 CR = 06:00Z: la fecha UTC es la de CR
   if (!phase) return []
-  const { data, error } = await db.from('transactions').select('amount, currency, occurred_at, installments')
-    .eq('user_id', ownerId).eq('payment_method', 'credit')
-  if (error) throw error
-  const { crcCents, usdCents } = dueOn(data.map((t) => ({ amountCents: numericToCents(t.amount), currency: currency(t.currency),
-    direction: 'out' as const, paymentMethod: 'credit' as const, occurredAt: t.occurred_at, installments: t.installments })), payDay)
+  // ARQ-02jm-T03: todas las páginas; una compra vieja a plazo puede tener cuotas vigentes.
+  const data = await allPages(async (from, to) => {
+    const { data, error } = await db.from('transactions').select('amount, currency, occurred_at, installments')
+      .eq('user_id', ownerId).eq('payment_method', 'credit').order('id').range(from, to)
+    if (error) throw error
+    return data
+  })
+  const settings = await db.from('settings').select('card_paid_through').eq('user_id', ownerId)
+  if (settings.error) throw settings.error
+  // Sin marca se corta justo antes de ese 20 (no en `now`): el día 20 su cuota aún se avisa (AC-3).
+  const paidThrough = paidUntil(settings.data[0]?.card_paid_through, new Date(Date.parse(payDay) - 1))
+  const { pending } = splitCredit(data.map((t) => ({ amountCents: numericToCents(t.amount), currency: currency(t.currency),
+    direction: 'out' as const, paymentMethod: 'credit' as const, occurredAt: t.occurred_at, installments: t.installments })), paidThrough)
+  const crcCents = dueBy(pending.scheduleCrc, payDay)
+  const usdCents = dueBy(pending.scheduleUsd, payDay)
   if (crcCents === 0 && usdCents === 0) return []
   return [{ table: 'settings', marker: 'card_notified_on', key: 'user_id', value: ownerId, description: 'Tarjeta de crédito', phase,
     amounts: [{ cents: crcCents, currency: 'CRC' }, { cents: usdCents, currency: 'USD' }] }]

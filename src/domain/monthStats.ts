@@ -1,5 +1,5 @@
 // MCP-01jm-T01: con extensión; la Edge Function mcp importa este archivo desde Deno.
-import type { PaymentMethod } from './credit.ts'
+import { installmentDues, type PaymentMethod } from './credit.ts'
 import { CR_OFFSET_MS } from './date.ts'
 import { isCardPayment } from './reminder.ts'
 import type { SummaryMovement } from './summary.ts'
@@ -60,6 +60,20 @@ export function lastEmailMovement(movements: Pick<MonthMovement, 'occurredAt' | 
   return latest
 }
 
+// TC-11jm-T02: el pago de la tarjeta (son las cuotas otra vez). Explícito si es manual; los correos BAC no traen
+// forma de pago, así que ahí sigue el regex. Un gasto manual que dice "visa" cuenta.
+export function isCardPaymentMovement(m: Pick<SpendMovement, 'paymentMethod' | 'source' | 'description'>): boolean {
+  return m.paymentMethod === 'card_payment' || (m.source.startsWith('email_') && isCardPayment(m.description))
+}
+
+// Gasto "de bolsillo": sin compras con tarjeta (ya restan como cuotas) ni pagos de tarjeta (serían esas mismas cuotas).
+const isTypicalSpend = (m: SpendMovement) => m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPaymentMovement(m)
+
+// PROY-01jm-T01: lo ya gastado este mes CR con el mismo filtro que avgMonthlySpend.
+export function spentThisMonth(movements: SpendMovement[], now: Date): number {
+  return thisMonthCrc(movements, now).filter(isTypicalSpend).reduce((sum, m) => sum + m.amountCents, 0)
+}
+
 // SIM-01jm-T03: gasto típico del mes para "¿Puedo comprar esto?". Sin compras con tarjeta (ya restan como cuotas)
 // ni pagos de tarjeta (serían esas mismas cuotas otra vez). Divide solo entre meses con movimientos: con menos
 // de 3 meses de historial no subestima.
@@ -74,7 +88,18 @@ export function avgMonthlySpend(movements: SpendMovement[], now: Date): number {
     const at = Date.parse(m.occurredAt)
     if (m.currency !== 'CRC' || at < startMs || at >= endMs) continue
     months.add(new Date(at - CR_OFFSET_MS).getUTCMonth())
-    if (m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPayment(m.description)) cents += m.amountCents
+    if (isTypicalSpend(m)) cents += m.amountCents
   }
   return months.size ? Math.round(cents / months.size) : 0
+}
+
+// GAS-01jm-T01: el gasto del mes es lo que se paga ese mes. Una compra con tarjeta cuenta como sus cuotas, cada una
+// en el 20 en que vence (corte el 6: creditDueAt); el pago de la tarjeta sale porque serían esas mismas cuotas otra vez.
+export function monthlyCharges<T extends SpendMovement & { installments?: number }>(movements: T[]): T[] {
+  return movements.flatMap((m) => {
+    if (m.paymentMethod === 'credit') {
+      return installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).map((d) => ({ ...m, amountCents: d.cents, occurredAt: d.dueAt }))
+    }
+    return m.direction === 'out' && isCardPaymentMovement(m) ? [] : [m]
+  })
 }

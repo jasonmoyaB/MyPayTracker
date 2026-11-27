@@ -94,6 +94,15 @@ export function parseBankEmail(from: string, text: string): ParsedMovement | nul
   return PARSERS[address]?.(text) ?? null
 }
 
+// MAIL-02jm-T02: el parser no lo leyó pero trae un monto: probablemente el BAC cambió el formato y hay que avisar.
+// Un SINPE rechazado trae monto a propósito y no es movimiento.
+// MAIL-02jm-T04: exige una etiqueta ("Monto:", "por un monto de", "Cargo de"...) justo antes del monto:
+// un "$50" suelto de un correo promocional no avisa.
+const AMOUNT_RE = /\b(monto|importe|cargo|pago)\b\D{0,20}((CRC|USD|₡|\$)\s*\d|\d[\d,.]*\s+(Colones|D[oó]lares))/i
+export function looksLikeMovement(text: string): boolean {
+  return AMOUNT_RE.test(text) && !/rechazad[ao]/i.test(text)
+}
+
 export type GmailPart = { mimeType?: string; body?: { data?: string }; parts?: GmailPart[] }
 
 function findPart(part: GmailPart, mimeType: string): GmailPart | undefined {

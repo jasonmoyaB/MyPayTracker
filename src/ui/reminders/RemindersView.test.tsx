@@ -8,7 +8,7 @@ import { DashboardView } from '../dashboard/DashboardView'
 import { bellItems } from './NotificationBell'
 import { RemindersList, RemindersView } from './RemindersView'
 
-vi.mock('../../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn(), markReminderPaid: vi.fn() }))
+vi.mock('../../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn(), markReminderPaid: vi.fn(), setReminderReserve: vi.fn() }))
 
 const now = new Date('2026-10-29T12:00:00-06:00')
 const credit = (occurredAt: string, amountCents: number, currency: 'CRC' | 'USD' = 'CRC'): Transaction => ({ id: occurredAt, amountCents,
@@ -39,13 +39,13 @@ describe('REC-01jm-T04: pantalla Recordatorios', () => {
 
 describe('REC-01jm-T04: validación del formulario', () => {
   it('monto en centavos, descripción recortada, día 1–31', () => {
-    expect(checkReminder({ description: ' Spotify ', amount: '2000', currency: 'CRC', day: '15' }))
-      .toEqual({ description: 'Spotify', amountCents: 2000_00, currency: 'CRC', day: 15 })
+    expect(checkReminder({ description: ' Spotify ', amount: '2000', currency: 'CRC', day: '15', reserve: true }))
+      .toEqual({ description: 'Spotify', amountCents: 2000_00, currency: 'CRC', day: 15, reserve: true })
   })
   it('rechaza descripción vacía, monto inválido y día fuera de rango', () => {
-    expect(checkReminder({ description: ' ', amount: '2000', currency: 'CRC', day: '15' })).toHaveProperty('error')
-    expect(checkReminder({ description: 'x', amount: '0', currency: 'CRC', day: '15' })).toHaveProperty('error')
-    for (const day of ['0', '32', '1.5', '']) expect(checkReminder({ description: 'x', amount: '1', currency: 'USD', day })).toHaveProperty('error')
+    expect(checkReminder({ description: ' ', amount: '2000', currency: 'CRC', day: '15', reserve: false })).toHaveProperty('error')
+    expect(checkReminder({ description: 'x', amount: '0', currency: 'CRC', day: '15', reserve: false })).toHaveProperty('error')
+    for (const day of ['0', '32', '1.5', '']) expect(checkReminder({ description: 'x', amount: '1', currency: 'USD', day, reserve: false })).toHaveProperty('error')
   })
 })
 
@@ -104,7 +104,7 @@ describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen',
   const pays = `Pagas <span class="amount">${formatMoney(15_000_00, 'CRC')}</span> el 20 dic`
   it('la fila de la tarjeta dice "Pagas" y "Deuda total" igual que el Resumen, con "Ya pagué"', () => {
     const list = renderToStaticMarkup(<ToastProvider><RemindersList reminders={[]} transactions={debt} reload={() => {}} now={today}
-      cardPaidThrough={paid} onCardPaid={() => {}} /></ToastProvider>)
+      cardPaidThrough={paid} onChanged={() => {}} /></ToastProvider>)
     const dash = renderToStaticMarkup(<ToastProvider><DashboardView settings={{ salaryCents: 0, account: null, cardPaidThrough: paid }}
       transactions={debt} now={today} /></ToastProvider>)
     expect(list).toContain(pays)
@@ -126,5 +126,15 @@ describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen',
     const [card] = bellItems([], debt, new Date('2026-11-20T10:00:00-06:00'), paid)
     expect(card.title).toBe('Tarjeta de crédito')
     expect(card.when).not.toBe('atrasado')
+  })
+})
+
+describe('FIJ-01jm-T03: apartar del saldo', () => {
+  it('casilla al crear y por fila; la de tarjeta no se aparta y no la ofrece', () => {
+    const html = render([], [{ id: 'r1', description: 'Alquiler', amountCents: 2000_00, currency: 'CRC', day: 15 },
+      { id: 'r2', description: 'Tarjeta BAC', amountCents: 2000_00, currency: 'CRC', day: 20 }])
+    expect(html).toMatch(/<input type="checkbox"[^>]*aria-label="Apartar Alquiler del saldo"/)
+    expect(html).not.toContain('Apartar Tarjeta BAC del saldo')
+    expect(html).toMatch(/<input id="reminder-reserve" type="checkbox"/)
   })
 })

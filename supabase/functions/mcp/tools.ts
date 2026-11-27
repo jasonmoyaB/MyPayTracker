@@ -3,8 +3,9 @@ import { costaRicaDateTime, costaRicaIso } from '../../../src/domain/date.ts'
 import { centsToNumeric } from '../../../src/domain/money.ts'
 import { parseAmountToCents } from '../../../src/domain/amount.ts'
 import { paidUntil, splitCredit } from '../../../src/domain/credit.ts'
-import { avgMonthlySpend, costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
+import { avgMonthlySpend, monthlyCharges, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
 import { PLANS, recommend, type Plan } from '../../../src/domain/recommend.ts'
+import { reservedCents, type ReservableReminder } from '../../../src/domain/reminder.ts'
 import { summaryFor } from '../../../src/domain/summary.ts'
 
 // Movimientos (ya en centavos) con occurred_at en [desdeIso, hastaIso), más recientes primero.
@@ -15,6 +16,8 @@ export type Ledger = () => Promise<{
   // TC-10jm-T06: cardPaidThrough como en la app (Settings), para cortar la deuda igual que el Resumen.
   settings: Parameters<typeof summaryFor>[0] & { cardPaidThrough?: string | null }
   transactions: (SpendMovement & { installments: number })[]
+  // FIJ-01jm-T04: los recordatorios para apartar los fijos del mes, como el Resumen.
+  reminders?: ReservableReminder[]
 }>
 // MCP-03jm-T01: upsert de columnas de settings (ya en numeric) como el usuario del token.
 export type SaveSettings = (fields: Record<string, string>) => Promise<void>
@@ -48,7 +51,7 @@ const TOOLS = [
   {
     name: 'puedo_comprar',
     description: 'Recomendación de "¿Puedo comprar esto?" de la app para una compra en colones: veredicto (si/ajustado/no), cuota, '
-      + 'lo que queda hoy y lo libre mes a mes. queda_hoy = saldo + extra − lo que vence el próximo 20 (incluida esta compra si vence ahí); '
+      + 'lo que queda hoy y lo libre mes a mes. queda_hoy = saldo + extra − gastos fijos apartados del mes sin pagar − lo que vence el próximo 20 (incluida esta compra si vence ahí); '
       + 'cada mes siguiente sale del salario menos cuotas y gasto promedio. Lo sano: cuotas hasta 30 % del salario. No registra la compra.',
     inputSchema: {
       type: 'object',
@@ -83,12 +86,12 @@ const signed = (cents: number) => (cents < 0 ? '-' : '') + centsToNumeric(Math.a
 const iso = (ms: number) => new Date(ms).toISOString()
 const text = (value: unknown, isError = false) => ({ content: [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value) }], ...(isError && { isError }) })
 
-async function resumenMes(args: Record<string, unknown>, query: Query) {
+async function resumenMes(args: Record<string, unknown>, _query: Query, ledger: Ledger) {
   const mes = args.mes ?? costaRicaDateTime(new Date()).slice(0, 7)
   const now = typeof mes === 'string' ? parseMonth(mes) : null
   if (!now) return text('mes inválido: usa el formato YYYY-MM, p. ej. 2026-11.', true)
-  const { startMs, endMs } = costaRicaMonth(now)
-  const rows = await query(iso(startMs), iso(endMs))
+  // GAS-01jm-T03: todo el historial y no solo el mes: la cuota de este mes puede venir de una compra de hasta 12 meses antes.
+  const rows = monthlyCharges((await ledger()).transactions)
   const stats = monthStats(rows, now)
   return text({
     mes, moneda: 'CRC', ingresos: signed(stats.incomeCents), gastos: signed(stats.expenseCents), neto: signed(stats.netCents),
@@ -134,14 +137,14 @@ async function puedoComprar(args: Record<string, unknown>, _query: Query, ledger
   const plan = (args.plazo === 'contado' ? 'cash' : Number(args.plazo)) as Plan
   if (priceCents === null || extraCents === null) return text('precio y extra deben ser montos en colones mayores que cero, p. ej. "80000".', true)
   if (!PLANS.includes(plan)) return text('plazo debe ser "contado", "1", "3", "6", "10" o "12".', true)
-  const { settings, transactions } = await ledger()
+  const { settings, transactions, reminders = [] } = await ledger()
   // Misma composición que DashboardView: saldo con lo ya cobrado de la tarjeta; lo pendiente va como calendario de cuotas.
   const now = new Date()
   const { settled, pending } = splitCredit(transactions, paidUntil(settings.cardPaidThrough, now))
   const summary = summaryFor(settings, settled)
   if (!summary) return text('Registra tu saldo de cuenta o tu salario en Cuenta (en la app) para poder calcularlo.', true)
   const spendCents = avgMonthlySpend(transactions, now)
-  const r = recommend({ priceCents, plan, extraCents, balanceCents: summary.balanceCrcCents, salaryCents: settings.salaryCents,
+  const r = recommend({ priceCents, plan, extraCents, balanceCents: summary.balanceCrcCents - reservedCents(reminders, now), salaryCents: settings.salaryCents,
     scheduleCrc: pending.scheduleCrc, now, spendCents })
   return text({
     moneda: 'CRC', precio: centsToNumeric(priceCents), forma_pago: plan === 'cash' ? 'contado' : plan,

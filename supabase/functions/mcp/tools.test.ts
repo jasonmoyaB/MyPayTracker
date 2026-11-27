@@ -9,6 +9,7 @@ import { handleRpc } from './tools.ts'
 const mov = (occurredAt: string, amountCents: number, over: Partial<SpendMovement> = {}): SpendMovement => ({
   occurredAt, amountCents, direction: 'out', description: 'Super', currency: 'CRC', source: 'manual', paymentMethod: 'cash', ...over,
 })
+const ledgerOf = (transactions: (SpendMovement & { installments?: number })[]) => vi.fn().mockResolvedValue({ settings: {}, transactions })
 const call = (name: string, args: unknown, query = vi.fn().mockResolvedValue([]), ledger = vi.fn(), save = vi.fn()) =>
   handleRpc({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, query, ledger, save)
 const payload = (res: unknown) => JSON.parse((res as { result: { content: { text: string }[] } }).result.content[0].text)
@@ -43,20 +44,25 @@ describe('MCP-01jm-T02: protocolo', () => {
 })
 
 describe('AC-2: resumen_mes', () => {
-  it('ingresos, gastos, neto CRC y top comercios del mes pedido; consulta el rango del mes en CR', async () => {
-    const query = vi.fn().mockResolvedValue([
+  it('ingresos, gastos, neto CRC y top comercios del mes pedido en CR', async () => {
+    const ledger = ledgerOf([
       mov('2026-11-02T10:00:00-06:00', 100_000, { direction: 'in', description: 'Salario' }),
       mov('2026-11-03T10:00:00-06:00', 150_050),
       mov('2026-11-04T10:00:00-06:00', 9_999, { currency: 'USD' }),
+      mov('2026-12-01T00:00:00-06:00', 7_000),
     ])
-    const res = payload(await call('resumen_mes', { mes: '2026-11' }, query))
-    expect(query).toHaveBeenCalledWith('2026-11-01T06:00:00.000Z', '2026-12-01T06:00:00.000Z')
+    const res = payload(await call('resumen_mes', { mes: '2026-11' }, undefined, ledger))
     expect(res).toEqual({ mes: '2026-11', moneda: 'CRC', ingresos: '1000.00', gastos: '1500.50', neto: '-500.50',
       top_comercios: [{ comercio: 'Super', monto: '1500.50' }] })
   })
+  it('GAS-01jm AC-4: cuenta la cuota del mes de una compra con tarjeta de meses antes, no la compra entera', async () => {
+    const ledger = ledgerOf([mov('2026-10-27T15:00:00-06:00', 19_400_000, { paymentMethod: 'credit', installments: 12, description: 'Pantalla' })])
+    expect(payload(await call('resumen_mes', { mes: '2026-12' }, undefined, ledger))).toMatchObject({ gastos: '16166.66' })
+    expect(payload(await call('resumen_mes', { mes: '2026-10' }, undefined, ledger))).toMatchObject({ gastos: '0.00' })
+  })
   it('sin mes usa el mes en curso de Costa Rica', async () => {
     vi.useFakeTimers({ now: new Date('2026-12-01T05:59:00Z') }) // 30 nov 23:59 en CR
-    expect(payload(await call('resumen_mes', {}))).toMatchObject({ mes: '2026-11' })
+    expect(payload(await call('resumen_mes', {}, undefined, ledgerOf([])))).toMatchObject({ mes: '2026-11' })
   })
   it('AC-5: mes mal escrito → isError con mensaje claro', async () => {
     const res = await call('resumen_mes', { mes: '2026-13' }) as { result: { isError: boolean; content: { text: string }[] } }
@@ -151,6 +157,14 @@ describe('MCP-02jm-T02: puedo_comprar', () => {
     const left = async (paid: string) => payload(await call('puedo_comprar', { precio: '10000', plazo: 'contado' }, vi.fn(), l(paid))).queda_hoy
     expect(await left('2026-10-20T06:00:00Z')).toBe('40000.00')
     expect(await left('2026-11-20T06:00:00Z')).toBe('140000.00')
+  })
+  it('FIJ-01jm-T04: resta los fijos apartados del mes sin pagar, como el Resumen', async () => {
+    vi.useFakeTimers({ now: NOW })
+    const alquiler = { description: 'Alquiler', amountCents: 5_000_000, currency: 'CRC', day: 28, reserve: true, paidOn: null }
+    const l = (reminders: unknown[]) => vi.fn().mockResolvedValue({ settings, transactions, reminders })
+    const left = async (reminders: unknown[]) => Number(payload(await call('puedo_comprar', { precio: '10000', plazo: 'contado' }, vi.fn(), l(reminders))).queda_hoy)
+    expect(await left([]) - await left([alquiler])).toBe(50_000)
+    expect(await left([{ ...alquiler, paidOn: '2026-10-28' }])).toBe(await left([]))
   })
 })
 

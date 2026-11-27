@@ -1,13 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { CategorySelect } from './CategorySelect'
 import { TransactionsPanel } from './TransactionsPanel'
-import { PaymentField } from './TransactionForm'
+import { ToastProvider } from '../toast/ToastProvider'
+import { FeeField, PaymentField } from './TransactionForm'
 import { effectivePaymentMethod } from './useTransactionForm'
 import { formatDate, formatDay, formatMoney } from '../format'
 import type { Transaction } from '../../data/transactions'
 import type { MovementFilter } from '../../domain/movementFilter'
 
-vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn() }))
+vi.mock('../../data/transactions', () => ({ addManualTransaction: vi.fn(), setTransactionCategory: vi.fn() }))
 
 const transaction: Transaction = {
   id: '1', amountCents: 349050, currency: 'CRC', direction: 'out', source: 'manual',
@@ -16,7 +18,7 @@ const transaction: Transaction = {
 const income: Transaction = { ...transaction, id: '2', direction: 'in', source: 'email_regex', description: 'Salario' }
 const all: MovementFilter = { from: null, to: null, direction: 'all' }
 const render = (transactions: Transaction[], filter = all) => renderToStaticMarkup(
-  <TransactionsPanel transactions={transactions} filter={filter} onFilterChange={() => {}} onTransactionSaved={() => {}} />,
+  <ToastProvider><TransactionsPanel transactions={transactions} filter={filter} onFilterChange={() => {}} onTransactionSaved={() => {}} /></ToastProvider>,
 )
 
 describe('AC-5: lista de movimientos', () => {
@@ -105,5 +107,67 @@ describe('TC-02jm: plazo de tasa cero', () => {
   it('la fila muestra el plazo y la primera cuota', () => {
     const html = render([{ ...transaction, paymentMethod: 'credit', installments: 6, occurredAt: '2026-10-28T13:45:00-06:00' }])
     expect(html).toContain('Tarjeta · tasa cero 6 meses · primera cuota el 20 nov')
+  })
+})
+
+describe('TC-11jm-T03: "Pago de tarjeta" como forma de pago', () => {
+  const field = (direction: 'in' | 'out', paymentMethod: Transaction['paymentMethod'] = 'cash') => renderToStaticMarkup(
+    <PaymentField state={{ direction, paymentMethod, setPaymentMethod: () => {}, installments: 1, setInstallments: () => {} }} />)
+  it('se ofrece solo en gastos y sin plazo', () => {
+    expect(field('out')).toContain('value="card_payment">Pago de tarjeta')
+    expect(field('in')).not.toContain('card_payment')
+    expect(field('out', 'card_payment')).not.toContain('Plazo')
+  })
+  it('AC-4: un ingreso nunca se guarda como pago de tarjeta', () => {
+    expect(effectivePaymentMethod('in', 'card_payment')).toBe('cash')
+    expect(effectivePaymentMethod('out', 'card_payment')).toBe('card_payment')
+  })
+  it('la fila muestra la etiqueta "Pago de tarjeta"', () => {
+    expect(render([{ ...transaction, paymentMethod: 'card_payment' }])).toContain('Pago de tarjeta · Manual')
+  })
+})
+
+describe('TC-12jm-T01 AC-4: la comisión solo aparece en compras con tarjeta a plazo', () => {
+  const fee = (paymentMethod: Transaction['paymentMethod'], installments: number, direction: 'in' | 'out' = 'out') => renderToStaticMarkup(
+    <FeeField state={{ direction, paymentMethod, installments, fee: '', setFee: () => {}, feeError: '' }} />)
+  it('tarjeta a 12 meses → campo "Comisión (opcional)"', () => {
+    expect(fee('credit', 12)).toContain('Comisión (opcional)')
+  })
+  it('un pago, efectivo o ingreso → sin campo', () => {
+    expect(fee('credit', 1)).toBe('')
+    expect(fee('cash', 12)).toBe('')
+    expect(fee('credit', 12, 'in')).toBe('')
+  })
+  it('AC-3: el error se asocia al campo (aria-describedby)', () => {
+    const html = renderToStaticMarkup(<FeeField state={{ direction: 'out', paymentMethod: 'credit', installments: 12, fee: '-1', setFee: () => {}, feeError: 'mal' }} />)
+    expect(html).toContain('aria-describedby="transaction-fee-error"')
+    expect(html).toContain('id="transaction-fee-error"')
+  })
+})
+
+describe('CAT-01jm-T04: categoría en Movimientos', () => {
+  it('cada gasto muestra un selector con su categoría efectiva; los ingresos no', () => {
+    const html = render([{ ...transaction, description: 'AUTO MERCADO ESCAZU' }, income])
+    expect(html.match(/<select[^>]*aria-label="Categoría"/g)).toHaveLength(1)
+    expect(html).toContain('value="Súper" selected=""')
+  })
+  it('AC-5: la guardada (al recargar) es la que se muestra', () => {
+    expect(render([{ ...transaction, category: 'Salud' }])).toContain('value="Salud" selected=""')
+  })
+  it('AC-5: al cambiar avisa la categoría elegida', () => {
+    const onChange = vi.fn()
+    const select = CategorySelect({ value: 'Otros', onChange })
+    select.props.onChange({ target: { value: 'Comida' } })
+    expect(onChange).toHaveBeenCalledWith('Comida')
+  })
+})
+
+describe('ANA-02jm-T02: Exportar CSV', () => {
+  it('AC-5: con el filtro vacío el botón está deshabilitado', () => {
+    const html = render([transaction], { from: '2027-01-01', to: '2027-01-31', direction: 'all' })
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Exportar CSV<\/button>/)
+  })
+  it('con movimientos filtrados el botón está habilitado', () => {
+    expect(render([transaction])).toMatch(/<button type="button" class="secondary">Exportar CSV<\/button>/)
   })
 })

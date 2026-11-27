@@ -1,6 +1,7 @@
 // MCP-01jm-T03: conector MCP (Streamable HTTP sin estado). Solo I/O; el protocolo vive en tools.ts.
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 import { numericToCents } from '../../../src/domain/money.ts'
+import { allPages } from '../../../src/domain/paging.ts'
 import { handleRpc, type Ledger, type Query, type SaveSettings } from './tools.ts'
 
 function env(name: string): string {
@@ -64,14 +65,26 @@ Deno.serve(async (req) => {
       if (error) throw error
       return data.map(toMovement)
     }
-    // MCP-02jm-T02: igual que listTransactions + getSettings en la app (mismo techo de 1000 filas de PostgREST).
+    // MCP-02jm-T02: igual que listTransactions + getSettings en la app.
+    // ARQ-02jm-T03: paginado como la app para no perder historia más allá de 1000 filas.
     const ledger: Ledger = async () => {
-      const [settings, transactions] = await Promise.all([
+      const [settings, reminders, transactions] = await Promise.all([
         db.from('settings').select('salary, account_balance, account_balance_at, card_paid_through').maybeSingle(),
-        db.from('transactions').select(`${COLUMNS}, installments`),
+        // FIJ-01jm-T04: los apartados restan en puedo_comprar como en el Resumen.
+        // FIJ-01jm-T05: sin la 0018 aplicada (42703) se reintenta sin reserve, como listReminders en la app.
+        db.from('reminders').select('description, amount, currency, day, paid_on, reserve')
+          .then((r) => r.error?.code === '42703' ? db.from('reminders').select('description, amount, currency, day, paid_on') : r),
+        allPages(async (from, to) => {
+          const { data, error } = await db.from('transactions').select(`${COLUMNS}, installments`)
+            .order('occurred_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, to)
+          if (error) throw error
+          return data
+        }),
       ])
       if (settings.error) throw settings.error
-      if (transactions.error) throw transactions.error
+      if (reminders.error) throw reminders.error
       const s = settings.data
       return {
         settings: {
@@ -79,7 +92,9 @@ Deno.serve(async (req) => {
           account: s?.account_balance_at ? { cents: numericToCents(s.account_balance), asOf: s.account_balance_at } : null,
           cardPaidThrough: s?.card_paid_through ?? null,
         },
-        transactions: transactions.data.map((r) => ({ ...toMovement(r), installments: r.installments })),
+        transactions: transactions.map((r) => ({ ...toMovement(r), installments: r.installments })),
+        reminders: reminders.data.map((r) => ({ description: r.description, amountCents: numericToCents(r.amount), currency: r.currency,
+          day: r.day, paidOn: r.paid_on, reserve: r.reserve === true })),
       }
     }
 

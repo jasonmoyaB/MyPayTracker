@@ -5,12 +5,13 @@ export type AccountBalance = { cents: number; asOf: string }
 
 // null = el usuario todavía no lo registró.
 // TC-10jm-T03: cardPaidThrough = el 20 hasta el que pagó la tarjeta; opcional para no tocar a quien no lo usa.
-export type Settings = { salaryCents: number | null; account: AccountBalance | null; cardPaidThrough?: string | null }
+// USD-01jm-T02: usdRateCents = colones por dólar en céntimos; null = sin tipo de cambio.
+export type Settings = { salaryCents: number | null; account: AccountBalance | null; cardPaidThrough?: string | null; usdRateCents?: number | null }
 
 export async function getSettings(): Promise<Settings> {
   const { data, error } = await supabase
     .from('settings')
-    .select('salary, account_balance, account_balance_at, card_paid_through')
+    .select('salary, account_balance, account_balance_at, card_paid_through, usd_rate')
     .maybeSingle()
   if (error) throw error
   return {
@@ -19,6 +20,7 @@ export async function getSettings(): Promise<Settings> {
       ? { cents: numericToCents(data.account_balance), asOf: data.account_balance_at }
       : null,
     cardPaidThrough: data?.card_paid_through ?? null,
+    usdRateCents: data?.usd_rate == null ? null : numericToCents(data.usd_rate),
   }
 }
 
@@ -38,6 +40,11 @@ export function saveSalaryCents(salaryCents: number): Promise<void> {
 // La fecha es "ahora": los movimientos posteriores se suman sobre este saldo.
 export function saveAccountBalanceCents(cents: number): Promise<void> {
   return upsertSettings({ account_balance: centsToNumeric(cents), account_balance_at: new Date().toISOString() })
+}
+
+// USD-01jm-T02: mismo formato que un monto (2 decimales); el check de 0015 rechaza 0 o negativos.
+export function saveUsdRateCents(cents: number): Promise<void> {
+  return upsertSettings({ usd_rate: centsToNumeric(cents) })
 }
 
 // TC-10jm-T03: marca pagado el ciclo que vence en `dueAt` (un 20) y todos los anteriores.

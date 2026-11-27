@@ -1,18 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { addManualTransaction, deleteTransaction, listTransactions, updateTransaction } from './transactions'
+import { addManualTransaction, deleteTransaction, listTransactions, setTransactionCategory, updateTransaction } from './transactions'
 
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
-    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3 }
-  const order = vi.fn(async () => ({ data: [row], error: null }))
+    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3, category: 'Salud' }
+  const range = vi.fn(async () => ({ data: [row], error: null }))
+  const order = vi.fn(() => ({ order, range }))
   const select = vi.fn(() => ({ order }))
   const insert = vi.fn(async () => ({ error: null }))
   const eq = vi.fn(async () => ({ error: null }))
   const remove = vi.fn(() => ({ eq }))
   const update = vi.fn(() => ({ eq }))
   const from = vi.fn(() => ({ select, insert, update, delete: remove }))
-  return { select, insert, update, eq, from }
+  return { select, order, range, insert, update, eq, from }
 })
 vi.mock('./supabase', () => ({ supabase: { from: db.from } }))
 
@@ -27,6 +28,15 @@ describe('TC-01jm AC-4: payment_method en transactions', () => {
   })
   it('credit solo para gastos', () => {
     expect(sql).toMatch(/check \(payment_method = 'cash' or direction = 'out'\)/)
+  })
+})
+
+describe('ARQ-02jm-T02: listTransactions lee todas las páginas', () => {
+  it('pagina con range y desempata el orden por id', async () => {
+    await listTransactions()
+    expect(db.order).toHaveBeenCalledWith('occurred_at', { ascending: false })
+    expect(db.order).toHaveBeenCalledWith('id', { ascending: false })
+    expect(db.range).toHaveBeenCalledWith(0, 999)
   })
 })
 
@@ -76,6 +86,17 @@ describe('MOV-02jm-T01: SINPE como forma de pago', () => {
   })
 })
 
+describe('TC-11jm-T01: "Pago de tarjeta" como forma de pago', () => {
+  const sql14 = () => readFileSync(new URL('../../supabase/migrations/0014_payment_method_card_payment.sql', import.meta.url), 'utf8').toLowerCase()
+  it('acepta card_payment además de cash, credit y sinpe', () => {
+    expect(sql14()).toMatch(/drop constraint transactions_payment_method_check/)
+    expect(sql14()).toMatch(/add constraint transactions_payment_method_check check \(payment_method in \('cash', 'credit', 'sinpe', 'card_payment'\)\)/)
+  })
+  it('AC-4: card_payment solo como gasto y en un pago', () => {
+    expect(sql14()).toMatch(/add constraint transactions_card_payment_gasto_un_pago check \(payment_method <> 'card_payment' or \(direction = 'out' and installments = 1\)\)/)
+  })
+})
+
 describe('TC-07jm-T02: borrar una deuda', () => {
   it('AC-3: borra solo la fila de ese id (RLS limita al dueño)', async () => {
     await deleteTransaction('abc')
@@ -88,6 +109,27 @@ describe('TC-08jm-T01: editar una deuda', () => {
   it('AC-2: actualiza solo esa fila con precio, cuotas y fecha; no toca moneda ni método', async () => {
     await updateTransaction('abc', { amountCents: 120_000_00, description: 'Tele', occurredAt: '2026-09-10T12:00:00-06:00', installments: 3 })
     expect(db.update).toHaveBeenCalledWith({ amount: '120000.00', description: 'Tele', occurred_at: '2026-09-10T12:00:00-06:00', installments: 3 })
+    expect(db.eq).toHaveBeenCalledWith('id', 'abc')
+  })
+})
+
+const sql16 = readFileSync(new URL('../../supabase/migrations/0016_transaction_category.sql', import.meta.url), 'utf8')
+
+describe('CAT-01jm-T01: category en transactions', () => {
+  it('0016: columna nula con check en la lista fija', () => {
+    expect(sql16).toMatch(/alter table public\.transactions\s+add column category text\s+check \(category in \('Súper', 'Comida', 'Transporte', 'Servicios', 'Salud', 'Compras', 'Entretenimiento', 'Otros'\)\)/)
+  })
+})
+
+describe('CAT-01jm-T03: leer y guardar la categoría', () => {
+  it('listTransactions mapea category', async () => {
+    const [t] = await listTransactions()
+    expect(db.select).toHaveBeenCalledWith(expect.stringContaining('category'))
+    expect(t.category).toBe('Salud')
+  })
+  it('AC-5: setTransactionCategory actualiza solo esa fila', async () => {
+    await setTransactionCategory('abc', 'Comida')
+    expect(db.update).toHaveBeenCalledWith({ category: 'Comida' })
     expect(db.eq).toHaveBeenCalledWith('id', 'abc')
   })
 })

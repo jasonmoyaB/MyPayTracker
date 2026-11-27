@@ -93,6 +93,11 @@ describe('TC-01jm AC-2/AC-3: tarjeta de crédito en el Resumen', () => {
     const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit })
     expect(html).toContain(`Puedes gastar ${formatMoney(100_000_00, 'CRC')}`)
   })
+  it('FIJ-01jm-T03: un fijo apartado y sin pagar baja "Puedes gastar" y el saldo de ¿Puedo comprar?', () => {
+    const reminders = [{ id: 'r1', description: 'Alquiler', amountCents: 60_000_00, currency: 'CRC' as const, day: 28, reserve: true }]
+    const html = render({ settings: { salaryCents: 300_000_00, account: null }, transactions: credit, reminders })
+    expect(html).toContain(`Puedes gastar ${formatMoney(40_000_00, 'CRC')}`)
+  })
 })
 
 describe('TC-02jm: cuotas futuras contra el salario', () => {
@@ -134,5 +139,75 @@ describe('TC-10jm-T04: la deuda baja solo con "Ya pagué"', () => {
     expect(at('2026-11-02T10:00:00-06:00')).not.toContain('Ya pagué')
     expect(at('2026-11-07T10:00:00-06:00')).toContain('>Ya pagué</button>')
     expect(at('2026-11-25T10:00:00-06:00')).toContain('>Ya pagué</button>')
+  })
+})
+
+describe('USD-01jm-T03: equivalente en colones de los USD', () => {
+  it('con tipo guardado muestra ≈ ₡ y el tipo, sin tocar el saldo', () => {
+    const html = render({ settings: { ...settings, usdRateCents: 505_32 } })
+    expect(html).toContain(`≈ +${formatMoney(0, 'CRC')} / −${formatMoney(10_106_40, 'CRC')} al tipo ${formatMoney(505_32, 'CRC')}`)
+  })
+  it('AC-4: sin tipo guardado no hay equivalente', () => {
+    expect(render()).not.toContain('≈')
+  })
+})
+
+describe('PRES-01jm-T04: tarjeta Presupuestos', () => {
+  it('AC-5: sin presupuestos no se muestra', () => {
+    expect(render()).not.toContain('Presupuestos')
+  })
+  it('muestra gastado / tope, barra y porcentaje en texto', () => {
+    // Ningún gasto de noviembre del fixture tiene palabras conocidas: los ₡36 500 caen en Otros.
+    const html = render({ budgets: [{ category: 'Otros', limitCents: 50_000_00 }] })
+    expect(html).toContain('Presupuestos')
+    expect(html).toContain(`${formatMoney(36_500_00, 'CRC')} de ${formatMoney(50_000_00, 'CRC')}`)
+    expect(html).toMatch(/<progress[^>]*max="100"[^>]*value="73"|<progress[^>]*value="73"[^>]*max="100"/)
+    expect(html).toContain('73 %')
+  })
+})
+
+describe('PROY-01jm-T02: tarjeta Fin de mes', () => {
+  it('AC-3: negativo con signo menos, "Te faltarían" y desglose en texto', () => {
+    // Saldo 100 000 (salario) y una compra con tarjeta de 200 000 que vence el 20 nov sin pagar.
+    const credit = [tx('2026-10-25T10:00:00-06:00', 200_000_00, 'out', 'Tele', { paymentMethod: 'credit' })]
+    const html = render({ transactions: credit })
+    expect(html).toMatch(/<h2[^>]*>Fin de mes<\/h2>/)
+    expect(html).toContain('Te faltarían')
+    expect(html).toContain(`−${formatMoney(100_000_00, 'CRC')}`)
+    expect(html).toMatch(/Cuotas de tarjeta hasta fin de mes.*−₡200.000,00/)
+  })
+  it('AC-4: sin saldo ni salario no se muestra', () => {
+    expect(render({ transactions: [], settings: { salaryCents: null, account: null } })).not.toContain('Fin de mes')
+  })
+})
+
+describe('ANA-01jm-T02: tarjeta Contra el mes pasado', () => {
+  it('AC-4: sin gastos en ninguno de los dos meses', () => {
+    expect(render({ transactions: [] })).toContain('Sin gastos para comparar')
+  })
+  it('tabla por categoría con la diferencia con signo', () => {
+    // Al 15 nov: Otros ₡36 500 este mes; el gasto del 20 oct queda fuera (después del 15).
+    const full = render()
+    const html = full.slice(full.indexOf('Contra el mes pasado'))
+    expect(html).toMatch(/<th scope="col">Diferencia<\/th>/)
+    expect(html).toContain(`+${formatMoney(36_500_00, 'CRC')}`)
+  })
+})
+
+describe('META-01jm-T04: tarjeta Metas', () => {
+  const g = { id: 'g', name: 'Diciembre', targetCents: 500_000_00, currency: 'CRC' as const, deadline: '2026-12', savedCents: 100_000_00 }
+  it('AC-5: sin metas no aparece', () => {
+    expect(render()).not.toContain('Metas')
+  })
+  it('ahorrado / objetivo, barra, aporte mensual, cumplida, vencida y USD en USD', () => {
+    const html = render({ goals: [g, { ...g, id: 'u', name: 'Viaje', currency: 'USD', targetCents: 1_000_00, savedCents: 1_000_00 },
+      { ...g, id: 'v', name: 'Tele', deadline: '2026-10' }] })
+    expect(html).toMatch(/<h2[^>]*>Metas<\/h2>/)
+    expect(html).toContain(`${formatMoney(100_000_00, 'CRC')} de ${formatMoney(500_000_00, 'CRC')}`)
+    expect(html).toContain(`Aparta ${formatMoney(200_000_00, 'CRC')} al mes`)
+    expect(html).toContain(`${formatMoney(1_000_00, 'USD')} de ${formatMoney(1_000_00, 'USD')}`)
+    expect(html).toContain('¡Meta cumplida!')
+    expect(html).toContain(`Venció: te faltan ${formatMoney(400_000_00, 'CRC')}`)
+    expect(html).toMatch(/<progress[^>]*aria-label="Diciembre: 20 % ahorrado"/)
   })
 })

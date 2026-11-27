@@ -1,8 +1,11 @@
 // MAIL-01jm-T05: lee correos BAC de Gmail y los guarda en transactions. Solo I/O; la lógica vive en src/domain.
 import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
-import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
+import { BAC_SENDERS, gmailBodyText, type GmailPart, looksLikeMovement, parseBankEmail } from '../../../src/domain/bankEmail.ts'
+import { allPages } from '../../../src/domain/paging.ts'
 import { notifyNewMovements } from './push.ts'
+import { notifyBudgets } from './budgets.ts'
 import { notifyReminders } from './reminders.ts'
+import { saveUnread, type UnreadRow, unreadIds } from './unread.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
 // CRON-02jm: desde oct 2026 sin fecha de fin (lo anterior ya está en el saldo de cuenta, BAL-01jm).
@@ -63,25 +66,40 @@ Deno.serve(async (req) => {
     if (!authorized) return Response.json({ error: 'No autorizado' }, { status: 401 })
     // REC-01jm-T05: antes de Gmail para que un fallo de Google no los bloquee; nunca lanza (captura sus errores).
     await notifyReminders(db, env('OWNER_USER_ID'), new Date())
+    // PRES-01jm-T06: también antes de Gmail; los movimientos de esta corrida cuentan en la siguiente (5 min).
+    await notifyBudgets(db, env('OWNER_USER_ID'), new Date())
 
     const token = await accessToken()
     const ids = await listMessageIds(token)
     // Listar ids es barato; descargar cada correo no. Solo se descargan los que no están guardados.
-    // ponytail: correos sin movimiento (SINPE rechazado, etc.) no se guardan y se re-descargan cada corrida; son pocos.
-    const { data: stored, error: storedError } = await db
-      .from('transactions')
-      .select('email_message_id')
-      .not('email_message_id', 'is', null)
-    if (storedError) throw storedError
-    const known = new Set(stored.map((r) => r.email_message_id))
+    // MAIL-02jm-T03: los que el parser no leyó también quedan guardados (unread_bank_emails) y no se re-descargan.
+    // ARQ-02jm-T03: todas las páginas; si faltara alguna, esos correos se re-descargarían y re-avisarían.
+    const stored = await allPages(async (from, to) => {
+      const { data, error } = await db
+        .from('transactions')
+        .select('email_message_id')
+        .not('email_message_id', 'is', null)
+        .order('id')
+        .range(from, to)
+      if (error) throw error
+      return data
+    })
+    const known = new Set([...stored.map((r) => r.email_message_id), ...await unreadIds(db, env('OWNER_USER_ID'))])
     const newIds = ids.filter((id) => !known.has(id))
 
     const rows = []
+    const unread: UnreadRow[] = []
     for (const id of newIds) {
-      const msg = await gmail<{ payload: GmailPart & { headers: { name: string; value: string }[] } }>(`${GMAIL}/${id}?format=full`, token)
+      const msg = await gmail<{ internalDate?: string; payload: GmailPart & { headers: { name: string; value: string }[] } }>(`${GMAIL}/${id}?format=full`, token)
       const from = msg.payload.headers.find((h) => h.name.toLowerCase() === 'from')?.value ?? ''
-      const parsed = parseBankEmail(from, gmailBodyText(msg.payload))
-      if (!parsed) continue
+      const text = gmailBodyText(msg.payload)
+      const parsed = parseBankEmail(from, text)
+      if (!parsed) {
+        // internalDate = ms epoch de recepción en Gmail; solo para la fecha del aviso.
+        unread.push({ email_message_id: id, received_at: msg.internalDate ? new Date(Number(msg.internalDate)).toISOString() : null,
+          notify: looksLikeMovement(text) })
+        continue
+      }
       rows.push({
         user_id: env('OWNER_USER_ID'),
         amount: toNumeric(parsed.amountCents),
@@ -99,9 +117,11 @@ Deno.serve(async (req) => {
     const { data, error } = await db
       .from('transactions')
       .upsert(rows, { onConflict: 'email_message_id', ignoreDuplicates: true })
-      .select('direction, amount, currency, description')
+      .select('direction, amount, currency, description, email_message_id')
     if (error) throw error
     await notifyNewMovements(db, env('OWNER_USER_ID'), data)
+    // MAIL-02jm-T03: después de guardar los movimientos; nunca lanza (captura sus errores).
+    await saveUnread(db, env('OWNER_USER_ID'), unread)
 
     return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {

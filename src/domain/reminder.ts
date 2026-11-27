@@ -50,3 +50,16 @@ const CARD_WORDS = /\b(tarjetas?|creditos?|tc|visa|mastercard)\b/
 export function isCardPayment(description: string): boolean {
   return CARD_WORDS.test(description.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase())
 }
+
+export type ReservableReminder = { description: string; amountCents: number; currency: Currency; day: number; reserve?: boolean; paidOn?: string | null }
+
+// FIJ-01jm-T02: lo comprometido en fijos del mes CR en curso que aún no se paga. Solo CRC (USD va aparte);
+// la tarjeta no, su pago ya se resta como cuotas. Un vencimiento ya pasado y sin pagar sigue apartado.
+export function reservedCents(reminders: ReservableReminder[], now: Date): number {
+  // nextDueOn desde el día 1 (06:00 CR) = vencimiento de este mes, ya recortado al largo del mes.
+  const firstOfMonth = new Date(`${costaRicaDateTime(now).slice(0, 7)}-01T12:00:00Z`)
+  return reminders
+    .filter((r) => r.reserve && r.currency === 'CRC' && !isCardPayment(r.description))
+    .filter((r) => !(r.paidOn && r.paidOn >= nextDueOn(r.day, firstOfMonth)))
+    .reduce((sum, r) => sum + r.amountCents, 0)
+}

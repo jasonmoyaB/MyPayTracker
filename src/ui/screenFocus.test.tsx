@@ -8,7 +8,7 @@ import { ToastProvider } from './toast/ToastProvider'
 import { RemindersView } from './reminders/RemindersView'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-vi.mock('../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn() }))
+vi.mock('../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSalaryCents: vi.fn(), saveUsdRateCents: vi.fn() }))
 vi.mock('../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
 vi.mock('../data/transactions', () => ({ addManualTransaction: vi.fn() }))
 vi.mock('../data/reminders', () => ({ addReminder: vi.fn(), deleteReminder: vi.fn(), listReminders: vi.fn() }))
@@ -35,7 +35,7 @@ describe('AC-1: al cambiar de sección', () => {
     ['Movimientos', <TransactionsPanel transactions={[]} filter={{ from: null, to: null, direction: 'all' }}
       onFilterChange={() => {}} onTransactionSaved={() => {}} />],
     ['Recordatorios', <ToastProvider><RemindersView transactions={[]} /></ToastProvider>],
-    ['Cuenta', <ToastProvider><AccountView settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
+    ['Cuenta', <ToastProvider><AccountView transactions={[]} settings={settings} onSettingsSaved={() => {}} /></ToastProvider>],
   ])('el primer h2 de %s es enfocable por código (tabindex -1)', (_, screen) => {
     expect(firstH2(renderToStaticMarkup(screen))).toContain('tabindex="-1"')
   })
