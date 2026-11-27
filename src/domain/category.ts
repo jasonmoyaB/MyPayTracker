@@ -19,7 +19,8 @@ const KEYWORDS: [Category, string[]][] = [
 
 // Sin mayúsculas, tildes, apóstrofos ni espacios extra; con espacios en los bordes para buscar palabras completas
 // ("servicentro" no debe caer en Servicios por contener "ice").
-const normalize = (text: string) =>
+// ALR-01jm-T01: también decide "mismo comercio" en unusual.ts.
+export const normalize = (text: string) =>
   ` ${text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()} `
 
 const byKeywords = (description: string): Category => {
