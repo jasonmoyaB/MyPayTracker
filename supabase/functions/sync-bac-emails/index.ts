@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     const { data, error } = await db
       .from('transactions')
       .upsert(rows, { onConflict: 'email_message_id', ignoreDuplicates: true })
-      .select('direction, amount, currency, description')
+      .select('direction, amount, currency, description, email_message_id')
     if (error) throw error
     await notifyNewMovements(db, env('OWNER_USER_ID'), data)
 

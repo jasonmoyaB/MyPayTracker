@@ -2,10 +2,12 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { numericToCents } from '../../../src/domain/money.ts'
 import { type MovementInput, movementNotification } from '../../../src/domain/notification.ts'
+import { allPages } from '../../../src/domain/paging.ts'
+import { unusualExpense, unusualNotification } from '../../../src/domain/unusual.ts'
 
 export type PushTarget = { endpoint: string; keys: { p256dh: string; auth: string } }
 export type SendPush = (target: PushTarget, payload: string) => Promise<unknown>
-export type InsertedRow = { direction: string; amount: string | number; currency: string; description: string }
+export type InsertedRow = { direction: string; amount: string | number; currency: string; description: string; email_message_id?: string | null }
 type Subscription = { id: string; endpoint: string; p256dh: string; auth: string }
 
 // Secrets VAPID solo en el servidor. Sin ellos se omite el push (el sync sigue igual).
@@ -30,9 +32,35 @@ export async function notifyNewMovements(db: SupabaseClient, ownerId: string, ro
   try {
     const send = await sender()
     if (!send) return
-    await pushToOwner(db, ownerId, rows.map((r) => JSON.stringify(movementNotification(toMovement(r)))), send)
+    const history = await expenseHistory(db, ownerId, rows)
+    // ALR-01jm-T02: el gasto raro reemplaza al push normal de ese movimiento (no llegan dos).
+    const payload = (m: MovementInput) => {
+      const unusual = unusualExpense(m, history)
+      return unusual ? unusualNotification(m, unusual.typicalCents) : movementNotification(m)
+    }
+    await pushToOwner(db, ownerId, rows.map((r) => JSON.stringify(payload(toMovement(r)))), send)
   } catch (e) {
     console.error('Notificaciones push fallaron:', e instanceof Error ? e.message : String(e))
+  }
+}
+
+// ALR-01jm-T02: gastos previos del dueño sin las filas recién insertadas. Si falla, [] = push normal.
+// ponytail: lee todo el historial solo cuando hay gastos nuevos; filtrar por comercio en la query si crece mucho.
+async function expenseHistory(db: SupabaseClient, ownerId: string, rows: InsertedRow[]): Promise<MovementInput[]> {
+  if (!rows.some((r) => r.direction === 'out')) return []
+  try {
+    const fresh = new Set(rows.map((r) => r.email_message_id))
+    const data = await allPages(async (from, to) => {
+      // service_role no tiene RLS: se filtra por el dueño a mano.
+      const { data, error } = await db.from('transactions').select('direction, amount, currency, description, email_message_id')
+        .eq('user_id', ownerId).eq('direction', 'out').order('id').range(from, to)
+      if (error) throw error
+      return data
+    })
+    return data.filter((r) => !r.email_message_id || !fresh.has(r.email_message_id)).map(toMovement)
+  } catch (e) {
+    console.error('Historial para gasto raro falló:', e instanceof Error ? e.message : String(e))
+    return []
   }
 }
 

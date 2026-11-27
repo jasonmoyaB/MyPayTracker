@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { movementNotification } from '../../../src/domain/notification.ts'
+import { unusualNotification } from '../../../src/domain/unusual.ts'
+import { fakeDb as stateDb } from './fakeDb.ts'
 import { notifyNewMovements, type SendPush } from './push.ts'
 
 // Fake mínimo del cliente service role: lee suscripciones y borra por id.
@@ -54,5 +56,29 @@ describe('PWA-01jm AC-9: limpieza y errores', () => {
     expect(inIds).not.toHaveBeenCalled()
     expect(error).toHaveBeenCalled()
     await expect(notifyNewMovements(db, 'owner', [row], async () => { throw new Error('import') })).resolves.toBeUndefined()
+  })
+})
+
+describe('ALR-01jm-T02: gasto raro reemplaza al push normal', () => {
+  const sub = { id: 's1', user_id: 'owner', endpoint: 'https://e/1', p256dh: 'P', auth: 'A' }
+  const prev = (amount: string, id: string) => ({ user_id: 'owner', direction: 'out', amount, currency: 'CRC', description: 'AUTO MERCADO', email_message_id: id })
+  const fresh = { direction: 'out', amount: '95000.00', currency: 'CRC', description: 'AUTO MERCADO', email_message_id: 'm4' }
+  it('con 3 anteriores del comercio manda "Gasto inusual" y no el normal; la fila nueva no cuenta como historial', async () => {
+    const state = { transactions: [prev('30000.00', 'm1'), prev('28000.00', 'm2'), prev('32000.00', 'm3'), { user_id: 'owner', ...fresh }],
+      push_subscriptions: [sub] }
+    const { db, eqs } = stateDb(state)
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyNewMovements(db, 'owner', [fresh], async () => send)
+    expect(send.mock.calls.map(([, p]) => JSON.parse(p as string))).toEqual([
+      unusualNotification({ direction: 'out', amountCents: 95_000_00, currency: 'CRC', description: 'AUTO MERCADO' }, 30_000_00)])
+    // service_role sin RLS: el historial se filtra por el dueño.
+    expect(eqs).toContainEqual(['transactions', 'user_id', 'owner'])
+  })
+  it('si el historial falla, manda el push normal', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { db } = stateDb({ transactions: null as never, push_subscriptions: [sub] })
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyNewMovements(db, 'owner', [fresh], async () => send)
+    expect(JSON.parse(send.mock.calls[0][1])).toMatchObject({ title: 'Gasto' })
   })
 })
