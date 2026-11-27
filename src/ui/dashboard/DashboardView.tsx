@@ -1,7 +1,7 @@
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
 import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
-import { avgMonthlySpend, lastEmailMovement, monthStats, topExpenses } from '../../domain/monthStats'
+import { avgMonthlySpend, lastEmailMovement, monthlyCharges, monthStats, topExpenses } from '../../domain/monthStats'
 import { summaryFor } from '../../domain/summary'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard } from './BalanceCard'
@@ -21,13 +21,15 @@ export function DashboardView({ settings, transactions, now = new Date(), reload
   // TC-02jm-T05: hoy solo resta lo que vence el próximo 20; las cuotas posteriores salen del salario de ese mes.
   const dueNextCents = dueBy(pending.scheduleCrc, nextPayDay(now))
   const limitCents = summary && summary.balanceCrcCents - dueNextCents
+  // GAS-01jm-T02: "Este mes" y "Top gastos" cuentan la cuota que vence este mes, no la compra entera.
+  const charges = monthlyCharges(transactions)
   return (
     <div className="dashboard">
       <BalanceCard summary={summary} />
       <CreditCard pending={pending} limitCents={limitCents} salaryCents={settings.salaryCents} now={now} onSaved={reload}
         dueNextCents={dueNextCents} purchases={pendingPurchases(transactions, paidThrough)} />
-      <MonthCards stats={monthStats(transactions, now)} />
-      <TopExpenses items={topExpenses(transactions, now)} />
+      <MonthCards stats={monthStats(charges, now)} />
+      <TopExpenses items={topExpenses(charges, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
       {summary && (
         <section className="card">

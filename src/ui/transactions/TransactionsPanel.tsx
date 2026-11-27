@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
 import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
 import { creditDueAt } from '../../domain/credit'
+import { monthlyCharges } from '../../domain/monthStats'
 import { formatDate, formatDay, formatMoney } from '../format'
 import { FilterTotals } from './FilterTotals'
 import { MovementFilters } from './MovementFilters'
@@ -44,7 +45,8 @@ function FilteredList({ transactions, filter, onFilterChange }: FilteredListProp
   return (
     <>
       <MovementFilters filter={filter} now={now} onChange={onFilterChange} />
-      <FilterTotals totals={filterTotals(shown)} />
+      {/* GAS-01jm-T02: los totales cuentan lo que se paga en el rango; la lista muestra cada movimiento tal cual. */}
+      <FilterTotals totals={filterTotals(applyFilter(monthlyCharges(transactions), filter))} />
       {shown.length === 0 ? (
         <div className="filtered-empty">
           <p className="muted">No hay movimientos con estos filtros</p>
