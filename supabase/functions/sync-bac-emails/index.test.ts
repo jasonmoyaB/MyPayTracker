@@ -39,3 +39,11 @@ describe('MAIL-02jm-T01: tabla unread_bank_emails', () => {
     expect(sql).not.toMatch(/for (insert|update|delete|all)/)
   })
 })
+
+describe('MAIL-02jm-T03: el cron no re-descarga los ilegibles', () => {
+  it('known incluye los ids de unread_bank_emails y los ilegibles se guardan con looksLikeMovement', () => {
+    expect(source).toMatch(/\.\.\.await unreadIds\(db, env\('OWNER_USER_ID'\)\)/)
+    expect(source).toMatch(/notify: looksLikeMovement\(text\)/)
+    expect(source).toMatch(/await saveUnread\(db, env\('OWNER_USER_ID'\), unread\)/)
+  })
+})
