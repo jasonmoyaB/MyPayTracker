@@ -66,6 +66,14 @@ export function isCardPaymentMovement(m: Pick<SpendMovement, 'paymentMethod' | '
   return m.paymentMethod === 'card_payment' || (m.source.startsWith('email_') && isCardPayment(m.description))
 }
 
+// Gasto "de bolsillo": sin compras con tarjeta (ya restan como cuotas) ni pagos de tarjeta (serían esas mismas cuotas).
+const isTypicalSpend = (m: SpendMovement) => m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPaymentMovement(m)
+
+// PROY-01jm-T01: lo ya gastado este mes CR con el mismo filtro que avgMonthlySpend.
+export function spentThisMonth(movements: SpendMovement[], now: Date): number {
+  return thisMonthCrc(movements, now).filter(isTypicalSpend).reduce((sum, m) => sum + m.amountCents, 0)
+}
+
 // SIM-01jm-T03: gasto típico del mes para "¿Puedo comprar esto?". Sin compras con tarjeta (ya restan como cuotas)
 // ni pagos de tarjeta (serían esas mismas cuotas otra vez). Divide solo entre meses con movimientos: con menos
 // de 3 meses de historial no subestima.
@@ -80,7 +88,7 @@ export function avgMonthlySpend(movements: SpendMovement[], now: Date): number {
     const at = Date.parse(m.occurredAt)
     if (m.currency !== 'CRC' || at < startMs || at >= endMs) continue
     months.add(new Date(at - CR_OFFSET_MS).getUTCMonth())
-    if (m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPaymentMovement(m)) cents += m.amountCents
+    if (isTypicalSpend(m)) cents += m.amountCents
   }
   return months.size ? Math.round(cents / months.size) : 0
 }
