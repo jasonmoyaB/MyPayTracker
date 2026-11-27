@@ -17,3 +17,5 @@ Quiero saber si este mes estoy gastando más o menos que el pasado y en qué cat
 ## Supuestos
 - Mes pasado "al mismo día" = hasta el mismo día o el último del mes si es más corto.
 - Sin gráfico: lista con montos (accesible y sin dependencias).
+- `categoryOf` no existe como export: se usa `categorize` (CAT-01jm), como `budgetStatus`.
+- "Este mes" va hasta ahora: una cuota que vence más adelante en el mes no entra hasta su día.
