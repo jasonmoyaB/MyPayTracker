@@ -19,3 +19,5 @@ Quiero ponerme un tope por categoría ("Súper ₡80 000 al mes") y enterarme an
 ## Supuestos
 - Barra accesible: texto con el porcentaje, no solo color. Sin presupuesto en USD.
 - El número de la migración es el siguiente libre al implementarla.
+- El dueño tiene update de `(category, amount)` porque el upsert reescribe ambas; los marcadores solo los escribe el cron.
+- PRES-01jm-T07: el "solo tabla no existe" se decide en `listBudgets` (data), no en `App.tsx`, para no meter lógica en la UI.

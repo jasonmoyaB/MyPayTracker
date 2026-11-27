@@ -58,3 +58,15 @@ describe('PRES-01jm-T03: listar, guardar y quitar presupuestos (RLS filtra por d
     await expect(deleteBudget('Súper')).rejects.toEqual({ code: '42501' })
   })
 })
+
+describe('PRES-01jm-T07: solo "tabla no existe" da lista vacía', () => {
+  beforeEach(() => { vi.clearAllMocks(); db.result.error = null })
+  it.each(['42P01', 'PGRST205'])('%s → []', async (code) => {
+    db.result.error = { code }
+    expect(await listBudgets()).toEqual([])
+  })
+  it('cualquier otro error se relanza', async () => {
+    db.result.error = { code: 'PGRST301' }
+    await expect(listBudgets()).rejects.toEqual({ code: 'PGRST301' })
+  })
+})

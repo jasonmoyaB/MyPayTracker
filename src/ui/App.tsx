@@ -44,8 +44,8 @@ function Dashboard({ session }: { session: Session }) {
 
   const load = useCallback(async () => {
     try {
-      // PRES-01jm-T04 ponytail: si 0017 aún no está aplicada, sin presupuestos en vez de tumbar toda la app.
-      const [settings, transactions, budgets] = await Promise.all([getSettings(), listTransactions(), listBudgets().catch(() => [])])
+      // PRES-01jm-T07: listBudgets ya devuelve [] si falta la tabla; cualquier otro error cae al catch.
+      const [settings, transactions, budgets] = await Promise.all([getSettings(), listTransactions(), listBudgets()])
       setData({ settings, transactions, budgets })
       setError(null)
     } catch (e) {
