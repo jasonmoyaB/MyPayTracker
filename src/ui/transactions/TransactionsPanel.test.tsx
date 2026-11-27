@@ -161,3 +161,13 @@ describe('CAT-01jm-T04: categoría en Movimientos', () => {
     expect(onChange).toHaveBeenCalledWith('Comida')
   })
 })
+
+describe('ANA-02jm-T02: Exportar CSV', () => {
+  it('AC-5: con el filtro vacío el botón está deshabilitado', () => {
+    const html = render([transaction], { from: '2027-01-01', to: '2027-01-31', direction: 'all' })
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Exportar CSV<\/button>/)
+  })
+  it('con movimientos filtrados el botón está habilitado', () => {
+    expect(render([transaction])).toMatch(/<button type="button" class="secondary">Exportar CSV<\/button>/)
+  })
+})

@@ -3,6 +3,8 @@ import { setTransactionCategory, type Transaction } from '../../data/transaction
 import { categorize, type Category } from '../../domain/category'
 import { applyFilter, clearedFilter, filterTotals, type MovementFilter } from '../../domain/movementFilter'
 import { creditDueAt } from '../../domain/credit'
+import { movementsCsv } from '../../domain/csv'
+import { costaRicaDateTime } from '../../domain/date'
 import { monthlyCharges } from '../../domain/monthStats'
 import { formatDate, formatDay, formatMoney } from '../format'
 import { saveWithToast } from '../toast/saveWithToast'
@@ -53,6 +55,8 @@ function FilteredList({ transactions, filter, onFilterChange, onSaved }: Filtere
       <MovementFilters filter={filter} now={now} onChange={onFilterChange} />
       {/* GAS-01jm-T02: los totales cuentan lo que se paga en el rango; la lista muestra cada movimiento tal cual. */}
       <FilterTotals totals={filterTotals(applyFilter(monthlyCharges(transactions), filter))} />
+      <button type="button" className="secondary" disabled={shown.length === 0}
+        onClick={() => downloadCsv(movementsCsv(shown, categoryOf), now)}>Exportar CSV</button>
       {shown.length === 0 ? (
         <div className="filtered-empty">
           <p className="muted">No hay movimientos con estos filtros</p>
@@ -99,4 +103,14 @@ function originLabel(t: Transaction): string {
   // MOV-02jm-T02: SINPE se paga como efectivo; solo se distingue en la etiqueta.
   if (t.paymentMethod === 'card_payment') return `Pago de tarjeta · ${origin}` // TC-11jm-T03
   return t.paymentMethod === 'sinpe' ? `SINPE · ${origin}` : origin
+}
+
+// ANA-02jm-T02: descarga en el navegador, sin servidor; la URL se revoca al terminar para no dejar el Blob vivo.
+function downloadCsv(csv: string, now: Date) {
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `movimientos-${costaRicaDateTime(now).slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
