@@ -3,7 +3,7 @@ import { costaRicaDateTime, costaRicaIso } from '../../../src/domain/date.ts'
 import { centsToNumeric } from '../../../src/domain/money.ts'
 import { parseAmountToCents } from '../../../src/domain/amount.ts'
 import { paidUntil, splitCredit } from '../../../src/domain/credit.ts'
-import { avgMonthlySpend, costaRicaMonth, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
+import { avgMonthlySpend, monthlyCharges, monthStats, parseMonth, topExpenses, type SpendMovement } from '../../../src/domain/monthStats.ts'
 import { PLANS, recommend, type Plan } from '../../../src/domain/recommend.ts'
 import { summaryFor } from '../../../src/domain/summary.ts'
 
@@ -83,12 +83,12 @@ const signed = (cents: number) => (cents < 0 ? '-' : '') + centsToNumeric(Math.a
 const iso = (ms: number) => new Date(ms).toISOString()
 const text = (value: unknown, isError = false) => ({ content: [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value) }], ...(isError && { isError }) })
 
-async function resumenMes(args: Record<string, unknown>, query: Query) {
+async function resumenMes(args: Record<string, unknown>, _query: Query, ledger: Ledger) {
   const mes = args.mes ?? costaRicaDateTime(new Date()).slice(0, 7)
   const now = typeof mes === 'string' ? parseMonth(mes) : null
   if (!now) return text('mes inválido: usa el formato YYYY-MM, p. ej. 2026-11.', true)
-  const { startMs, endMs } = costaRicaMonth(now)
-  const rows = await query(iso(startMs), iso(endMs))
+  // GAS-01jm-T03: todo el historial y no solo el mes: la cuota de este mes puede venir de una compra de hasta 12 meses antes.
+  const rows = monthlyCharges((await ledger()).transactions)
   const stats = monthStats(rows, now)
   return text({
     mes, moneda: 'CRC', ingresos: signed(stats.incomeCents), gastos: signed(stats.expenseCents), neto: signed(stats.netCents),
