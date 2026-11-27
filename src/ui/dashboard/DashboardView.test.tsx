@@ -192,3 +192,21 @@ describe('ANA-01jm-T02: tarjeta Contra el mes pasado', () => {
     expect(html).toContain(`+${formatMoney(36_500_00, 'CRC')}`)
   })
 })
+
+describe('META-01jm-T04: tarjeta Metas', () => {
+  const g = { id: 'g', name: 'Diciembre', targetCents: 500_000_00, currency: 'CRC' as const, deadline: '2026-12', savedCents: 100_000_00 }
+  it('AC-5: sin metas no aparece', () => {
+    expect(render()).not.toContain('Metas')
+  })
+  it('ahorrado / objetivo, barra, aporte mensual, cumplida, vencida y USD en USD', () => {
+    const html = render({ goals: [g, { ...g, id: 'u', name: 'Viaje', currency: 'USD', targetCents: 1_000_00, savedCents: 1_000_00 },
+      { ...g, id: 'v', name: 'Tele', deadline: '2026-10' }] })
+    expect(html).toMatch(/<h2[^>]*>Metas<\/h2>/)
+    expect(html).toContain(`${formatMoney(100_000_00, 'CRC')} de ${formatMoney(500_000_00, 'CRC')}`)
+    expect(html).toContain(`Aparta ${formatMoney(200_000_00, 'CRC')} al mes`)
+    expect(html).toContain(`${formatMoney(1_000_00, 'USD')} de ${formatMoney(1_000_00, 'USD')}`)
+    expect(html).toContain('¡Meta cumplida!')
+    expect(html).toContain(`Venció: te faltan ${formatMoney(400_000_00, 'CRC')}`)
+    expect(html).toMatch(/<progress[^>]*aria-label="Diciembre: 20 % ahorrado"/)
+  })
+})

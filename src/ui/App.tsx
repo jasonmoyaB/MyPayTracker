@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { onSessionChange, signOut, type Session } from '../data/auth'
 import { listBudgets } from '../data/budgets'
 import { listReminders, type Reminder } from '../data/reminders'
+import { listGoals } from '../data/savings'
 import { getSettings, type Settings } from '../data/settings'
 import { listTransactions, type Transaction } from '../data/transactions'
 import type { Budget } from '../domain/budget'
+import type { SavingsGoal } from '../domain/savings'
 import { initialFilter, type MovementFilter } from '../domain/movementFilter'
 import { autoRefresh } from './autoRefresh'
 import { toUiError } from './sessionExpiry'
@@ -20,7 +22,7 @@ import { DashboardView } from './dashboard/DashboardView'
 import { useRoute, type Route } from './route'
 import { TransactionsPanel } from './transactions/TransactionsPanel'
 
-type Data = { settings: Settings; transactions: Transaction[]; budgets?: Budget[]; reminders?: Reminder[] }
+type Data = { settings: Settings; transactions: Transaction[]; budgets?: Budget[]; goals?: SavingsGoal[]; reminders?: Reminder[] }
 
 export function App() {
   // undefined = todavía no sabemos si hay sesión (evita parpadear el login).
@@ -47,8 +49,9 @@ function Dashboard({ session }: { session: Session }) {
     try {
       // PRES-01jm-T07: listBudgets ya devuelve [] si falta la tabla; cualquier otro error cae al catch.
       // FIJ-01jm-T03: los recordatorios también, porque el Resumen resta los apartados.
-      const [settings, transactions, budgets, reminders] = await Promise.all([getSettings(), listTransactions(), listBudgets(), listReminders()])
-      setData({ settings, transactions, budgets, reminders })
+      // META-01jm-T04: listGoals también devuelve [] si falta 0020.
+      const [settings, transactions, budgets, reminders, goals] = await Promise.all([getSettings(), listTransactions(), listBudgets(), listReminders(), listGoals()])
+      setData({ settings, transactions, budgets, reminders, goals })
       setError(null)
     } catch (e) {
       const failure = toUiError(e)
@@ -104,6 +107,6 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
   )
   if (route === 'recordatorios') return <RemindersView transactions={data.transactions} cardPaidThrough={data.settings.cardPaidThrough} onCardPaid={reload} />
   if (route === 'cuenta') return <AccountView settings={data.settings} transactions={data.transactions} onSettingsSaved={reload} />
-  if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} budgets={data.budgets} onBudgetsSaved={reload} />
-  return <DashboardView settings={data.settings} transactions={data.transactions} budgets={data.budgets} reminders={data.reminders} reload={reload} />
+  if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} budgets={data.budgets} goals={data.goals} onBudgetsSaved={reload} />
+  return <DashboardView settings={data.settings} transactions={data.transactions} budgets={data.budgets} goals={data.goals} reminders={data.reminders} reload={reload} />
 }
