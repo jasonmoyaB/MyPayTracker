@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthStats, parseMonth, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
+import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthlyCharges, monthStats, parseMonth, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
 
 // 1 nov 2026 00:30 en Costa Rica = 06:30 UTC.
 const now = new Date('2026-11-01T06:30:00Z')
@@ -118,5 +118,29 @@ describe('MOV-03jm-T01 AC-4: el gasto SINPE sigue contando en los gastos del mes
     const m = { amountCents: 3_500_00, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-30T10:05:00-06:00',
       description: 'SINPE', source: 'manual', paymentMethod: 'sinpe' as const }
     expect(monthStats([m], now).expenseCents).toBe(3_500_00)
+  })
+})
+
+describe('GAS-01jm: monthlyCharges (gastos del mes = lo que se paga ese mes)', () => {
+  const buy = (occurredAt: string, amountCents: number, paymentMethod: SpendMovement['paymentMethod'], installments = 1, description = 'X') =>
+    ({ ...m(occurredAt, amountCents, 'out', description), paymentMethod, installments })
+  const expenseIn = (movements: ReturnType<typeof buy>[], month: string) => monthStats(monthlyCharges(movements), parseMonth(month)!).expenseCents
+
+  it('AC-1: pantalla ₡194 000 a 12 meses del 27/11 → nov ₡0, dic ₡16 166,74, ene ₡16 166,66', () => {
+    const tv = [buy('2026-11-27T15:00:00-06:00', 19_400_000, 'credit', 12, 'Pantalla')]
+    expect(expenseIn(tv, '2026-11')).toBe(0)
+    expect(expenseIn(tv, '2026-12')).toBe(1_616_674)
+    expect(expenseIn(tv, '2027-01')).toBe(1_616_666)
+    expect(expenseIn(tv, '2027-11')).toBe(1_616_666)
+    expect(expenseIn(tv, '2027-12')).toBe(0)
+  })
+  it('AC-2: compra en un pago el 6/12 cuenta en dic; el 7/12, en ene', () => {
+    expect(expenseIn([buy('2026-12-06T23:00:00-06:00', 1_000_000, 'credit')], '2026-12')).toBe(1_000_000)
+    expect(expenseIn([buy('2026-12-07T00:30:00-06:00', 1_000_000, 'credit')], '2026-12')).toBe(0)
+    expect(expenseIn([buy('2026-12-07T00:30:00-06:00', 1_000_000, 'credit')], '2027-01')).toBe(1_000_000)
+  })
+  it('AC-3: efectivo cuenta en su fecha; el pago de la tarjeta no cuenta como gasto', () => {
+    const ms = [buy('2026-11-03T10:00:00-06:00', 500_000, 'cash'), buy('2026-11-20T10:00:00-06:00', 1_616_674, 'cash', 1, 'Pago tarjeta BAC')]
+    expect(expenseIn(ms, '2026-11')).toBe(500_000)
   })
 })

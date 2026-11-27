@@ -1,5 +1,5 @@
 // MCP-01jm-T01: con extensión; la Edge Function mcp importa este archivo desde Deno.
-import type { PaymentMethod } from './credit.ts'
+import { installmentDues, type PaymentMethod } from './credit.ts'
 import { CR_OFFSET_MS } from './date.ts'
 import { isCardPayment } from './reminder.ts'
 import type { SummaryMovement } from './summary.ts'
@@ -77,4 +77,15 @@ export function avgMonthlySpend(movements: SpendMovement[], now: Date): number {
     if (m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPayment(m.description)) cents += m.amountCents
   }
   return months.size ? Math.round(cents / months.size) : 0
+}
+
+// GAS-01jm-T01: el gasto del mes es lo que se paga ese mes. Una compra con tarjeta cuenta como sus cuotas, cada una
+// en el 20 en que vence (corte el 6: creditDueAt); el pago de la tarjeta sale porque serían esas mismas cuotas otra vez.
+export function monthlyCharges<T extends SpendMovement & { installments?: number }>(movements: T[]): T[] {
+  return movements.flatMap((m) => {
+    if (m.paymentMethod === 'credit') {
+      return installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).map((d) => ({ ...m, amountCents: d.cents, occurredAt: d.dueAt }))
+    }
+    return m.direction === 'out' && isCardPayment(m.description) ? [] : [m]
+  })
 }
