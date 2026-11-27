@@ -112,3 +112,11 @@ describe('TC-08jm-T01: editar una deuda', () => {
     expect(db.eq).toHaveBeenCalledWith('id', 'abc')
   })
 })
+
+const sql16 = readFileSync(new URL('../../supabase/migrations/0016_transaction_category.sql', import.meta.url), 'utf8')
+
+describe('CAT-01jm-T01: category en transactions', () => {
+  it('0016: columna nula con check en la lista fija', () => {
+    expect(sql16).toMatch(/alter table public\.transactions\s+add column category text\s+check \(category in \('Súper', 'Comida', 'Transporte', 'Servicios', 'Salud', 'Compras', 'Entretenimiento', 'Otros'\)\)/)
+  })
+})
