@@ -1,7 +1,8 @@
 // REC-01jm-T02: con extensión; credit.ts (importado por la Edge Function) depende de este archivo.
 import type { Currency } from './bankEmail.ts'
 import { availableBalance, type Movement } from './balance.ts'
-import type { PaymentMethod } from './credit.ts'
+import { paidUntil, splitCredit, type CreditMovement, type PaymentMethod } from './credit.ts'
+import { formatAmount } from './notification.ts'
 
 export type SummaryMovement = Movement & { currency: Currency }
 
@@ -48,4 +49,19 @@ export function summaryFor(
   const movements = all.filter((m) => m.paymentMethod !== 'card_payment')
   if (account) return summarizeFromAccount(account.cents, account.asOf, movements)
   return salaryCents === null ? null : summarize(salaryCents, movements)
+}
+
+type SummarySettings = Parameters<typeof summaryFor>[0] & { cardPaidThrough?: string | null }
+
+// BAL-02jm-T01: el saldo disponible de hoy tal como lo muestra el Resumen (cuotas pagadas sí, pendientes no).
+export function availableNow(settings: SummarySettings, all: CreditMovement[], now: Date): number | null {
+  const { settled } = splitCredit(all, paidUntil(settings.cardPaidThrough, now))
+  return summaryFor(settings, settled)?.balanceCrcCents ?? null
+}
+
+// BAL-02jm-T01: diferencia entre lo que calculaba la app y el saldo real del BAC, para buscar lo que falta.
+export function reconcileText(appCents: number, bacCents: number): string {
+  const diff = appCents - bacCents
+  if (diff === 0) return 'Cuadra con la app'
+  return `La app tenía ${formatAmount(Math.abs(diff), 'CRC')} de ${diff > 0 ? 'más' : 'menos'}`
 }

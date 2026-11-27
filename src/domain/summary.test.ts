@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { summarize, summarizeFromAccount, summaryFor } from './summary'
+import { formatAmount } from './notification'
+import { availableNow, reconcileText, summarize, summarizeFromAccount, summaryFor } from './summary'
 
 describe('AC-2: summarize', () => {
   it('saldo CRC = salario + ingresos CRC − gastos CRC; USD aparte', () => {
@@ -73,5 +74,23 @@ describe('TC-11jm-T02 AC-2: el "Pago de tarjeta" no baja el saldo (ya restan las
       ({ amountCents: 50_000_00, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-30T11:00:00-06:00', paymentMethod })
     expect(summaryFor({ account, salaryCents: null }, [pago('card_payment')])?.balanceCrcCents).toBe(100_000_00)
     expect(summaryFor({ account, salaryCents: null }, [pago('cash')])?.balanceCrcCents).toBe(50_000_00)
+  })
+})
+
+describe('BAL-02jm-T01: cuadre con el saldo del BAC', () => {
+  it('AC-1: app ₡58 930, BAC ₡55 430 → de más', () => {
+    expect(reconcileText(58_930_00, 55_430_00)).toBe(`La app tenía ${formatAmount(3_500_00, 'CRC')} de más`)
+  })
+  it('AC-2: app ₡50 000, BAC ₡52 000 → de menos', () => {
+    expect(reconcileText(50_000_00, 52_000_00)).toBe(`La app tenía ${formatAmount(2_000_00, 'CRC')} de menos`)
+  })
+  it('AC-3: iguales → cuadra', () => {
+    expect(reconcileText(10_00, 10_00)).toBe('Cuadra con la app')
+  })
+  it('availableNow: la cuota de tarjeta aún no pagada no baja el saldo; sin datos → null', () => {
+    const now = new Date('2026-11-27T12:00:00-06:00')
+    const txs = [{ amountCents: 1_000_00, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-11-25T12:00:00-06:00', paymentMethod: 'credit' as const }]
+    expect(availableNow({ salaryCents: 5_000_00, account: null, cardPaidThrough: null }, txs, now)).toBe(5_000_00)
+    expect(availableNow({ salaryCents: null, account: null }, txs, now)).toBeNull()
   })
 })
