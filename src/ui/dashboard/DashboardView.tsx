@@ -2,6 +2,7 @@ import type { Reminder } from '../../data/reminders'
 import type { Settings } from '../../data/settings'
 import type { Transaction } from '../../data/transactions'
 import { budgetStatus, type Budget } from '../../domain/budget'
+import { compareMonths } from '../../domain/compare'
 import { dueBy, nextPayDay, paidUntil, pendingPurchases, splitCredit } from '../../domain/credit'
 import { reservedCents } from '../../domain/reminder'
 import { avgMonthlySpend, lastEmailMovement, monthlyCharges, monthStats, spentThisMonth, topExpenses } from '../../domain/monthStats'
@@ -10,6 +11,7 @@ import { summaryFor } from '../../domain/summary'
 import { AffordCheck } from '../balance/AffordCheck'
 import { BalanceCard } from './BalanceCard'
 import { BudgetCard } from './BudgetCard'
+import { CompareCard } from './CompareCard'
 import { CreditCard } from './CreditCard'
 import { MonthCards } from './MonthCards'
 import { ProjectionCard } from './ProjectionCard'
@@ -45,6 +47,7 @@ export function DashboardView({ settings, transactions, budgets = [], reminders 
       <TopExpenses items={topExpenses(charges, now)} />
       <BudgetCard status={budgetStatus(budgets, transactions, now)} />
       <RecentMovements transactions={transactions} lastEmailAt={lastEmailMovement(transactions)} />
+      <CompareCard rows={compareMonths(transactions, now)} />
       {summary && (
         <section className="card">
           <AffordCheck balanceCents={freeCents ?? 0} salaryCents={settings.salaryCents} scheduleCrc={pending.scheduleCrc} now={now}

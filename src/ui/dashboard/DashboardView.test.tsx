@@ -180,3 +180,15 @@ describe('PROY-01jm-T02: tarjeta Fin de mes', () => {
     expect(render({ transactions: [], settings: { salaryCents: null, account: null } })).not.toContain('Fin de mes')
   })
 })
+
+describe('ANA-01jm-T02: tarjeta Contra el mes pasado', () => {
+  it('AC-4: sin gastos en ninguno de los dos meses', () => {
+    expect(render({ transactions: [] })).toContain('Sin gastos para comparar')
+  })
+  it('tabla por categoría con la diferencia con signo', () => {
+    // Al 15 nov: Otros ₡36 500 este mes; el gasto del 20 oct queda fuera (después del 15).
+    const html = render().slice(render().indexOf('Contra el mes pasado'))
+    expect(html).toMatch(/<th scope="col">Diferencia<\/th>/)
+    expect(html).toContain(`+${formatMoney(36_500_00, 'CRC')}`)
+  })
+})
