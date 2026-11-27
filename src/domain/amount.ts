@@ -10,3 +10,12 @@ export function parseAmountToCents(text: string): number | null {
 export function parseFeeToCents(text: string): number | null {
   return /^0*(\.0*)?$/.test(text.trim()) ? 0 : parseAmountToCents(text)
 }
+
+// TC-12jm-T02: monto a guardar de una compra = precio + comisión (la comisión solo existe a plazo).
+// Separa precio y comisión para que el formulario marque cada error; total null si alguno es inválido.
+export function purchaseCents(priceText: string, feeText: string, installments: number) {
+  const priceCents = parseAmountToCents(priceText)
+  const feeCents = installments > 1 ? parseFeeToCents(feeText) : 0
+  const totalCents = priceCents === null || feeCents === null ? null : priceCents + feeCents
+  return { priceCents, feeCents, totalCents }
+}

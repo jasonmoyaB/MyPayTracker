@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { addManualTransaction, type NewTransaction } from '../../data/transactions'
-import { parseAmountToCents, parseFeeToCents } from '../../domain/amount'
+import { purchaseCents } from '../../domain/amount'
 import { costaRicaDateTime, costaRicaIso } from '../../domain/date'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
@@ -40,15 +40,13 @@ export function useTransactionForm(onSaved: () => void) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (pending.current) return
-    const priceCents = parseAmountToCents(amount)
-    // TC-12jm-T01: la comisión solo existe a plazo; si el campo está oculto, lo escrito no cuenta.
-    const feeCents = installments > 1 ? parseFeeToCents(fields.fee) : 0
+    // TC-12jm-T02: la comisión solo existe a plazo; si el campo está oculto, lo escrito no cuenta.
+    const { priceCents, feeCents, totalCents: amountCents } = purchaseCents(amount, fields.fee, installments)
     const occurredAt = costaRicaIso(date)
     setAmountError(priceCents === null ? 'Ingresa un monto mayor que cero con hasta 2 decimales.' : '')
     setFeeError(feeCents === null ? 'Ingresa una comisión de cero o más con hasta 2 decimales, o déjala vacía.' : '')
     setError('')
-    if (priceCents === null || feeCents === null) return
-    const amountCents = priceCents + feeCents
+    if (amountCents === null) return
     if (!description.trim()) { setError('Ingresa una descripción para el movimiento.'); return }
     if (!occurredAt) { setError('Ingresa una fecha y hora válidas de Costa Rica.'); return }
     pending.current = true
