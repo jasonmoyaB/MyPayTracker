@@ -22,3 +22,20 @@ describe('ARQ-02jm-T03: lee todos los email_message_id guardados', () => {
     expect(source).toMatch(/\.order\('id'\)\s*\.range\(from, to\)/)
   })
 })
+
+describe('MAIL-02jm-T01: tabla unread_bank_emails', () => {
+  const sql = readFileSync(new URL('../../migrations/0019_unread_bank_emails.sql', import.meta.url), 'utf8').toLowerCase()
+  it('id del correo como PK, dueño, fecha y si avisa; sin cuerpo del correo', () => {
+    expect(sql).toMatch(/create table public\.unread_bank_emails/)
+    expect(sql).toMatch(/email_message_id text primary key/)
+    expect(sql).toMatch(/user_id uuid not null references auth\.users \(id\) on delete cascade/)
+    expect(sql).toMatch(/received_at timestamptz/)
+    expect(sql).toMatch(/notify boolean not null/)
+    expect(sql).not.toMatch(/body|cuerpo text/)
+  })
+  it('RLS: el dueño solo lee; escribe únicamente el cron (service_role)', () => {
+    expect(sql).toContain('alter table public.unread_bank_emails enable row level security')
+    expect(sql).toMatch(/for select to authenticated\s+using \(\(select auth\.uid\(\)\) = user_id\)/)
+    expect(sql).not.toMatch(/for (insert|update|delete|all)/)
+  })
+})
