@@ -83,3 +83,12 @@ describe('REC-02jm-T02: marcar pagado', () => {
     await expect(markReminderPaid('r1', '2026-11-01')).rejects.toEqual({ code: '42501' })
   })
 })
+
+describe('FIJ-01jm-T01: apartar del saldo', () => {
+  it('0018: columna reserve; el dueño solo suma update de reserve (paid_on ya lo tenía)', () => {
+    const sql18 = readFileSync(new URL('../../supabase/migrations/0018_reminders_reserve.sql', import.meta.url), 'utf8').toLowerCase()
+    expect(sql18).toMatch(/alter table public\.reminders\s+add column reserve boolean not null default false/)
+    expect(sql18).toMatch(/grant update \(reserve\) on public\.reminders to authenticated/)
+    expect(sql18).not.toMatch(/grant update on|grant all/)
+  })
+})
