@@ -7,7 +7,8 @@ const CUT_DAY = 6
 const DUE_DAY = 20
 
 // MOV-02jm-T01: 'sinpe' se trata como 'cash' (todo lo que no es 'credit' se paga en su fecha).
-export type PaymentMethod = 'cash' | 'credit' | 'sinpe'
+// TC-11jm-T02: 'card_payment' = pago de la tarjeta marcado a mano; se liquida en su fecha pero no es gasto (monthStats).
+export type PaymentMethod = 'cash' | 'credit' | 'sinpe' | 'card_payment'
 // TC-02jm: `installments` = plazo de tasa cero (1 = un pago); opcional para no tocar a quien no lo usa.
 export type CreditMovement = SummaryMovement & { paymentMethod: PaymentMethod; occurredAt: string; installments?: number }
 

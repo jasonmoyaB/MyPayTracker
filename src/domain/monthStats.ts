@@ -60,6 +60,12 @@ export function lastEmailMovement(movements: Pick<MonthMovement, 'occurredAt' | 
   return latest
 }
 
+// TC-11jm-T02: el pago de la tarjeta (son las cuotas otra vez). Explícito si es manual; los correos BAC no traen
+// forma de pago, así que ahí sigue el regex. Un gasto manual que dice "visa" cuenta.
+export function isCardPaymentMovement(m: Pick<SpendMovement, 'paymentMethod' | 'source' | 'description'>): boolean {
+  return m.paymentMethod === 'card_payment' || (m.source.startsWith('email_') && isCardPayment(m.description))
+}
+
 // SIM-01jm-T03: gasto típico del mes para "¿Puedo comprar esto?". Sin compras con tarjeta (ya restan como cuotas)
 // ni pagos de tarjeta (serían esas mismas cuotas otra vez). Divide solo entre meses con movimientos: con menos
 // de 3 meses de historial no subestima.
@@ -74,7 +80,7 @@ export function avgMonthlySpend(movements: SpendMovement[], now: Date): number {
     const at = Date.parse(m.occurredAt)
     if (m.currency !== 'CRC' || at < startMs || at >= endMs) continue
     months.add(new Date(at - CR_OFFSET_MS).getUTCMonth())
-    if (m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPayment(m.description)) cents += m.amountCents
+    if (m.direction === 'out' && m.paymentMethod !== 'credit' && !isCardPaymentMovement(m)) cents += m.amountCents
   }
   return months.size ? Math.round(cents / months.size) : 0
 }
@@ -86,6 +92,6 @@ export function monthlyCharges<T extends SpendMovement & { installments?: number
     if (m.paymentMethod === 'credit') {
       return installmentDues(m.occurredAt, m.amountCents, m.installments ?? 1).map((d) => ({ ...m, amountCents: d.cents, occurredAt: d.dueAt }))
     }
-    return m.direction === 'out' && isCardPayment(m.description) ? [] : [m]
+    return m.direction === 'out' && isCardPaymentMovement(m) ? [] : [m]
   })
 }

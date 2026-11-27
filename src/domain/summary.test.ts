@@ -65,3 +65,13 @@ describe('MOV-04jm-T01: un gasto SINPE baja el saldo (los SINPE de la app del BA
   it('AC-2: gasto en efectivo → ₡55 430', () => expect(saldo(sinpe('out', 'cash'))).toBe(55_430_00))
   it('AC-3: ingreso SINPE → ₡62 430', () => expect(saldo(sinpe('in', 'sinpe'))).toBe(62_430_00))
 })
+
+describe('TC-11jm-T02 AC-2: el "Pago de tarjeta" no baja el saldo (ya restan las cuotas)', () => {
+  it('₡50 000 con forma card_payment deja el saldo igual; en efectivo sí lo baja', () => {
+    const account = { cents: 100_000_00, asOf: '2026-10-30T10:00:00-06:00' }
+    const pago = (paymentMethod: 'cash' | 'card_payment') =>
+      ({ amountCents: 50_000_00, currency: 'CRC' as const, direction: 'out' as const, occurredAt: '2026-10-30T11:00:00-06:00', paymentMethod })
+    expect(summaryFor({ account, salaryCents: null }, [pago('card_payment')])?.balanceCrcCents).toBe(100_000_00)
+    expect(summaryFor({ account, salaryCents: null }, [pago('cash')])?.balanceCrcCents).toBe(50_000_00)
+  })
+})

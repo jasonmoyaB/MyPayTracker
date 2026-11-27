@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { avgMonthlySpend, costaRicaMonth, lastEmailMovement, monthlyCharges, monthStats, parseMonth, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
+import { avgMonthlySpend, costaRicaMonth, isCardPaymentMovement, lastEmailMovement, monthlyCharges, monthStats, parseMonth, topExpenses, type MonthMovement, type SpendMovement } from './monthStats'
 
 // 1 nov 2026 00:30 en Costa Rica = 06:30 UTC.
 const now = new Date('2026-11-01T06:30:00Z')
@@ -87,7 +87,8 @@ describe('SIM-01jm-T03: avgMonthlySpend', () => {
     expect(avgMonthlySpend([
       g('2026-10-05T10:00:00-06:00', 3_000_000),
       g('2026-10-06T10:00:00-06:00', 9_000_000, { paymentMethod: 'credit' }),
-      g('2026-10-07T10:00:00-06:00', 9_000_000, { description: 'PAGO TARJETA VISA' }),
+      g('2026-10-07T10:00:00-06:00', 9_000_000, { description: 'PAGO TARJETA VISA', source: 'email_regex' }),
+      g('2026-10-09T10:00:00-06:00', 9_000_000, { paymentMethod: 'card_payment' }), // TC-11jm
       g('2026-10-08T10:00:00-06:00', 9_000_000, { currency: 'USD' }),
       g('2026-11-02T10:00:00-06:00', 9_000_000),
       g('2026-07-31T10:00:00-06:00', 9_000_000), // antes de los 3 meses
@@ -140,7 +141,26 @@ describe('GAS-01jm: monthlyCharges (gastos del mes = lo que se paga ese mes)', (
     expect(expenseIn([buy('2026-12-07T00:30:00-06:00', 1_000_000, 'credit')], '2027-01')).toBe(1_000_000)
   })
   it('AC-3: efectivo cuenta en su fecha; el pago de la tarjeta no cuenta como gasto', () => {
-    const ms = [buy('2026-11-03T10:00:00-06:00', 500_000, 'cash'), buy('2026-11-20T10:00:00-06:00', 1_616_674, 'cash', 1, 'Pago tarjeta BAC')]
+    const ms = [buy('2026-11-03T10:00:00-06:00', 500_000, 'cash'), { ...buy('2026-11-20T10:00:00-06:00', 1_616_674, 'cash', 1, 'Pago tarjeta BAC'), source: 'email_regex' }]
     expect(expenseIn(ms, '2026-11')).toBe(500_000)
+  })
+})
+
+describe('TC-11jm-T02: el pago de tarjeta se marca explícito', () => {
+  const nov = parseMonth('2026-11')!
+  const g = (description: string, amountCents: number, paymentMethod: SpendMovement['paymentMethod'], source = 'manual'): SpendMovement =>
+    ({ ...m('2026-11-05T10:00:00-06:00', amountCents, 'out', description, 'CRC', source), paymentMethod })
+  const expense = (ms: SpendMovement[]) => monthStats(monthlyCharges(ms), nov).expenseCents
+  it('AC-1: gasto manual "Super Visa" en efectivo cuenta en gastos del mes', () => {
+    expect(expense([g('Super Visa', 5_000_00, 'cash')])).toBe(5_000_00)
+    expect(topExpenses(monthlyCharges([g('Super Visa', 5_000_00, 'cash')]), nov)).toEqual([{ description: 'Super Visa', cents: 5_000_00 }])
+  })
+  it('AC-2: "Pago" con forma "Pago de tarjeta" no cuenta en gastos del mes', () => {
+    expect(expense([g('Pago', 50_000_00, 'card_payment')])).toBe(0)
+  })
+  it('AC-3: correo "PAGO TARJETA BAC" no cuenta (como hoy)', () => {
+    expect(expense([g('PAGO TARJETA BAC', 50_000_00, 'cash', 'email_regex')])).toBe(0)
+    expect(isCardPaymentMovement(g('PAGO TARJETA BAC', 1, 'cash', 'email_ai'))).toBe(true)
+    expect(isCardPaymentMovement(g('PAGO TARJETA BAC', 1, 'cash'))).toBe(false)
   })
 })
