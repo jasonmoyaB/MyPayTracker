@@ -98,7 +98,7 @@ function Screen({ route, email, data, reload, filter, onFilterChange }: Omit<Bod
     <TransactionsPanel transactions={data.transactions} filter={filter} onFilterChange={onFilterChange} onTransactionSaved={reload} />
   )
   if (route === 'recordatorios') return <RemindersView transactions={data.transactions} cardPaidThrough={data.settings.cardPaidThrough} onCardPaid={reload} />
-  if (route === 'cuenta') return <AccountView settings={data.settings} onSettingsSaved={reload} />
+  if (route === 'cuenta') return <AccountView settings={data.settings} transactions={data.transactions} onSettingsSaved={reload} />
   if (route === 'opciones') return <OptionsView email={email} onSignOut={() => void signOut()} />
   return <DashboardView settings={data.settings} transactions={data.transactions} reload={reload} />
 }

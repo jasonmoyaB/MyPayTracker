@@ -12,7 +12,8 @@ export type MoneySettingProps = {
   note?: string
   valueCents: number | null
   save: (cents: number) => Promise<void>
-  successMessage: string
+  // BAL-02jm-T02: función para que el aviso dependa del monto guardado (diferencia con la app).
+  successMessage: string | ((cents: number) => string)
   onSaved: () => void
 }
 
@@ -53,7 +54,7 @@ function MoneyForm({ label, valueCents, save, successMessage, onSaved, onCancel 
     setSaving(true)
     setError(null)
     // Si falla, el toast avisa y el monto escrito se conserva.
-    const failed = await saveWithToast(() => save(cents), toast, successMessage)
+    const failed = await saveWithToast(() => save(cents), toast, typeof successMessage === 'string' ? successMessage : successMessage(cents))
     setSaving(false)
     if (!failed) onSaved()
   }

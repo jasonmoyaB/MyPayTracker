@@ -8,9 +8,9 @@ vi.mock('../../data/settings', () => ({ saveAccountBalanceCents: vi.fn(), saveSa
 vi.mock('../../data/auth', () => ({ changePassword: vi.fn(), endExpiredSession: vi.fn() }))
 vi.mock('../../data/push', () => ({ saveSubscription: vi.fn(), deleteSubscription: vi.fn() }))
 
-const render = (settings: Parameters<typeof AccountView>[0]['settings']) => renderToStaticMarkup(
+const render = (settings: Parameters<typeof AccountView>[0]['settings'], transactions: Parameters<typeof AccountView>[0]['transactions'] = []) => renderToStaticMarkup(
   <ToastProvider>
-    <AccountView settings={settings} onSettingsSaved={() => {}} />
+    <AccountView settings={settings} transactions={transactions} onSettingsSaved={() => {}} />
   </ToastProvider>,
 )
 
@@ -29,5 +29,16 @@ describe('AC-8: Cuenta', () => {
   })
   it('las notificaciones viven en Opciones (UX-03jm)', () => {
     expect(render({ salaryCents: null, account: null })).not.toContain('Notificaciones')
+  })
+})
+
+describe('BAL-02jm-T02: cuadre en Cuenta', () => {
+  it('muestra lo que calcula la app hoy (saldo + movimientos posteriores)', () => {
+    const tx = { id: 't1', amountCents: 1_000_00, currency: 'CRC' as const, direction: 'out' as const, description: 'X', occurredAt: '2026-11-02T10:00:00-06:00', source: 'manual' as const, paymentMethod: 'cash' as const, installments: 1 }
+    const html = render({ salaryCents: null, account: { cents: 120_000_00, asOf: '2026-11-01T10:00:00-06:00' } }, [tx])
+    expect(html).toContain(`La app calcula hoy: ${formatMoney(119_000_00, 'CRC')}`)
+  })
+  it('AC-4: sin saldo ni salario no muestra la cifra de la app', () => {
+    expect(render({ salaryCents: null, account: null })).not.toContain('La app calcula hoy')
   })
 })
