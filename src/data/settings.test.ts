@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { toAppError } from './errors'
 import { getSettings, saveCardPaidThrough, saveSalaryCents } from './settings'
@@ -27,5 +28,13 @@ describe('TC-10jm-T03: hasta dónde está pagada la tarjeta', () => {
     db.user = { id: 'u1' }
     await saveCardPaidThrough('2026-11-20T06:00:00.000Z')
     expect(db.upsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1', card_paid_through: '2026-11-20T06:00:00.000Z' }))
+  })
+})
+
+const sql15 = readFileSync(new URL('../../supabase/migrations/0015_usd_rate.sql', import.meta.url), 'utf8').toLowerCase()
+
+describe('USD-01jm-T01: tipo de cambio en settings', () => {
+  it('0015: usd_rate numeric(10,2) nulo con check > 0 (AC-3 en la BD)', () => {
+    expect(sql15).toMatch(/alter table public\.settings\s+add column usd_rate numeric\(10, 2\) check \(usd_rate > 0\)/)
   })
 })
