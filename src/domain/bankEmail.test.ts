@@ -116,4 +116,7 @@ describe('MAIL-02jm-T02: looksLikeMovement', () => {
   it('los que el parser sí lee también parecen movimiento (USD, ₡ y "Colones")', () => {
     for (const text of [compraCrc, compraUsd, sinpeOk, 'Cargo de ₡5.000,00', 'Pago por $ 12.50']) expect(looksLikeMovement(text)).toBe(true)
   })
+  it('MAIL-02jm-T04: correo promocional con un "$50" suelto (sin etiqueta de monto) → no', () => {
+    expect(looksLikeMovement('¡Aprovecha! Gana $50 de descuento en tu próxima compra con tu tarjeta BAC. Ahorra hasta USD 100 este mes en tu primer pago.')).toBe(false)
+  })
 })
