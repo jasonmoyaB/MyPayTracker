@@ -1,5 +1,6 @@
 import type { Currency } from '../domain/bankEmail'
 import type { Direction } from '../domain/balance'
+import type { Category } from '../domain/category'
 import type { PaymentMethod } from '../domain/credit'
 import { centsToNumeric, numericToCents } from '../domain/money'
 import { allPages } from '../domain/paging'
@@ -19,6 +20,8 @@ export type Transaction = {
   paymentMethod: PaymentMethod
   // TC-02jm-T04: plazo de tasa cero (1 = un pago); solo > 1 con tarjeta.
   installments: number
+  // CAT-01jm-T03: la que el dev eligió a mano; null = la asigna `categorize`. Opcional para no tocar a quien no la usa.
+  category?: Category | null
 }
 
 export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt' | 'paymentMethod' | 'installments'>
@@ -29,7 +32,7 @@ export async function listTransactions(): Promise<Transaction[]> {
   const rows = await allPages(async (from, to) => {
     const { data, error } = await supabase
       .from('transactions')
-      .select('id, amount, currency, direction, source, description, occurred_at, payment_method, installments')
+      .select('id, amount, currency, direction, source, description, occurred_at, payment_method, installments, category')
       .order('occurred_at', { ascending: false })
       .order('id', { ascending: false })
       .range(from, to)
@@ -46,6 +49,7 @@ export async function listTransactions(): Promise<Transaction[]> {
     occurredAt: r.occurred_at,
     paymentMethod: r.payment_method,
     installments: r.installments,
+    category: r.category,
   }))
 }
 
@@ -78,5 +82,11 @@ export async function updateTransaction(id: string, t: Pick<Transaction, 'amount
     occurred_at: t.occurredAt,
     installments: t.installments,
   }).eq('id', id)
+  if (error) throw error
+}
+
+// CAT-01jm-T03: guarda la categoría elegida en Movimientos. RLS impide editar filas de otro.
+export async function setTransactionCategory(id: string, category: Category): Promise<void> {
+  const { error } = await supabase.from('transactions').update({ category }).eq('id', id)
   if (error) throw error
 }

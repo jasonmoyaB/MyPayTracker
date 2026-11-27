@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { addManualTransaction, deleteTransaction, listTransactions, updateTransaction } from './transactions'
+import { addManualTransaction, deleteTransaction, listTransactions, setTransactionCategory, updateTransaction } from './transactions'
 
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
-    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3 }
+    description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3, category: 'Salud' }
   const range = vi.fn(async () => ({ data: [row], error: null }))
   const order = vi.fn(() => ({ order, range }))
   const select = vi.fn(() => ({ order }))
@@ -118,5 +118,18 @@ const sql16 = readFileSync(new URL('../../supabase/migrations/0016_transaction_c
 describe('CAT-01jm-T01: category en transactions', () => {
   it('0016: columna nula con check en la lista fija', () => {
     expect(sql16).toMatch(/alter table public\.transactions\s+add column category text\s+check \(category in \('Súper', 'Comida', 'Transporte', 'Servicios', 'Salud', 'Compras', 'Entretenimiento', 'Otros'\)\)/)
+  })
+})
+
+describe('CAT-01jm-T03: leer y guardar la categoría', () => {
+  it('listTransactions mapea category', async () => {
+    const [t] = await listTransactions()
+    expect(db.select).toHaveBeenCalledWith(expect.stringContaining('category'))
+    expect(t.category).toBe('Salud')
+  })
+  it('AC-5: setTransactionCategory actualiza solo esa fila', async () => {
+    await setTransactionCategory('abc', 'Comida')
+    expect(db.update).toHaveBeenCalledWith({ category: 'Comida' })
+    expect(db.eq).toHaveBeenCalledWith('id', 'abc')
   })
 })
