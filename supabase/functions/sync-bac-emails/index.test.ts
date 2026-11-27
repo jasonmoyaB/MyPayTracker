@@ -14,3 +14,11 @@ describe('AC-7: la sincronización no filtra detalles internos', () => {
     expect(finalCatch).not.toMatch(/Response\.json\([^)]*\.message/)
   })
 })
+
+describe('ARQ-02jm-T03: lee todos los email_message_id guardados', () => {
+  it('pagina con allPages y orden estable', () => {
+    expect(source).toMatch(/from '\.\.\/\.\.\/\.\.\/src\/domain\/paging\.ts'/)
+    expect(source).toMatch(/allPages\(async \(from, to\)/)
+    expect(source).toMatch(/\.order\('id'\)\s*\.range\(from, to\)/)
+  })
+})

@@ -4,6 +4,7 @@ import type { Currency } from '../../../src/domain/bankEmail.ts'
 import { dueOn, nextPayDay } from '../../../src/domain/credit.ts'
 import { costaRicaDateTime } from '../../../src/domain/date.ts'
 import { numericToCents } from '../../../src/domain/money.ts'
+import { allPages } from '../../../src/domain/paging.ts'
 import { nextDueOn, reminderNotification, reminderPhase, type ReminderPhase } from '../../../src/domain/reminder.ts'
 import { pushToOwner, type SendPush, webPushSender } from './push.ts'
 
@@ -52,9 +53,13 @@ async function dueCard(db: SupabaseClient, ownerId: string, now: Date): Promise<
   const payDay = nextPayDay(now)
   const phase = reminderPhase(payDay.slice(0, 10), now) // 00:00 CR = 06:00Z: la fecha UTC es la de CR
   if (!phase) return []
-  const { data, error } = await db.from('transactions').select('amount, currency, occurred_at, installments')
-    .eq('user_id', ownerId).eq('payment_method', 'credit')
-  if (error) throw error
+  // ARQ-02jm-T03: todas las páginas; una compra vieja a plazo puede tener cuotas vigentes.
+  const data = await allPages(async (from, to) => {
+    const { data, error } = await db.from('transactions').select('amount, currency, occurred_at, installments')
+      .eq('user_id', ownerId).eq('payment_method', 'credit').order('id').range(from, to)
+    if (error) throw error
+    return data
+  })
   const { crcCents, usdCents } = dueOn(data.map((t) => ({ amountCents: numericToCents(t.amount), currency: currency(t.currency),
     direction: 'out' as const, paymentMethod: 'credit' as const, occurredAt: t.occurred_at, installments: t.installments })), payDay)
   if (crcCents === 0 && usdCents === 0) return []

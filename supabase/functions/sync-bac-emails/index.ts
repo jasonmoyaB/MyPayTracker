@@ -1,6 +1,7 @@
 // MAIL-01jm-T05: lee correos BAC de Gmail y los guarda en transactions. Solo I/O; la lógica vive en src/domain.
 import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
+import { allPages } from '../../../src/domain/paging.ts'
 import { notifyNewMovements } from './push.ts'
 import { notifyReminders } from './reminders.ts'
 
@@ -68,11 +69,17 @@ Deno.serve(async (req) => {
     const ids = await listMessageIds(token)
     // Listar ids es barato; descargar cada correo no. Solo se descargan los que no están guardados.
     // ponytail: correos sin movimiento (SINPE rechazado, etc.) no se guardan y se re-descargan cada corrida; son pocos.
-    const { data: stored, error: storedError } = await db
-      .from('transactions')
-      .select('email_message_id')
-      .not('email_message_id', 'is', null)
-    if (storedError) throw storedError
+    // ARQ-02jm-T03: todas las páginas; si faltara alguna, esos correos se re-descargarían y re-avisarían.
+    const stored = await allPages(async (from, to) => {
+      const { data, error } = await db
+        .from('transactions')
+        .select('email_message_id')
+        .not('email_message_id', 'is', null)
+        .order('id')
+        .range(from, to)
+      if (error) throw error
+      return data
+    })
     const known = new Set(stored.map((r) => r.email_message_id))
     const newIds = ids.filter((id) => !known.has(id))
 

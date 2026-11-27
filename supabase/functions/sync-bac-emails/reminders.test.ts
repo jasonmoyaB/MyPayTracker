@@ -13,9 +13,11 @@ function fakeDb(state: State) {
   const or = vi.fn()
   const eqs: unknown[][] = []
   const from = vi.fn((table: keyof State) => {
-    const q = { op: 'select', patch: {} as Row, where: {} as Row }
+    const q = { op: 'select', patch: {} as Row, where: {} as Row, range: [0, 999] }
     const builder = {
       select: () => builder,
+      order: () => builder,
+      range: (a: number, b: number) => { q.range = [a, b]; return builder },
       eq: (col: string, val: unknown) => { eqs.push([table, col, val]); q.where[col] = val; return builder },
       or: (filter: string) => { or(table, filter); return builder },
       update: (patch: Row) => { q.op = 'update'; q.patch = patch; return builder },
@@ -26,7 +28,8 @@ function fakeDb(state: State) {
     const matches = (r: Row) => Object.entries(q.where).every(([k, v]) => r[k] === v)
     function run() {
       if (q.op === 'delete') return { error: null }
-      if (q.op === 'select') return { data: state[table].filter(matches), error: null }
+      // Como PostgREST: máximo 1000 filas por consulta (ARQ-02jm).
+      if (q.op === 'select') return { data: state[table].filter(matches).slice(q.range[0], Math.min(q.range[1], q.range[0] + 999) + 1), error: null }
       const [col, today] = Object.entries(q.patch)[0]
       const claimed = state[table].filter((r) => matches(r) && r[col] !== today)
       for (const r of claimed) r[col] = today
@@ -112,6 +115,14 @@ describe('REC-01jm AC-4: aviso del pago de la tarjeta el 17 y el 20', () => {
     expect(eqs).toContainEqual(['transactions', 'user_id', 'owner'])
     expect(eqs).toContainEqual(['transactions', 'payment_method', 'credit'])
     expect(s.settings[0].card_notified_on).toBe('2026-11-20')
+  })
+  it('ARQ-02jm-T03: suma más de 1000 compras con tarjeta (pagina)', async () => {
+    const many = Array.from({ length: 1001 }, () => credit('2026-10-10T12:00:00-06:00', '1.00'))
+    const { db } = fakeDb(state({ reminders: [], transactions: many }))
+    const send = vi.fn<SendPush>(async () => {})
+    await notifyReminders(db, 'owner', cr('2026-11-17T09:00:00'), async () => send)
+    expect(sent(send)[0]).toEqual(reminderNotification({ description: 'Tarjeta de crédito', phase: 'pronto',
+      amounts: [{ cents: 1001_00, currency: 'CRC' }, { cents: 0, currency: 'USD' }] }))
   })
   it('sin cuotas ese 20 no avisa ni marca', async () => {
     const s = state({ reminders: [] })

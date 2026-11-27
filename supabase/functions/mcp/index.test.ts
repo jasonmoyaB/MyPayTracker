@@ -37,3 +37,10 @@ describe('MCP-03jm-T01: escritura como el usuario del token', () => {
     expect(source).toMatch(/upsert\(\{ user_id: userId, \.\.\.fields/)
   })
 })
+
+describe('ARQ-02jm-T03: ledger lee todos los movimientos', () => {
+  it('pagina con allPages y el mismo orden que la app', () => {
+    expect(source).toMatch(/from '\.\.\/\.\.\/\.\.\/src\/domain\/paging\.ts'/)
+    expect(source).toMatch(/\.order\('occurred_at', \{ ascending: false \}\)\s*\.order\('id', \{ ascending: false \}\)\s*\.range\(from, to\)/)
+  })
+})
