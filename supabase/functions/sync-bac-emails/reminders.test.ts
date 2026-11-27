@@ -2,43 +2,11 @@ import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { reminderNotification } from '../../../src/domain/reminder.ts'
 import type { SendPush } from './push.ts'
+import { fakeDb } from './fakeDb.ts'
 import { notifyReminders } from './reminders.ts'
 
 type Row = Record<string, unknown>
 type State = { reminders: Row[]; settings: Row[]; transactions: Row[]; push_subscriptions: Row[] }
-
-// Fake del cliente service role con estado: el update solo "devuelve fila" si el marcador aún no es hoy,
-// como el filtro `or(... is null, ... neq hoy)` en Postgres. Así se prueba que dos corridas avisan una vez.
-function fakeDb(state: State) {
-  const or = vi.fn()
-  const eqs: unknown[][] = []
-  const from = vi.fn((table: keyof State) => {
-    const q = { op: 'select', patch: {} as Row, where: {} as Row, range: [0, 999] }
-    const builder = {
-      select: () => builder,
-      order: () => builder,
-      range: (a: number, b: number) => { q.range = [a, b]; return builder },
-      eq: (col: string, val: unknown) => { eqs.push([table, col, val]); q.where[col] = val; return builder },
-      or: (filter: string) => { or(table, filter); return builder },
-      update: (patch: Row) => { q.op = 'update'; q.patch = patch; return builder },
-      delete: () => { q.op = 'delete'; return builder },
-      in: () => builder,
-      then: (resolve: (r: unknown) => void) => resolve(run()),
-    }
-    const matches = (r: Row) => Object.entries(q.where).every(([k, v]) => r[k] === v)
-    function run() {
-      if (q.op === 'delete') return { error: null }
-      // Como PostgREST: máximo 1000 filas por consulta (ARQ-02jm).
-      if (q.op === 'select') return { data: state[table].filter(matches).slice(q.range[0], Math.min(q.range[1], q.range[0] + 999) + 1), error: null }
-      const [col, today] = Object.entries(q.patch)[0]
-      const claimed = state[table].filter((r) => matches(r) && r[col] !== today)
-      for (const r of claimed) r[col] = today
-      return { data: claimed, error: null }
-    }
-    return builder
-  })
-  return { db: { from } as never, or, eqs }
-}
 
 const cr = (local: string) => new Date(`${local}-06:00`)
 const sub = { id: 's1', user_id: 'owner', endpoint: 'https://e/1', p256dh: 'P', auth: 'A' }

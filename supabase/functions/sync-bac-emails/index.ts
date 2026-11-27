@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.50.0'
 import { BAC_SENDERS, gmailBodyText, type GmailPart, parseBankEmail } from '../../../src/domain/bankEmail.ts'
 import { allPages } from '../../../src/domain/paging.ts'
 import { notifyNewMovements } from './push.ts'
+import { notifyBudgets } from './budgets.ts'
 import { notifyReminders } from './reminders.ts'
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
@@ -109,6 +110,8 @@ Deno.serve(async (req) => {
       .select('direction, amount, currency, description')
     if (error) throw error
     await notifyNewMovements(db, env('OWNER_USER_ID'), data)
+    // PRES-01jm-T05: con los movimientos nuevos ya guardados; nunca lanza (captura sus errores).
+    await notifyBudgets(db, env('OWNER_USER_ID'), new Date())
 
     return Response.json({ scanned: ids.length, skipped: ids.length - newIds.length, parsed: rows.length, inserted: data.length })
   } catch (e) {
