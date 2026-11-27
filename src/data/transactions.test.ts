@@ -5,14 +5,15 @@ import { addManualTransaction, deleteTransaction, listTransactions, updateTransa
 const db = vi.hoisted(() => {
   const row = { id: '1', amount: '2000.50', currency: 'CRC', direction: 'out', source: 'manual',
     description: 'Zapatos', occurred_at: '2026-10-10T18:00:00+00:00', payment_method: 'credit', installments: 3 }
-  const order = vi.fn(async () => ({ data: [row], error: null }))
+  const range = vi.fn(async () => ({ data: [row], error: null }))
+  const order = vi.fn(() => ({ order, range }))
   const select = vi.fn(() => ({ order }))
   const insert = vi.fn(async () => ({ error: null }))
   const eq = vi.fn(async () => ({ error: null }))
   const remove = vi.fn(() => ({ eq }))
   const update = vi.fn(() => ({ eq }))
   const from = vi.fn(() => ({ select, insert, update, delete: remove }))
-  return { select, insert, update, eq, from }
+  return { select, order, range, insert, update, eq, from }
 })
 vi.mock('./supabase', () => ({ supabase: { from: db.from } }))
 
@@ -27,6 +28,15 @@ describe('TC-01jm AC-4: payment_method en transactions', () => {
   })
   it('credit solo para gastos', () => {
     expect(sql).toMatch(/check \(payment_method = 'cash' or direction = 'out'\)/)
+  })
+})
+
+describe('ARQ-02jm-T02: listTransactions lee todas las páginas', () => {
+  it('pagina con range y desempata el orden por id', async () => {
+    await listTransactions()
+    expect(db.order).toHaveBeenCalledWith('occurred_at', { ascending: false })
+    expect(db.order).toHaveBeenCalledWith('id', { ascending: false })
+    expect(db.range).toHaveBeenCalledWith(0, 999)
   })
 })
 

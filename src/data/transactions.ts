@@ -2,6 +2,7 @@ import type { Currency } from '../domain/bankEmail'
 import type { Direction } from '../domain/balance'
 import type { PaymentMethod } from '../domain/credit'
 import { centsToNumeric, numericToCents } from '../domain/money'
+import { allPages } from '../domain/paging'
 import { supabase } from './supabase'
 
 export type Source = 'email_regex' | 'email_ai' | 'manual'
@@ -23,13 +24,19 @@ export type Transaction = {
 export type NewTransaction = Pick<Transaction, 'amountCents' | 'currency' | 'direction' | 'description' | 'occurredAt' | 'paymentMethod' | 'installments'>
 
 // RLS ya filtra por user_id; más recientes primero.
+// ARQ-02jm-T02: paginado; el desempate por id evita que filas con la misma fecha se repitan entre páginas.
 export async function listTransactions(): Promise<Transaction[]> {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('id, amount, currency, direction, source, description, occurred_at, payment_method, installments')
-    .order('occurred_at', { ascending: false })
-  if (error) throw error
-  return data.map((r) => ({
+  const rows = await allPages(async (from, to) => {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('id, amount, currency, direction, source, description, occurred_at, payment_method, installments')
+      .order('occurred_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to)
+    if (error) throw error
+    return data
+  })
+  return rows.map((r) => ({
     id: r.id,
     amountCents: numericToCents(r.amount),
     currency: r.currency,
