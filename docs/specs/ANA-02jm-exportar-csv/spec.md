@@ -20,3 +20,6 @@ Quiero sacar mis movimientos a Excel para revisarlos o para la declaración.
 - AC-5: con el filtro vacío el botón está deshabilitado.
 ## Supuestos
 - Separador coma; Excel en español puede pedir importar; el BOM asegura las tildes.
+- La etiqueta de forma de pago vive en la UI (`originLabel` compone texto): `csv.ts` usa el mismo texto que las
+  opciones del formulario. La categoría la resuelve el `categoryOf` que ya arma Movimientos con todo el historial.
+- Además de `= + - @` se neutralizan tab y retorno de carro al inicio (lista de OWASP); más conservador.
