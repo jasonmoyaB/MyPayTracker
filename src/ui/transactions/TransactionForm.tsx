@@ -39,6 +39,7 @@ function AmountFields({ state: s }: { state: TransactionFormState }) {
       <option value="out">Gasto</option><option value="in">Ingreso</option>
     </select>
     <PaymentField state={s} />
+    <FeeField state={s} />
   </>
 }
 
@@ -74,3 +75,16 @@ export function PaymentField({ state: s }: { state: PaymentState }) {
 
 // TC-02jm-T04: compartido con la fila y con "¿Puedo comprar esto?".
 export const planLabel = (n: number) => (n === 1 ? 'Un solo pago' : `Tasa cero ${n} meses`)
+
+type FeeState = Pick<TransactionFormState, 'direction' | 'paymentMethod' | 'installments' | 'fee' | 'setFee' | 'feeError'>
+
+// TC-12jm-T01: comisión de BAC por pasar la compra a tasa cero; se suma al monto y se reparte en las cuotas.
+export function FeeField({ state: s }: { state: FeeState }) {
+  if (effectivePaymentMethod(s.direction, s.paymentMethod) !== 'credit' || s.installments <= 1) return null
+  return <>
+    <label htmlFor="transaction-fee">Comisión (opcional)</label>
+    <input id="transaction-fee" type="text" inputMode="decimal" value={s.fee} onChange={e => s.setFee(e.target.value)}
+      aria-invalid={!!s.feeError} aria-describedby={s.feeError ? 'transaction-fee-error' : undefined} />
+    {s.feeError && <span id="transaction-fee-error" role="alert" className="status-danger">{s.feeError}</span>}
+  </>
+}

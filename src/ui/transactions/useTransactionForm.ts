@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { addManualTransaction, type NewTransaction } from '../../data/transactions'
-import { parseAmountToCents } from '../../domain/amount'
+import { parseAmountToCents, parseFeeToCents } from '../../domain/amount'
 import { costaRicaDateTime, costaRicaIso } from '../../domain/date'
 import { saveWithToast } from '../toast/saveWithToast'
 import { useToast } from '../toast/ToastProvider'
@@ -19,9 +19,10 @@ function useFields() {
   const [direction, setDirection] = useState<NewTransaction['direction']>('out')
   const [paymentMethod, setPaymentMethod] = useState<Method>('cash')
   const [installments, setInstallments] = useState(1)
+  const [fee, setFee] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(() => costaRicaDateTime(new Date()))
-  return { amount, setAmount, currency, setCurrency, direction, setDirection, paymentMethod, setPaymentMethod, installments, setInstallments, description, setDescription, date, setDate }
+  return { amount, setAmount, currency, setCurrency, direction, setDirection, paymentMethod, setPaymentMethod, installments, setInstallments, fee, setFee, description, setDescription, date, setDate }
 }
 
 export function useTransactionForm(onSaved: () => void) {
@@ -32,17 +33,22 @@ export function useTransactionForm(onSaved: () => void) {
   // TC-02jm-T04: el plazo solo aplica a tarjeta (la BD también lo exige).
   const installments = paymentMethod === 'credit' ? fields.installments : 1
   const [amountError, setAmountError] = useState('')
+  const [feeError, setFeeError] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const pending = useRef(false)
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (pending.current) return
-    const amountCents = parseAmountToCents(amount)
+    const priceCents = parseAmountToCents(amount)
+    // TC-12jm-T01: la comisión solo existe a plazo; si el campo está oculto, lo escrito no cuenta.
+    const feeCents = installments > 1 ? parseFeeToCents(fields.fee) : 0
     const occurredAt = costaRicaIso(date)
-    setAmountError(amountCents === null ? 'Ingresa un monto mayor que cero con hasta 2 decimales.' : '')
+    setAmountError(priceCents === null ? 'Ingresa un monto mayor que cero con hasta 2 decimales.' : '')
+    setFeeError(feeCents === null ? 'Ingresa una comisión de cero o más con hasta 2 decimales, o déjala vacía.' : '')
     setError('')
-    if (amountCents === null) return
+    if (priceCents === null || feeCents === null) return
+    const amountCents = priceCents + feeCents
     if (!description.trim()) { setError('Ingresa una descripción para el movimiento.'); return }
     if (!occurredAt) { setError('Ingresa una fecha y hora válidas de Costa Rica.'); return }
     pending.current = true
@@ -54,7 +60,7 @@ export function useTransactionForm(onSaved: () => void) {
     setSaving(false)
     if (!failed) onSaved()
   }
-  return { ...fields, amountError, error, saving, submit }
+  return { ...fields, amountError, feeError, error, saving, submit }
 }
 
 export type TransactionFormState = ReturnType<typeof useTransactionForm>

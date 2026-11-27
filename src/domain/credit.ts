@@ -25,7 +25,7 @@ export function creditDueAt(occurredAt: string): string {
 }
 
 // TC-02jm-T02: cuota k el 20 del mes k después del primer pago; el resto de centavos va en la primera.
-// ponytail: cuotas iguales sin la comisión de BAC por plazo; agregarla si el dev la conoce.
+// TC-12jm-T01: la comisión de BAC por plazo ya viene sumada en `amountCents` (el formulario la agrega).
 export function installmentDues(occurredAt: string, amountCents: number, n: number): { dueAt: string; cents: number }[] {
   const first = new Date(creditDueAt(occurredAt))
   const base = Math.floor(amountCents / n)

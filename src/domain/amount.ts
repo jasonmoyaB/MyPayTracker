@@ -5,3 +5,8 @@ export function parseAmountToCents(text: string): number | null {
   const cents = Number(m[1].replace(/,/g, '')) * 100 + Number((m[2] ?? '').padEnd(2, '0'))
   return cents > 0 ? cents : null
 }
+
+// TC-12jm-T01: comisión opcional de la tasa cero; vacía o 0 = sin comisión. null si no es un monto válido.
+export function parseFeeToCents(text: string): number | null {
+  return /^0*(\.0*)?$/.test(text.trim()) ? 0 : parseAmountToCents(text)
+}

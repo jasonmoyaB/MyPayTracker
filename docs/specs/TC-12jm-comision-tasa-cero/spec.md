@@ -18,3 +18,4 @@ salen más bajas que lo que de verdad cobra el banco.
 ## Supuestos
 - BAC reparte la comisión en las cuotas; si la cobrara aparte en el primer pago, se registra como gasto aparte.
 - La comisión no se guarda por separado: el detalle muestra el total (precio + comisión).
+- Comisión "0" equivale a vacía. Va en `parseFeeToCents` (domain) y no en el hook: sin DOM en los tests, así se prueba AC-1..AC-3.

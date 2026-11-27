@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { TransactionsPanel } from './TransactionsPanel'
-import { PaymentField } from './TransactionForm'
+import { FeeField, PaymentField } from './TransactionForm'
 import { effectivePaymentMethod } from './useTransactionForm'
 import { formatDate, formatDay, formatMoney } from '../format'
 import type { Transaction } from '../../data/transactions'
@@ -122,5 +122,23 @@ describe('TC-11jm-T03: "Pago de tarjeta" como forma de pago', () => {
   })
   it('la fila muestra la etiqueta "Pago de tarjeta"', () => {
     expect(render([{ ...transaction, paymentMethod: 'card_payment' }])).toContain('Pago de tarjeta · Manual')
+  })
+})
+
+describe('TC-12jm-T01 AC-4: la comisión solo aparece en compras con tarjeta a plazo', () => {
+  const fee = (paymentMethod: Transaction['paymentMethod'], installments: number, direction: 'in' | 'out' = 'out') => renderToStaticMarkup(
+    <FeeField state={{ direction, paymentMethod, installments, fee: '', setFee: () => {}, feeError: '' }} />)
+  it('tarjeta a 12 meses → campo "Comisión (opcional)"', () => {
+    expect(fee('credit', 12)).toContain('Comisión (opcional)')
+  })
+  it('un pago, efectivo o ingreso → sin campo', () => {
+    expect(fee('credit', 1)).toBe('')
+    expect(fee('cash', 12)).toBe('')
+    expect(fee('credit', 12, 'in')).toBe('')
+  })
+  it('AC-3: el error se asocia al campo (aria-describedby)', () => {
+    const html = renderToStaticMarkup(<FeeField state={{ direction: 'out', paymentMethod: 'credit', installments: 12, fee: '-1', setFee: () => {}, feeError: 'mal' }} />)
+    expect(html).toContain('aria-describedby="transaction-fee-error"')
+    expect(html).toContain('id="transaction-fee-error"')
   })
 })
