@@ -16,9 +16,9 @@ type Loaded = { reminders: Reminder[] | null; error: string | null }
 
 // REC-01jm-T06: carga sus recordatorios aquí y no con los datos de App; si 0010 falta, solo esta pantalla falla.
 // `initial` solo existe para probar los estados sin DOM.
-// TC-10jm-T05: `cardPaidThrough` y `onCardPaid` (recarga de App) para "Ya pagué" con las cifras del Resumen.
-type ViewProps = { transactions: Transaction[]; cardPaidThrough?: string | null; onCardPaid?: () => void; initial?: Loaded }
-export function RemindersView({ transactions, cardPaidThrough, onCardPaid = () => {}, initial }: ViewProps) {
+// TC-10jm-T05 / REC-03jm-T02: `cardPaidThrough` y `onChanged` (recarga de App) tras "Ya pagué" o cambiar un recordatorio, con las cifras del Resumen.
+type ViewProps = { transactions: Transaction[]; cardPaidThrough?: string | null; onChanged?: () => void; initial?: Loaded }
+export function RemindersView({ transactions, cardPaidThrough, onChanged = () => {}, initial }: ViewProps) {
   const toast = useToast()
   const [state, setState] = useState<Loaded>(initial ?? { reminders: null, error: null })
   const load = useCallback(async () => {
@@ -33,7 +33,7 @@ export function RemindersView({ transactions, cardPaidThrough, onCardPaid = () =
   }, [toast])
   useEffect(() => { void load() }, [load])
   // FIJ-01jm-T03: App también recarga, porque el Resumen resta los recordatorios apartados.
-  const reload = () => { void load(); onCardPaid() }
+  const reload = () => { void load(); onChanged() }
   return (
     <section className="card" aria-labelledby="reminders-title" style={{ display: 'grid', gap: 12 }}>
       <h2 id="reminders-title" tabIndex={-1} style={{ margin: 0 }}>Recordatorios</h2>
@@ -44,18 +44,18 @@ export function RemindersView({ transactions, cardPaidThrough, onCardPaid = () =
       )}
       {!state.reminders && !state.error && <p className="muted" style={{ margin: 0 }}>Cargando recordatorios…</p>}
       {state.reminders && <RemindersList reminders={state.reminders} transactions={transactions} reload={reload}
-        cardPaidThrough={cardPaidThrough} onCardPaid={onCardPaid} />}
+        cardPaidThrough={cardPaidThrough} onChanged={onChanged} />}
     </section>
   )
 }
 
 type ListProps = {
   reminders: Reminder[]; transactions: Transaction[]; reload: () => void; now?: Date
-  cardPaidThrough?: string | null; onCardPaid?: () => void
+  cardPaidThrough?: string | null; onChanged?: () => void
 }
 
 // REC-01jm-T04: pagos mensuales y, arriba, lo que vence el próximo 20 de la tarjeta. No tocan saldo ni deuda.
-export function RemindersList({ reminders, transactions, reload, now = new Date(), cardPaidThrough, onCardPaid = () => {} }: ListProps) {
+export function RemindersList({ reminders, transactions, reload, now = new Date(), cardPaidThrough, onChanged = () => {} }: ListProps) {
   const toast = useToast()
   const [deleting, setDeleting] = useState(false)
   const pending = useRef(false)
@@ -92,7 +92,7 @@ export function RemindersList({ reminders, transactions, reload, now = new Date(
               </CardDebtDialog>
             </span>
             <span className="reminder-actions">
-              <CardPaidButton pending={card} now={now} onSaved={onCardPaid} />
+              <CardPaidButton pending={card} now={now} onSaved={onChanged} />
             </span>
           </li>
         </ul>

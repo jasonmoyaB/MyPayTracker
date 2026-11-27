@@ -104,7 +104,7 @@ describe('TC-10jm-T05 AC-4: Recordatorios y campana con las cifras del Resumen',
   const pays = `Pagas <span class="amount">${formatMoney(15_000_00, 'CRC')}</span> el 20 dic`
   it('la fila de la tarjeta dice "Pagas" y "Deuda total" igual que el Resumen, con "Ya pagué"', () => {
     const list = renderToStaticMarkup(<ToastProvider><RemindersList reminders={[]} transactions={debt} reload={() => {}} now={today}
-      cardPaidThrough={paid} onCardPaid={() => {}} /></ToastProvider>)
+      cardPaidThrough={paid} onChanged={() => {}} /></ToastProvider>)
     const dash = renderToStaticMarkup(<ToastProvider><DashboardView settings={{ salaryCents: 0, account: null, cardPaidThrough: paid }}
       transactions={debt} now={today} /></ToastProvider>)
     expect(list).toContain(pays)
